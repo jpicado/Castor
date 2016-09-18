@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<start>
+  <iteration>
+ 	2
+ </iteration>
+ <recall>
+ 	20
+ </recall>
+ <server>
+ 	localhost
+ </server>
+ <temparoryTableName>
+ 	temp
+ </temparoryTableName>
+ <SPNameTemplate>
+ 	kinshipProcedure
+ </SPNameTemplate>
+ <mode>
+    <element>
+      :- modeh(*,father(+person,+person)).
+    </element>
+    <element>
+      :- modeb(*,mother(-person,+person)).
+    </element>
+    <element>
+      :- modeb(*,mother(+person,-person)).
+    </element>
+    <element>
+      :- modeb(*,husband(-person,+person)).
+    </element>
+    <element>
+      :- modeb(*,husband(+person,-person)).
+    </element>
+    <element>
+      :- modeb(*,son(+person,-person)).
+    </element>
+    <element>
+      :- modeb(*,son(-person,+person)).
+    </element>
+ </mode>
+ <determination>
+   <element>
+     :- determination(father/2,mother/2).
+    </element>
+    <element>
+     :- determination(father/2,husband/2).
+    </element>
+    <element>
+     :- determination(father/2,son/2).
+    </element>
+ </determination>
+</start>

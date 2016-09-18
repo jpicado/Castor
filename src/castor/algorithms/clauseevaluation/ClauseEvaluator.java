@@ -1,0 +1,16 @@
+package castor.algorithms.clauseevaluation;
+
+import java.util.List;
+
+import castor.algorithms.coverageengines.CoverageEngine;
+import castor.db.dataaccess.GenericDAO;
+import castor.hypotheses.ClauseInfo;
+import castor.language.Relation;
+import castor.language.Schema;
+import castor.language.Tuple;
+
+public interface ClauseEvaluator {
+
+	double computeScore(GenericDAO genericDAO, CoverageEngine coverageEngine, Schema schema, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, ClauseInfo clauseInfo, EvaluationFunctions.FUNCTION evaluationFunction);
+	boolean entails(GenericDAO genericDAO, CoverageEngine coverageEngine, Schema schema, ClauseInfo clauseInfo, Tuple exampleTuple, Relation posExamplesRelation);
+}

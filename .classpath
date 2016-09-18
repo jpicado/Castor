@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="lib/aima-core.jar"/>
+	<classpathentry kind="lib" path="lib/args4j-2.33.jar"/>
+	<classpathentry kind="lib" path="lib/gson-2.7.jar"/>
+	<classpathentry kind="lib" path="lib/log4j-1.2.16.jar"/>
+	<classpathentry kind="lib" path="lib/mymln2poss.jar"/>
+	<classpathentry kind="lib" path="lib/ST-4.0.8.jar"/>
+	<classpathentry kind="lib" path="lib/voltdb-5.9.jar"/>
+	<classpathentry kind="lib" path="lib/voltdbclient-5.9.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

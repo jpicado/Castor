@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<start>
+	<iteration>
+ 		2
+	</iteration>
+	<recall>
+ 		10
+	</recall>
+	<maxterms>
+ 		100000
+	</maxterms>
+	<server>
+ 		localhost
+	</server>
+	<temparoryTableName>
+ 		temp
+	</temparoryTableName>
+	<SPNameTemplate>
+ 		HIVProcedure
+	</SPNameTemplate>
+	 <mode> 
+		<element>
+			:- modeh(*,hiv_active(+compound)).
+		</element>
+		<element>
+			:- modeb(*,compounds(+compound,-atom)).
+		</element>
+		<element>
+			:- modeb(*,atoms(+atom,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag,#flag)).
+		</element>
+		<element>
+			:- modeb(*,bonds(+bond,-atom,-atom,#flag,#flag,#flag)).
+		</element>
+		<element>
+			:- modeb(*,bonds(-bond,+atom,-atom,#flag,#flag,#flag)).
+		</element>
+		<element>
+			:- modeb(*,bonds(-bond,-atom,+atom,#flag,#flag,#flag)).
+		</element>
+	</mode>
+	<inlusiondep>
+	</inlusiondep>
+</start>

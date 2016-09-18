@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<start>
+  <iteration>
+ 	2
+ </iteration>
+ <recall>
+ 	20
+ </recall>
+ <maxterms>
+ 	100000
+ </maxterms>
+ <server>
+ 	localhost
+ </server>
+ <temparoryTableName>
+ 	temp
+ </temparoryTableName>
+ <SPNameTemplate>
+ 	UWCSEProcedure
+ </SPNameTemplate>
+ <mode> 
+    <element>
+      	:- modeh(*,advisedby(+student,+professor)).
+    </element>
+    <element>
+		:- modeb(*,student(+student,-phase,-years,-ref)).
+	</element>
+	<element>
+		:- modeb(*,student(-student,-phase,-years,+ref)).
+	</element>
+	
+	<element>
+		:- modeb(*,professor(+professor,-faculty,-ref)).
+	</element>
+	<element>
+		:- modeb(*,professor(-professor,-faculty,+ref)).
+	</element>
+	
+	<element>
+		:- modeb(*,course(+course,-professor,-student,-date,-level)).
+	</element>
+	<element>
+		:- modeb(*,course(-course,+professor,-student,-date,-level)).
+	</element>
+	<element>
+		:- modeb(*,course(-course,-professor,+student,-date,-level)).
+	</element>
+ </mode>
+ <inlusiondep>
+
+ </inlusiondep>
+</start>

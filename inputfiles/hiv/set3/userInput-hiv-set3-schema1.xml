@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<start>
+	<iteration>
+ 		2
+	</iteration>
+	<recall>
+ 		10
+	</recall>
+	<maxterms>
+ 		100000
+	</maxterms>
+	<server>
+ 		localhost
+	</server>
+	<temparoryTableName>
+ 		temp
+	</temparoryTableName>
+	<SPNameTemplate>
+ 		HIVProcedure
+	</SPNameTemplate>
+	 <mode> 
+		<element>
+			:- modeh(*,hiv_active(+compound)).
+		</element>
+		<element>
+			:- modeb(*,compounds(+compound,-atom)).
+		</element>
+		</element>
+			:- modeb(*,element_C(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_O(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_N(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_H(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_S(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_F(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Cl(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_P(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Br(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_I(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Na(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Se(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Sn(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Cu(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Si(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_As(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_B(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Ge(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Ac(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Mg(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Rh(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Fe(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Ru(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Co(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Bi(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Pd(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Ni(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Sb(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Pt(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Ir(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Re(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Mn(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_W(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Mo(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Gd(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Tl(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Zn(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Hg(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Ho(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Pb(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Cr(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Ag(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Ga(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Au(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Li(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_K(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Cs(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Nb(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_V(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Nd(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Al(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Zr(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Te(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Ti(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Cd(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Yb(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Ca(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_U(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Er(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Pr(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Sm(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Os(+atom)).
+		</element>
+		<element>
+			:- modeb(*,element_Tb(+atom)).
+		</element>
+		<element>
+			:- modeb(*,p2_0(+atom,#flag)).
+		</element>
+		<element>
+			:- modeb(*,p2_1(+atom,#flag)).
+		</element>
+		<element>
+			:- modeb(*,p2_2(+atom,#flag)).
+		</element>
+		<element>
+			:- modeb(*,p2_3(+atom,#flag)).
+		</element>
+		<element>
+			:- modeb(*,p2_4(+atom,#flag)).
+		</element>
+		<element>
+			:- modeb(*,p2_5(+atom,#flag)).
+		</element>
+		<element>
+			:- modeb(*,p2_6(+atom,#flag)).
+		</element>
+		<element>
+			:- modeb(*,p2_7(+atom,#flag)).
+		</element>
+		<element>
+			:- modeb(*,p2_8(+atom,#flag)).
+		</element>
+		<element>
+			:- modeb(*,p2_9(+atom,#flag)).
+		</element>
+		<element>
+			:- modeb(*,p2_10(+atom,#flag)).
+		</element>
+		<element>
+			:- modeb(*,p3(+atom,#flag)).
+		</element>
+		<element>
+			:- modeb(*,bonds(+bond,-atom,-atom)).
+		</element>
+		<element>
+			:- modeb(*,bonds(-bond,+atom,-atom)).
+		</element>
+		<element>
+			:- modeb(*,bonds(-bond,-atom,+atom)).
+		</element>
+		<element>
+			:- modeb(*,bondtype_1(+bond,#flag)).
+		</element>
+		<element>
+			:- modeb(*,bondtype_2(+bond,#flag)).
+		</element>
+		<element>
+			:- modeb(*,bondtype_3(+bond,#flag)).
+		</element>
+	</mode>
+	<inlusiondep>
+	
+		<element>
+			:- ind(bonds:0,bondtype_1:0).
+		</element>
+		<element>
+			:- ind(bondtype_1:0,bonds:0).
+		</element>
+		<element>
+			:- ind(bonds:0,bondtype_2:0).
+		</element>
+		<element>
+			:- ind(bondtype_2:0,bonds:0).
+		</element>
+		<element>
+			:- ind(bonds:0,bondtype_3:0).
+		</element>
+		<element>
+			:- ind(bondtype_3:0,bonds:0).
+		</element>
+		
+		
+		<element>
+			:- ind(p2_0:0,p2_1:0).
+		</element>
+		<element>
+			:- ind(p2_1:0,p2_0:0).
+		</element>
+		<element>
+			:- ind(p2_0:0,p2_2:0).
+		</element>
+		<element>
+			:- ind(p2_2:0,p2_0:0).
+		</element>
+		<element>
+			:- ind(p2_0:0,p2_3:0).
+		</element>
+		<element>
+			:- ind(p2_3:0,p2_0:0).
+		</element>
+		<element>
+			:- ind(p2_0:0,p2_4:0).
+		</element>
+		<element>
+			:- ind(p2_4:0,p2_0:0).
+		</element>
+		<element>
+			:- ind(p2_0:0,p2_5:0).
+		</element>
+		<element>
+			:- ind(p2_5:0,p2_0:0).
+		</element>
+		<element>
+			:- ind(p2_0:0,p2_6:0).
+		</element>
+		<element>
+			:- ind(p2_6:0,p2_0:0).
+		</element>
+		<element>
+			:- ind(p2_0:0,p2_7:0).
+		</element>
+		<element>
+			:- ind(p2_7:0,p2_0:0).
+		</element>
+		<element>
+			:- ind(p2_0:0,p2_8:0).
+		</element>
+		<element>
+			:- ind(p2_8:0,p2_0:0).
+		</element>
+		<element>
+			:- ind(p2_0:0,p2_9:0).
+		</element>
+		<element>
+			:- ind(p2_9:0,p2_0:0).
+		</element>
+		<element>
+			:- ind(p2_0:0,p2_10:0).
+		</element>
+		<element>
+			:- ind(p2_10:0,p2_0:0).
+		</element>
+		<element>
+			:- ind(p2_0:0,p3:0).
+		</element>
+		<element>
+			:- ind(p3:0,p2_0:0).
+		</element>
+		
+
+	</inlusiondep>
+</start>

@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<start>
+	<iteration>
+ 		2
+	</iteration>
+	<recall>
+ 		20
+	</recall>
+	<maxterms>
+ 		5
+	</maxterms>
+	<server>
+ 		localhost
+	</server>
+	<temparoryTableName>
+ 		temp
+	</temparoryTableName>
+	<SPNameTemplate>
+ 		UWCSEProcedure
+	</SPNameTemplate>
+	<mode> 
+		<element>
+			:- modeh(*,advisedby(+student,+professor)).
+		</element>
+		<element>
+			:- modeb(*,student(+student)).
+		</element>
+		<element>
+			:- modeb(*,inphase(+student,#phase)).
+		</element>
+		<element>
+			:- modeb(*,inphase(+student,-phase)).
+		</element>
+		<element>
+			:- modeb(*,inphase(-student,+phase)).
+		</element>
+		<element>
+			:- modeb(*,yearsinprogram(+student,#years)).
+		</element>
+		<element>
+			:- modeb(*,yearsinprogram(+student,-years)).
+		</element>
+		<element>
+			:- modeb(*,yearsinprogram(-student,+years)).
+		</element>
+		
+		<element>
+			:- modeb(*,professor(+professor)).
+		</element>
+		<element>
+			:- modeb(*,hasposition(+professor,#faculty)).
+		</element>
+		<element>
+			:- modeb(*,hasposition(+professor,-faculty)).
+		</element>
+		<element>
+			:- modeb(*,hasposition(-professor,+faculty)).
+		</element>
+		
+		<element>
+			:- modeb(*,courselevel(+course,#level)).
+		</element>
+		<element>
+			:- modeb(*,courselevel(+course,-level)).
+		</element>
+		<element>
+			:- modeb(*,courselevel(-course,+level)).
+		</element>
+		<element>
+			:- modeb(*,taughtby(+course,-professor,-date)).
+		</element>
+		<element>
+			:- modeb(*,taughtby(-course,+professor,-date)).
+		</element>
+		<element>
+			:- modeb(*,taughtby(-course,-professor,+date)).
+		</element>
+		<element>
+			:- modeb(*,ta(+course,-student,-date)).
+		</element>
+		<element>
+			:- modeb(*,ta(-course,+student,-date)).
+		</element>
+		<element>
+			:- modeb(*,ta(-course,-student,+date)).
+		</element>
+		
+		<element>
+			:- modeb(*,publication(+ref,-student)).
+		</element>
+		<element>
+			:- modeb(*,publication(-ref,+student)).
+		</element>
+		<element>
+			:- modeb(*,publication(+ref,-professor)).
+		</element>
+		<element>
+			:- modeb(*,publication(-ref,+professor)).
+		</element>
+	
+	</mode>
+	<inlusiondep>
+ 	
+		<element>
+			:- ind(student:0,inphase:0).
+		</element>
+		<element>
+			:- ind(inphase:0,student:0).
+		</element>
+		<element>
+			:- ind(student:0,yearsinprogram:0).
+		</element>
+		<element>
+			:- ind(yearsinprogram:0,student:0).
+		</element>
+	
+		<element>
+			:- ind(professor:0,hasposition:0).
+		</element>
+		<element>
+			:- ind(hasposition:0,professor:0).
+		</element>
+	
+		<element>
+			:- ind(courselevel:0,taughtby:0).
+		</element>
+		<element>
+			:- ind(taughtby:0,courselevel:0).
+		</element>
+ 	
+	</inlusiondep>
+</start>

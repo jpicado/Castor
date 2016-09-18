@@ -1,0 +1,186 @@
+<start>
+	<iteration>
+		2
+	</iteration>
+	<recall>
+ 		20
+ 	</recall>
+	<server>
+		localhost
+	</server>
+	<temparoryTableName>
+		temp
+	</temparoryTableName>
+	<SPNameTemplate>
+		IMDbProcedures
+	</SPNameTemplate>
+	<mode>
+		<element>
+			:- modeh(*,bigopening(+movieid)).
+		</element>
+		<element>
+			:- modeb(*,actors_gender(+actorid,-name)).
+		</element>
+		<element>
+			:- modeb(*,actors_gender(-actorid,+name)).
+		</element>
+		<element>
+			:- modeb(*,actors(+actid,-name,-sex)).
+		</element>
+		<element>
+			:- modeb(*,actors(-actid,+name,-sex)).
+		</element>
+		<element>
+			:- modeb(*,actors(-actid,-name,+sex)).
+		</element>
+		<element>
+			:- modeb(*,certificates(+movieid,-country,-certification)).
+		</element>
+		<element>
+			:- modeb(*,certificates(-movieid,+country,-certification)).
+		</element>
+		<element>
+			:- modeb(*,certificates(-movieid,-country,+certification)).
+		</element>
+		<element>
+			:- modeb(*,colorinfo(+movieid,-color)).
+		</element>
+		<element>
+			:- modeb(*,colorinfo(-movieid,+color)).
+		</element>
+		<element>
+			:- modeb(*,countries(+movieid,-country)).
+		</element>
+		<element>
+			:- modeb(*,countries(-movieid,+country)).
+		</element>
+		<element>
+			:- modeb(*,directors(+directorid,-name)).
+		</element>
+		<element>
+			:- modeb(*,directors(-directorid,+name)).
+		</element>
+		<element>
+			:- modeb(*,genres(+movieid,-genre)).
+		</element>
+		<element>
+			:- modeb(*,genres(-movieid,+genre)).
+		</element>
+		<element>
+			:- modeb(*,keywords(+movieid,-keyword)).
+		</element>
+		<element>
+			:- modeb(*,keywords(-movieid,+keyword)).
+		</element>
+		<element>
+			:- modeb(*,movies(+movieid,-title,-year)).
+		</element>
+		<element>
+			:- modeb(*,movies(-movieid,+title,-year)).
+		</element>
+		<element>
+			:- modeb(*,movies(-movieid,-title,+year)).
+		</element>
+		<element>
+			:- modeb(*,movies2actors(+movieid,-actorid,-as_character)).
+		</element>
+		<element>
+			:- modeb(*,movies2actors(-movieid,+actorid,-as_character)).
+		</element>
+		<element>
+			:- modeb(*,movies2actors(-movieid,-actorid,+as_character)).
+		</element>
+		<element>
+			:- modeb(*,movies2directors(+movieid,-directorid)).
+		</element>
+		<element>
+			:- modeb(*,movies2directors(-movieid,+directorid)).
+		</element>
+		<element>
+			:- modeb(*,movies2producers(+movieid,-producerid)).
+		</element>
+		<element>
+			:- modeb(*,movies2producers(-movieid,+producerid)).
+		</element>
+		<element>
+			:- modeb(*,prodcompanies(+movieid,-name)).
+		</element>
+		<element>
+			:- modeb(*,prodcompanies(-movieid,+name)).
+		</element>
+		<element>
+			:- modeb(*,ratings(+movieid,-rank,-votes)).
+		</element>
+		<element>
+			:- modeb(*,ratings(-movieid,+rank,-votes)).
+		</element>
+		<element>
+			:- modeb(*,ratings(-movieid,-rank,+votes)).
+		</element>
+		<element>
+			:- modeb(*,runningtimes(+movieid,-time)).
+		</element>
+		<element>
+			:- modeb(*,runningtimes(-movieid,+time)).
+		</element>
+		<element>
+			:- modeb(*,writers(+writerid,-name)).
+		</element>
+		<element>
+			:- modeb(*,writers(-writerid,+name)).
+		</element>
+</mode>
+<determination>
+		<element>
+			:- determination(bigopening/1,actors_gender/2).
+		</element>
+		<element>
+			:- determination(bigopening/1,actors/3).
+		</element>
+		<element>
+			:- determination(bigopening/1,certificates/3).
+		</element>
+		<element>
+			:- determination(bigopening/1,colorinfo/2).
+		</element>
+		<element>
+			:- determination(bigopening/1,countries/2).
+		</element>
+		<element>
+			:- determination(bigopening/1,directors/2).
+		</element>
+		<element>
+			:- determination(bigopening/1,genres/2).
+		</element>
+		<element>
+			:- determination(bigopening/1,keywords/2).
+		</element>
+		<element>
+			:- determination(bigopening/1,movies/3).
+		</element>
+		<element>
+			:- determination(bigopening/1,movies2actors/3).
+		</element>
+		<element>
+			:- determination(bigopening/1,movies2directors/2).
+		</element>
+		<element>
+			:- determination(bigopening/1,movies2producers/2).
+		</element>
+		<element>
+			:- determination(bigopening/1,prodcompanies/2).
+		</element>
+		<element>
+			:- determination(bigopening/1,producers/2).
+		</element>
+		<element>
+			:- determination(bigopening/1,ratings/3).
+		</element>
+		<element>
+			:- determination(bigopening/1,runningtimes/2).
+		</element>
+		<element>
+			:- determination(bigopening/1,writers/2).
+		</element>
+	</determination>
+</start>
