@@ -11,6 +11,7 @@ import org.kohsuke.args4j.Option;
 
 import castor.algorithms.CastorLearner;
 import castor.algorithms.bottomclause.BottomClauseUtil;
+import castor.algorithms.coverageengines.CoverageByDBJoiningAllSingleExample;
 import castor.algorithms.coverageengines.CoverageBySubsumptionParallel;
 import castor.algorithms.coverageengines.CoverageEngine;
 import castor.db.DBCommons;
@@ -112,7 +113,8 @@ public class CastorCmd {
             	throw new IllegalArgumentException("Incorrect reduction method. Options: precision (default), consistency, none.");
             }
         } catch (CmdLineException e) {
-			e.printStackTrace();
+//			e.printStackTrace();
+			logger.error(e.getMessage());
 			return;
 		} catch (Exception e) {
 			logger.error(e.getMessage());
@@ -166,6 +168,7 @@ public class CastorCmd {
             
             boolean createFullCoverageEngine = !saturation && !groundSaturation;
             CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.spName, this.iterations, this.recall, this.maxterms, this.threads, createFullCoverageEngine);
+//            CoverageEngine coverageEngine = new CoverageByDBJoiningAllSingleExample(genericDAO, posTrain, negTrain);
             TimeKeeper.creatingCoverageTime = tw.time();
             
             CastorLearner castor = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, this.minPrecision, this.minRecall, this.minimizeBottomClause);

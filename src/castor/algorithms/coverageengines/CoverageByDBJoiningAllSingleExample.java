@@ -12,12 +12,12 @@ import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
 
-public class CoverageByDBExampleEntailment implements CoverageEngine {
+public class CoverageByDBJoiningAllSingleExample implements CoverageEngine {
 
 	private List<Tuple> allPosExamples;
 	private List<Tuple> allNegExamples;
 	
-	public CoverageByDBExampleEntailment(GenericDAO genericDAO, Relation posExamplesRelation, Relation negExamplesRelation) {
+	public CoverageByDBJoiningAllSingleExample(GenericDAO genericDAO, Relation posExamplesRelation, Relation negExamplesRelation) {
 		this.initialize(genericDAO, posExamplesRelation, negExamplesRelation);
 	}
 	
@@ -148,13 +148,5 @@ public class CoverageByDBExampleEntailment implements CoverageEngine {
 			}
 		}
 		return coveredExamples;
-	}
-
-	@Override
-	public boolean[] coveredExamplesFromList(GenericDAO genericDAO, Schema schema,
-			ClauseInfo clauseInfo, List<Tuple> examples,
-			Relation examplesRelation, boolean isPositiveRelation) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 }

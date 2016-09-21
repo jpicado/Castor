@@ -267,65 +267,6 @@ public class CoverageBySubsumptionParallelUsingMyMatching implements CoverageEng
 	}
 	
 	@Override
-	public boolean[] coveredExamplesFromList(GenericDAO genericDAO, Schema schema, ClauseInfo clauseInfo, List<Tuple> examples, Relation examplesRelation, boolean isPositiveRelation) {
-		// Get information from clause info
-		List<Tuple> allExamples;
-		boolean[] coveredExamples;
-		boolean[] evaluatedExamples;
-		if (isPositiveRelation) {
-			allExamples = this.allPosExamples;
-			coveredExamples = clauseInfo.getPosExamplesCovered();
-			evaluatedExamples = clauseInfo.getPosExamplesEvaluated();
-		} else {
-			allExamples = this.allNegExamples;
-			coveredExamples = clauseInfo.getNegExamplesCovered();
-			evaluatedExamples = clauseInfo.getNegExamplesEvaluated();
-		}
-		
-		// Create array of undecided examples
-		// If example has been covered, it is not undecided
-		// Otherwise; if it's in the input list of examples, it is undecided
-		boolean[] undecided = new boolean[allExamples.size()];
-		for (int i = 0; i < undecided.length; i++) {
-			// Only evaluate examples specified in input list of examples
-			boolean evaluateExample = false;
-			Tuple example = allExamples.get(i);
-			if (examples.contains(example)) {
-				evaluateExample = true;
-			}
-			
-			// Evaluate only if example has not been covered and is in input list
-			undecided[i] = false;
-			if (!evaluatedExamples[i] && evaluateExample) {
-				undecided[i] = true;
-			}
-		}
-		
-		// Evaluate coverage of clause
-		int[] subsumptionResult = this.clauseCoverage(clauseInfo.getClause(), undecided, isPositiveRelation);
-		for (int i = 0; i < subsumptionResult.length; i++) {
-			// If it was covered before or subsumption result indicates that it is now covered, count
-			if (coveredExamples[i] || subsumptionResult[i] == MyMatching.YES) {
-				coveredExamples[i] = true;
-			}
-			
-			// Update evaluated examples
-			if (undecided[i]) {
-				evaluatedExamples[i] = true;
-			}
-		}
-		// Update undecided examples in clauseInfo
-		if (isPositiveRelation) {
-			clauseInfo.setPosExamplesCovered(coveredExamples);
-			clauseInfo.setPosExamplesEvaluated(evaluatedExamples);
-		} else {
-			clauseInfo.setNegExamplesCovered(coveredExamples);
-			clauseInfo.setNegExamplesEvaluated(evaluatedExamples);
-		}
-		return coveredExamples;
-	}
-	
-	@Override
 	public int countCoveredExamplesFromRelation(GenericDAO genericDAO, Schema schema, ClauseInfo clauseInfo, Relation examplesRelation, boolean isPositiveRelation) {
 		int covered = 0;
 		

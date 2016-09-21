@@ -144,12 +144,4 @@ public class CoverageByDBJoiningAll implements CoverageEngine {
 		}
 		return coveredExamples;
 	}
-
-	@Override
-	public boolean[] coveredExamplesFromList(GenericDAO genericDAO, Schema schema,
-			ClauseInfo clauseInfo, List<Tuple> examples,
-			Relation examplesRelation, boolean isPositiveRelation) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }

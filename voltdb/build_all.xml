@@ -5,12 +5,10 @@
 	</description>
 	
 	<property name="ddlFileName" value=""/>
-	<property name="ddlLocation" location="./ddl"/>
+	<property name="ddlLocation" location=""/>
 	<property name="jarFileName" value="catalog.jar"/>
 	<!--<property name="VoltHome" value="/Users/jose/voltdb"/>-->
 	<!--<property name="VoltLicense" value="${env.VOLTDB_HOME}/voltdb/license.xml"/>-->
-	<property name="sourceCodePath" value="../ProGolem-In-DB-StoredProcedures/src"/>
-	<property name="compileOutputDir" value="../ProGolem-In-DB-StoredProcedures/bin"/>
 	<property name="voltClasspath" value=".:${env.VOLTDB_HOME}/lib/*:${env.VOLTDB_HOME}/voltdb/*"/>
 	
 	<property environment="env"/>

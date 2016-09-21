@@ -1,0 +1,8 @@
+.DS_Store
+/bin/
+/log/
+/statement-plans/
+/voltdbroot/
+catalog-report.html
+catalog.jar
+/src/auto/

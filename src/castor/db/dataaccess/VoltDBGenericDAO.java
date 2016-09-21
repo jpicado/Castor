@@ -6,7 +6,6 @@ import java.util.List;
 
 import org.voltdb.VoltTable;
 import org.voltdb.client.ClientResponse;
-import org.voltdb.client.NoConnectionsException;
 import org.voltdb.client.ProcCallException;
 
 import castor.language.Tuple;
