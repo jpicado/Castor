@@ -1,11 +1,10 @@
-package castor.inputdecoders;
+package castor.settings;
 
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import castor.language.DataModel;
 import castor.language.InclusionDependency;
 import castor.language.Mode;
 import castor.language.Relation;
@@ -14,12 +13,61 @@ import castor.language.Schema;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-public class JsonDecoder {
+public class JsonSettingsReader {
 
 	/*
-	 * Convert JSON object for data model and convert to object
+	 * Read JSON object for parameters and convert to object
 	 */
-	public static DataModel decodeDataModel(JsonObject dataModelJson) throws Exception {
+	public static Parameters readParameters(JsonObject parametersJson) {
+		Parameters parameters = new Parameters();
+			
+		if (parametersJson.get("createStoredProcedure") != null) {
+			parameters.setCreateStoredProcedure(parametersJson.get("createStoredProcedure").getAsBoolean());
+		}
+		if (parametersJson.get("minprec") != null) {
+			parameters.setMinPrecision(parametersJson.get("minprec").getAsDouble());
+		}
+		if (parametersJson.get("minrec") != null) {
+			parameters.setMinRecall(parametersJson.get("minrec").getAsDouble());
+		}
+		if (parametersJson.get("sample") != null) {
+			parameters.setSample(parametersJson.get("sample").getAsInt());
+		}
+		if (parametersJson.get("beam") != null) {
+			parameters.setBeam(parametersJson.get("beam").getAsInt());
+		}
+		if (parametersJson.get("threads") != null) {
+			parameters.setThreads(parametersJson.get("threads").getAsInt());
+		}
+		if (parametersJson.get("minimizeBottomClause") != null) {
+			parameters.setMinimizeBottomClause(parametersJson.get("minimizeBottomClause").getAsBoolean());
+		}
+		if (parametersJson.get("reductionMethod") != null) {
+			parameters.setReductionMethod(parametersJson.get("reductionMethod").getAsString());
+		}
+		if (parametersJson.get("iterations") != null) {
+			parameters.setIterations(parametersJson.get("iterations").getAsInt());
+		}
+		if (parametersJson.get("recall") != null) {
+			parameters.setRecall(parametersJson.get("recall").getAsInt());
+		}
+		if (parametersJson.get("maxterms") != null) {
+			parameters.setMaxterms(parametersJson.get("maxterms").getAsInt());
+		}
+		if (parametersJson.get("useInds") != null) {
+			parameters.setUseInds(parametersJson.get("useInds").getAsBoolean());
+		}
+		if (parametersJson.get("dbURL") != null) {
+			parameters.setDbURL(parametersJson.get("dbURL").getAsString());
+		}
+		
+		return parameters;
+	}
+	
+	/*
+	 * Read JSON object for data model and convert to object
+	 */
+	public static DataModel readDataModel(JsonObject dataModelJson) throws Exception {
 		String target;
 		Mode modeH;
 		List<Mode> modesB;
@@ -63,9 +111,9 @@ public class JsonDecoder {
 	}
 	
 	/*
-	 * Convert JSON object for schema and convert to object
+	 * Read JSON object for schema and convert to object
 	 */
-	public static Schema decodeSchema(JsonObject schemaJson) throws Exception {
+	public static Schema readSchema(JsonObject schemaJson) throws Exception {
 		String name = "";
 		Map<String, Relation> relations;
 		Map<String, List<InclusionDependency>> inds;

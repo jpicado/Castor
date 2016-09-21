@@ -63,9 +63,11 @@ public class Reducer {
 				if (measure.equals(Reducer.MEASURE.CONSISTENCY)) {
 					// Find first literal such that the negative coverage of the clause is equal to negative coverage of original clause
 					firstLiteralPosition = Reducer.findFirstLiteralWithSameRelationCoverage(genericDAO, coverageEngine, schema, reducedClause, negExamplesRelation, originallyCovered);
-				} else {
+				} else if (measure.equals(CastorReducer.MEASURE.PRECISION)) {
 					// Search literal that provides best precision
 					firstLiteralPosition = Reducer.findLiteralWithBestScore(genericDAO, coverageEngine, schema, reducedClause, remainingPosExamples, posExamplesRelation, negExamplesRelation, evaluator, EvaluationFunctions.FUNCTION.PRECISION);
+				} else {
+					throw new IllegalArgumentException("Unknown reduction method.");
 				}
 				Literal firstLiteral = reducedClause.getNegativeLiterals().get(firstLiteralPosition);
 

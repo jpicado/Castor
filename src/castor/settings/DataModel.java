@@ -1,6 +1,8 @@
-package castor.language;
+package castor.settings;
 
 import java.util.List;
+
+import castor.language.Mode;
 
 public class DataModel {
 

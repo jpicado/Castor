@@ -13,11 +13,12 @@ import castor.db.dataaccess.BottomClauseConstructionDAO;
 import castor.db.dataaccess.DAOFactory;
 import castor.db.dataaccess.GenericDAO;
 import castor.hypotheses.ClauseInfo;
-import castor.inputdecoders.JsonDecoder;
-import castor.language.DataModel;
 import castor.language.Relation;
 import castor.language.Schema;
 import castor.mappings.MyClauseToClauseAsString;
+import castor.settings.DataModel;
+import castor.settings.JsonSettingsReader;
+import castor.settings.Parameters;
 import castor.utils.FileUtils;
 import castor.utils.TimeKeeper;
 import castor.utils.TimeWatch;
@@ -28,20 +29,7 @@ import com.google.gson.JsonObject;
 
 public class CastorClient {
 
-	private boolean createStoredProcedure = true;
-	private double minPrecision = 0.5;
-	private double minRecall = 0;
-	private int sample = 1;
-	private int beam = 1;
-	private int threads = 1;
-	private boolean minimizeBottomClause = false;
-	private String reductionMethod = CastorLearner.NEGATIVE_REDUCTION_PRECISION;
-	private int iterations = 2;
-	private int recall = 10;
-	private int maxterms = 1000;
-	private boolean applyInds = true;
-	private String dbURL = "localhost";
-	
+	private Parameters parameters;
 	private Schema schema;
 	private DataModel dataModel;
 	
@@ -135,10 +123,15 @@ public class CastorClient {
 		learningResult.setAlgorithm("Castor");
 		
 		// Get parameters from JSON object
-		this.decodeParametersFromJson(parametersJson);
+		success = this.readParametersFromJson(parametersJson);
+    	if (!success) {
+    		learningResult.setSuccess(false);
+    		learningResult.setErrorMessage("Error reading parameters");
+    		return learningResult;
+    	}
 		
 		// Get schema from JSON object
-		success = this.decodeSchemaFromJson(schemaJson);
+		success = this.readSchemaFromJson(schemaJson);
     	if (!success) {
     		learningResult.setSuccess(false);
     		learningResult.setErrorMessage("Error reading schema");
@@ -147,7 +140,7 @@ public class CastorClient {
     	learningResult.setSchema(schema.getName());
     	
 		// Get data model from JSON object
-    	success = this.decodeDataModelFromJson(dataModelJson);
+    	success = this.readDataModelFromJson(dataModelJson);
     	if (!success) {
     		learningResult.setSuccess(false);
     		learningResult.setErrorMessage("Error reading data model");
@@ -163,10 +156,10 @@ public class CastorClient {
         try {
         	// Create data access objects and set URL of data
         	try {
-        		daoFactory.initConnection(this.dbURL);
+        		daoFactory.initConnection(this.parameters.getDbURL());
         	} catch(RuntimeException e) {
         		learningResult.setSuccess(false);
-        		learningResult.setErrorMessage("Unable to connect to server with URL: " + this.dbURL + "\n" + e.getMessage());
+        		learningResult.setErrorMessage("Unable to connect to server with URL: " + this.parameters.getDbURL() + "\n" + e.getMessage());
         		logger.error(learningResult.getErrorMessage());
         		return learningResult;
         	}
@@ -174,7 +167,7 @@ public class CastorClient {
             BottomClauseConstructionDAO bottomClauseConstructionDAO = daoFactory.getBottomClauseConstructionDAO();
             
         	// Generate and compile stored procedures
-        	if (this.createStoredProcedure) {
+        	if (this.parameters.isCreateStoredProcedure()) {
 	        	success = this.compileStoredProcedures();
 	        	if (!success) {
 	        		learningResult.setSuccess(false);
@@ -183,26 +176,25 @@ public class CastorClient {
 	        	}
         	}
             
-	        // General
+	        // Get examples relations
 	        Relation posTrain = this.schema.getRelations().get(postrainTableName);
 	      	Relation negTrain = this.schema.getRelations().get(negtrainTableName);
 	      	Relation posTest = this.schema.getRelations().get(postestTableName);
 	        Relation negTest = this.schema.getRelations().get(negtestTableName);
 	        
-            // Create CoverageEngine and ProGolem object
             tw.reset();
             logger.info("Creating coverage engine...");
-            CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.dataModel.getSpName(), this.iterations, this.recall, this.maxterms, this.threads, true);
+            CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true);
          // Use following line for demo of Castor using HIV-Small
-//          CoverageEngine coverageEngine = new CoverageBySubsumptionOptimizedParallel1_HIVSmallHardcoded(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.dataModel.getSpName(), this.iterations, this.recall, this.maxterms, this.threads, true, posExamplesFlags, negExamplesFlags);
+//          CoverageEngine coverageEngine = new CoverageBySubsumptionOptimizedParallel1_HIVSmallHardcoded(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true, posExamplesFlags, negExamplesFlags);
             TimeKeeper.creatingCoverageTime = tw.time();
             
-            CastorLearner learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, this.minPrecision, this.minRecall, this.minimizeBottomClause);
+            CastorLearner learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, this.parameters.getMinPrecision(), this.parameters.getMinRecall(), this.parameters.isMinimizeBottomClause());
 //            ProGolem learner = new ProGolem(genericDAO, coverageEngine, this.minPrecision, this.minRecall, this.minimizeBottomClause);
             
             // Learn
             logger.info("Learning...");
-            List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName(), this.iterations, this.recall, this.maxterms, this.sample, this.beam, this.reductionMethod);
+            List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getMaxterms(), this.parameters.getSample(), this.parameters.getBeam(), this.parameters.getReductionMethod());
             TimeKeeper.totalTime += tw.time();
             
             logger.info("Total time: " + TimeKeeper.totalTime);
@@ -217,7 +209,7 @@ public class CastorClient {
             
             // Evaluate
             logger.info("Evaluating on testing data...");
-            CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTest, negTest, this.dataModel.getSpName(), this.iterations, this.recall, this.maxterms, this.threads, true);
+            CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTest, negTest, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true);
             // Use following line for demo of Castor using HIV-Small
 //            CoverageEngine testCoverageEngine = new CoverageBySubsumptionOptimizedParallel1_HIVSmallHardcoded(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.dataModel.getSpName(), this.iterations, this.recall, this.maxterms, this.threads, true, posExamplesFlags, negExamplesFlags);
             EvaluationResult testEvaluationResult = learner.evaluate(testCoverageEngine, this.schema, definition, posTest, negTest);
@@ -256,59 +248,30 @@ public class CastorClient {
         return learningResult;
 	}
 	
-	
-	
-	private void decodeParametersFromJson(JsonObject parametersJson) {
-		logger.info("Reading parameters...");
-		if (parametersJson.get("createStoredProcedure") != null) {
-			createStoredProcedure = parametersJson.get("createStoredProcedure").getAsBoolean();
+	/*
+	 * Read data model from JSON object
+	 */
+	private boolean readParametersFromJson(JsonObject parametersJson) {
+		boolean success;
+		try {
+			logger.info("Reading parameters...");
+			parameters = JsonSettingsReader.readParameters(parametersJson);
+			success = true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			success = false;
 		}
-		if (parametersJson.get("minprec") != null) {
-			minPrecision = parametersJson.get("minprec").getAsDouble();
-		}
-		if (parametersJson.get("minrec") != null) {
-			minRecall = parametersJson.get("minrec").getAsDouble();
-		}
-		if (parametersJson.get("sample") != null) {
-			sample = parametersJson.get("sample").getAsInt();
-		}
-		if (parametersJson.get("beam") != null) {
-			beam = parametersJson.get("beam").getAsInt();
-		}
-		if (parametersJson.get("threads") != null) {
-			threads = parametersJson.get("threads").getAsInt();
-		}
-		if (parametersJson.get("minimizeBottomClause") != null) {
-			minimizeBottomClause = parametersJson.get("minimizeBottomClause").getAsBoolean();
-		}
-		if (parametersJson.get("reductionMethod") != null) {
-			reductionMethod = parametersJson.get("reductionMethod").getAsString();
-		}
-		if (parametersJson.get("iterations") != null) {
-			iterations = parametersJson.get("iterations").getAsInt();
-		}
-		if (parametersJson.get("recall") != null) {
-			recall = parametersJson.get("recall").getAsInt();
-		}
-		if (parametersJson.get("maxterms") != null) {
-			maxterms = parametersJson.get("maxterms").getAsInt();
-		}
-		if (parametersJson.get("useInds") != null) {
-			applyInds = parametersJson.get("useInds").getAsBoolean();
-		}
-		if (parametersJson.get("dbURL") != null) {
-			dbURL = parametersJson.get("dbURL").getAsString();
-		}
+		return success;
 	}
 	
 	/*
 	 * Read data model from JSON object
 	 */
-	private boolean decodeDataModelFromJson(JsonObject dataModelJson) {
+	private boolean readDataModelFromJson(JsonObject dataModelJson) {
 		boolean success;
 		try {
 			logger.info("Reading data model...");
-			dataModel = JsonDecoder.decodeDataModel(dataModelJson);
+			dataModel = JsonSettingsReader.readDataModel(dataModelJson);
 			success = true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -320,11 +283,11 @@ public class CastorClient {
 	/*
 	 * Read schema from JSON object
 	 */
-	private boolean decodeSchemaFromJson(JsonObject schemaJson) {
+	private boolean readSchemaFromJson(JsonObject schemaJson) {
 		boolean success;
 		try {
 			logger.info("Reading schema...");
-			schema = JsonDecoder.decodeSchema(schemaJson);
+			schema = JsonSettingsReader.readSchema(schemaJson);
 			success = true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -340,7 +303,7 @@ public class CastorClient {
 		boolean success;
 		try {
 			StoredProcedureGeneratorSaturationInsideSP spGenerator = new StoredProcedureGeneratorSaturationInsideSP();
-			success = spGenerator.generateAndCompileStoredProcedures("sp", this.dataModel.getSpName(), this.iterations, this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), this.applyInds);
+			success = spGenerator.generateAndCompileStoredProcedures("sp", this.dataModel.getSpName(), this.parameters.getIterations(), this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), this.parameters.isUseInds());
 		} catch (Exception e) {
 			e.printStackTrace();
 			success = false;

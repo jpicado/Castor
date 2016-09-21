@@ -64,9 +64,11 @@ public class CastorReducer {
 				if (measure.equals(CastorReducer.MEASURE.CONSISTENCY)) {
 					// Find first literal such that the negative coverage of the clause is equal to negative coverage of original clause
 					bestChainPosition = CastorReducer.findFirstChainWithSameRelationCoverage(genericDAO, coverageEngine, schema, clause, negExamplesRelation, originallyCovered, allChains);
-				} else {
+				} else if (measure.equals(CastorReducer.MEASURE.PRECISION)) {
 					// Search chain that provides best score
 					bestChainPosition = CastorReducer.findChainWithBestScore(genericDAO, coverageEngine, schema, clause, remainingPosExamples, posExamplesRelation, negExamplesRelation, allChains, evaluator, EvaluationFunctions.FUNCTION.PRECISION);
+				} else {
+					throw new IllegalArgumentException("Unknown reduction method.");
 				}
 				
 				// Get head connecting chains for literal in best chain

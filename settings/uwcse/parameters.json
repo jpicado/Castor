@@ -1,0 +1,8 @@
+{
+	"createStoredProcedure": false,
+	"minprec": 0.67,
+	"minrec": 0.33,
+	"maxterms": 5,
+	"sample": 20,
+	"beam": 3
+}
