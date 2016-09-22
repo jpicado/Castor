@@ -11,8 +11,11 @@
 	<property name="dist.dir" location="dist" />
 	<property name="dist.lib.dir" location="dist/lib" />
 	<property name="lib.dir" value="lib" />
-	<property name="res.dir" value="src/resources" />
+	<property name="res.dir" value="res/" />
+	<property name="dist.res.dir" value="dist/res" />
 	<property name="main-class" value="castor.clients.CastorCmd" />	
+	<property name="lo4j-properties" value="log4j.properties" />
+	<property name="dist.lo4j-properties" value="dist/log4j.properties" />
 	
 	<target name="init">
 		<mkdir dir="${build.dir}" />
@@ -50,14 +53,8 @@
 		</copy>
 	</target>
 	
-	<target name="copy-resources">
-		<copy todir="${dist.lib.dir}">
-			<fileset dir="${res.dir}" />
-		</copy>
-	</target>
-	
 	<!-- jar it, and declares the ext libraries in manifest.mf file -->
-	<target name="jar" depends="compile, copy-dependencies, copy-resources" description="package, output to JAR">
+	<target name="jar" depends="compile, copy-dependencies" description="package, output to JAR">
 	
 		<echo message="classpath.name : ${classpath.name} " />
 	
@@ -67,8 +64,10 @@
 		<jar jarfile="${dist.dir}/${projectName}.jar" basedir="${build.dir}">
 			<manifest>
 				<attribute name="Main-Class" value="${main-class}" />
-				<attribute name="Class-Path" value="${classpath.name}" />
+				<attribute name="Class-Path" value=". ${classpath.name}" />
 			</manifest>
+			<fileset dir="." includes="${res.dir}/*.stg" />
+			<fileset dir="." includes="*.properties" />
 		</jar>
 	</target>
 	

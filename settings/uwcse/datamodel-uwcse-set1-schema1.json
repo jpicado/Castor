@@ -1,5 +1,5 @@
 {
-	"target": "advisedby_ai",
+	"target": "advisedby",
 	"headMode": "advisedby(+student,+professor)",
 	"bodyModes": [
 		"student(+student)",

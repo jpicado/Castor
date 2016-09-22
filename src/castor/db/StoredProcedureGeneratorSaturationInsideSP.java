@@ -47,7 +47,7 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 	private static final String SP_COMPILED_LOCATION = "sps/bin";
 	
 	// Template names and argument names
-	private static final String TEMPLATE_LOCATION = "resources/spTemplate.stg";
+	private static final String TEMPLATE_LOCATION = "res/spTemplate.stg";
 	private static final String SP_BOTTOMCLAUSE_SQLSTATEMENT_TEMPLATE =			"spBottomClauseSqlStatementTemplate";
 	private static final String SP_BOTTOMCLAUSE_MODE_TEMPLATE =					"spBottomClauseModeTemplate";
 	private static final String SP_BOTTOMCLAUSE_INCLUSIONDEPENDENCY_TEMPLATE =	"spBottomClauseInclusionDependencyTemplate";

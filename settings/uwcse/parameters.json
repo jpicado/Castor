@@ -1,5 +1,5 @@
 {
-	"createStoredProcedure": false,
+	"createStoredProcedure": true,
 	"minprec": 0.67,
 	"minrec": 0.33,
 	"maxterms": 5,
