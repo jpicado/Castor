@@ -11,11 +11,10 @@
 	<property name="dist.dir" location="dist" />
 	<property name="dist.lib.dir" location="dist/lib" />
 	<property name="lib.dir" value="lib" />
-	<property name="res.dir" value="res/" />
+	<property name="res.dir" value="res" />
+	<property name="sps.dir" value="sps" />
 	<property name="dist.res.dir" value="dist/res" />
 	<property name="main-class" value="castor.clients.CastorCmd" />	
-	<property name="lo4j-properties" value="log4j.properties" />
-	<property name="dist.lo4j-properties" value="dist/log4j.properties" />
 	
 	<target name="init">
 		<mkdir dir="${build.dir}" />
@@ -74,6 +73,7 @@
 	<target name="clean" description="clean up">
 		<delete dir="${build.dir}" />
 		<delete dir="${dist.dir}" />
+		<delete dir="${sps.dir}" />
 	</target>
 	
 	<!-- Default, run this -->
