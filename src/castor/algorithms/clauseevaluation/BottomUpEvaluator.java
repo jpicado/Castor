@@ -79,9 +79,8 @@ public class BottomUpEvaluator implements ClauseEvaluator {
 		}
 		
 		// Get new positive examples covered
-		// Adding 1 to count seed example
-		int newPosTotal = remainingPosExamples.size() + 1;
-		int newPosCoveredCount = coverageEngine.countCoveredExamplesFromList(genericDAO, schema, clauseInfo, remainingPosExamples, posExamplesRelation, true) + 1;
+		int newPosTotal = remainingPosExamples.size();
+		int newPosCoveredCount = coverageEngine.countCoveredExamplesFromList(genericDAO, schema, clauseInfo, remainingPosExamples, posExamplesRelation, true);
 
 		// Get total negative examples covered
 		int totalNeg = coverageEngine.getAllNegExamples().size();
