@@ -4,5 +4,7 @@
 	"minrec": 0.33,
 	"maxterms": 5,
 	"sample": 20,
-	"beam": 3
+	"beam": 3,
+	"minimizeBottomClause": false,
+	"iterations": 2
 }
