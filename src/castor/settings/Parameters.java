@@ -65,7 +65,7 @@ public class Parameters {
 	}
 	public void setReductionMethod(String reductionMethod) {
 		if (reductionMethod.equals("consistency")) {
-			this.reductionMethod = CastorLearner.NEGATIVE_REDUCTION_PRECISION;
+			this.reductionMethod = CastorLearner.NEGATIVE_REDUCTION_CONSISTENCY;
 		} else if (reductionMethod.equals("precision")) {
 			this.reductionMethod = CastorLearner.NEGATIVE_REDUCTION_PRECISION;
 		} else if (reductionMethod.equals("none")) {

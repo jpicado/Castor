@@ -1,5 +1,5 @@
 {
-	"target": "hiv_active",
+	"target": "hiv_active_2k4k_fold4",
 	"headMode": "hiv_active(+compound)",
 	"bodyModes": [
 		"compounds(+compound,-atom)",

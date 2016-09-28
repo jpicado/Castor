@@ -1,0 +1,715 @@
+{
+	"name": "Schema1",
+	"relations": [
+      {
+         "name": "hiv_active_fold1_train_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold1_train_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold1_test_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold1_test_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold2_train_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold2_train_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold2_test_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold2_test_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold3_train_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold3_train_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold3_test_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold3_test_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold4_train_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold4_train_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold4_test_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold4_test_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold5_train_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold5_train_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold5_test_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold5_test_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold6_train_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold6_train_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold6_test_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold6_test_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold7_train_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold7_train_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold7_test_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold7_test_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold8_train_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold8_train_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold8_test_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold8_test_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold9_train_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold9_train_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold9_test_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold9_test_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold10_train_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold10_train_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold10_test_pos",
+         "attributes": [
+            "compound"
+         ]
+      },
+      {
+         "name": "hiv_active_fold10_test_neg",
+         "attributes": [
+            "compound"
+         ]
+      },
+		{
+			"name": "compounds",
+		"attributes": [
+			"compound",
+				"atom"
+			]
+		},
+		{
+			"name": "element_C",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_O",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_N",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_H",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_S",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_F",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Cl",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_P",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Br",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_I",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Na",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Se",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Sn",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Cu",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Si",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_As",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_B",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Ge",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Ac",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Mg",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Rh",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Fe",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Ru",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Co",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Bi",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Pd",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Ni",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Sb",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Pt",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Ir",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Re",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Mn",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_W",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Mo",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Gd",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Tl",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Zn",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Hg",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Ho",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Pb",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Cr",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Ag",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Ga",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Au",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Li",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_K",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Cs",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Nb",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_V",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Nd",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Al",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Zr",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Te",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Ti",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Cd",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Yb",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Ca",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_U",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Er",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Pr",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Sm",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Os",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "element_Tb",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "p2_0",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "p2_1",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "p2_2",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "p2_3",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "p2_4",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "p2_5",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "p2_6",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "p2_7",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "p2_8",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "p2_9",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "p2_10",
+		"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "p3",
+			"attributes": [
+				"atom"
+			]
+		},
+		{
+			"name": "bonds",
+			"attributes": [
+				"bond",
+				"atom1",
+				"atom2",
+				"bondtype_1",
+				"bondtype_2",
+				"bondtype_3"
+			]
+		}
+	],
+	"inds": [
+	]
+}
