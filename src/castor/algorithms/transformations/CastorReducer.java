@@ -275,7 +275,7 @@ public class CastorReducer {
 
 			// Compute score
 			double score = evaluator.computeScore(genericDAO, coverageEngine, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, newClauseInfo, EvaluationFunctions.FUNCTION.PRECISION);
-			if (score > bestScore) {
+			if (score >= bestScore) {
 				bestPosition = i;
 				bestScore = score;
 			}
