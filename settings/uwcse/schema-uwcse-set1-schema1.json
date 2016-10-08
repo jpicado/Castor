@@ -226,20 +226,6 @@
 			]
    		},
    		{
-   			"name": "publicationprofessor",
-			"attributes": [
-				"publication",
-   				"author"
-   			]
-   		},
-   		{
-   			"name": "publicationstudent",
-			"attributes": [
-				"publication",
-   				"author"
-   			]
-   		},
-   		{
    			"name": "publication",
 			"attributes": [
 				"publication",
