@@ -52,7 +52,7 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 	private static final String SP_BOTTOMCLAUSE_MODE_TEMPLATE =					"spBottomClauseModeTemplate";
 	private static final String SP_BOTTOMCLAUSE_INCLUSIONDEPENDENCY_TEMPLATE =	"spBottomClauseInclusionDependencyTemplate";
 	private static final String SP_BOTTOMCLAUSE_PROCEDURE_TEMPLATE =			"spBottomClauseProcedureTemplate";
-	private static final String SP_BOTTOMCLAUSE_GROUPEDMODES_TEMPLATE =			"spNewListeralsForGroupedModesInstantiation";
+	private static final String SP_BOTTOMCLAUSE_GROUPEDMODES_TEMPLATE =			"spNewListeralsForGroupedModesClear";
 	private static final String RELATION_ARG_NAME =			"relation";
 	private static final String ATTRIBUTE_ARG_NAME =		"attribute";
 	private static final String ATTRIBUTENUMBER_ARG_NAME = 	"attributeNumber";

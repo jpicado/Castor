@@ -3,8 +3,8 @@ spBottomClauseSqlStatementTemplate(relation,attribute,attributeNumber) ::= <<
 public final SQLStmt SQL_$relation$_$attributeNumber$ = new SQLStmt("SELECT * FROM $relation$ WHERE $attribute$ IN ?;");
 >>
 
-spNewListeralsForGroupedModesInstantiation() ::= <<
-newLiteralsForGroupedModes = new LinkedList<Literal>();
+spNewListeralsForGroupedModesClear() ::= <<
+newLiteralsForGroupedModes.clear();
 >>
 
 spBottomClauseModeTemplate(relation,modeBString,attributeNumber) ::= <<
@@ -108,7 +108,7 @@ public class $name$ extends VoltProcedure {
 			// Create new inTerms to hold terms for this iteration
 			Map<String,Set<String\>> newInTerms = new HashMap<String, Set<String\>>();
 
-			List<Literal> newLiteralsForGroupedModes;
+			List<Literal> newLiteralsForGroupedModes = new LinkedList<Literal>();
 
 			$modesBOperations$
 
