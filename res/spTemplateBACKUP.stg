@@ -3,16 +3,13 @@ spBottomClauseSqlStatementTemplate(relation,attribute,attributeNumber) ::= <<
 public final SQLStmt SQL_$relation$_$attributeNumber$ = new SQLStmt("SELECT * FROM $relation$ WHERE $attribute$ IN ?;");
 >>
 
-spNewListeralsForGroupedModesInstantiation() ::= <<
-newLiteralsForGroupedModes = new LinkedList<Literal>();
->>
 
 spBottomClauseModeTemplate(relation,modeBString,attributeNumber) ::= <<
-newLiteralsForGroupedModes.addAll(modeBOperation(recall, clauseLiterals, clauseLiteralsByRelation, hashConstantToVariable, hashVariableToConstant, inTerms, newInTerms, distinctTerms, "$modeBString$", SQL_$relation$_$attributeNumber$, $attributeNumber$));
+modeBOperation(recall, clauseLiterals, clauseLiteralsByRelation, hashConstantToVariable, hashVariableToConstant, inTerms, newInTerms, distinctTerms, "$modeBString$", SQL_$relation$_$attributeNumber$, $attributeNumber$);
 >>
 
 spBottomClauseInclusionDependencyTemplate(leftIndPredicate,leftIndAttNumber,rightIndPredicate,rightIndAttNumber,modesForRightIndPredicate) ::= <<
-applyInclusionDependency(recall, clauseLiterals, clauseLiteralsByRelation, hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, "$leftIndPredicate$", $leftIndAttNumber$, "$rightIndPredicate$", $rightIndAttNumber$, "$modesForRightIndPredicate$", SQL_$rightIndPredicate$_$rightIndAttNumber$, newLiteralsForGroupedModes);
+applyInclusionDependency(recall, clauseLiterals, clauseLiteralsByRelation, hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, "$leftIndPredicate$", $leftIndAttNumber$, "$rightIndPredicate$", $rightIndAttNumber$, "$modesForRightIndPredicate$", SQL_$rightIndPredicate$_$rightIndAttNumber$);
 >>
 
 
@@ -108,8 +105,6 @@ public class $name$ extends VoltProcedure {
 			// Create new inTerms to hold terms for this iteration
 			Map<String,Set<String\>> newInTerms = new HashMap<String, Set<String\>>();
 
-			List<Literal> newLiteralsForGroupedModes;
-
 			$modesBOperations$
 
 			// Add new terms to inTerms
@@ -152,49 +147,50 @@ public class $name$ extends VoltProcedure {
 	private void applyInclusionDependency(int recall, Set<Literal> clauseLiterals, Map<String,Set<Literal\>> clauseLiteralsByRelation,
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant, Map<String, Set<String\>> newInTerms, Set<String> distinctTerms,
 			String leftIndPredicate, int leftIndAttNumber, String rightIndPredicate, int rightIndAttNumber, 
-			String modesTogether, SQLStmt sqlStatement, List<Literal> newLiteralsForGroupedModes) {
+			String modesTogether, SQLStmt sqlStatement) {
 		
 		// For each literal with predicate equal to leftIndPredicate, check if IND holds
 		//TODO creating list to get element at position. Ideally, we wouldn't have to create a new list.
-		List<Literal> clauseLiteralsList = new ArrayList<Literal>(clauseLiterals);
-		
-		for (int i = 0; i < newLiteralsForGroupedModes.size(); i++) {
-			Literal literal = newLiteralsForGroupedModes.get(i);
-			String predicate = getPredicate(literal);
-			
-			if (predicate.equals(leftIndPredicate)) {
-				String leftIndTerm = getTermAtPos(literal, leftIndAttNumber);
+		if (clauseLiteralsByRelation.containsKey(leftIndPredicate)) {
+			List<Literal> clauseLiteralsList = new ArrayList<Literal>(clauseLiteralsByRelation.get(leftIndPredicate));
+			for (int i = 0; i < clauseLiteralsList.size(); i++) {
+				Literal literal = clauseLiteralsList.get(i);	
+				String predicate = getPredicate(literal);
 				
-				// Check if IND is satisfied
-				boolean indSatisfied = false;
-				for (int j = 0; j < clauseLiteralsList.size(); j++) {
-					Literal otherLiteral = clauseLiteralsList.get(j);
-					String otherPredicate = getPredicate(otherLiteral);
+				if (predicate.equals(leftIndPredicate)) {
+					String leftIndTerm = getTermAtPos(literal, leftIndAttNumber);
 					
-					if (otherPredicate.equals(rightIndPredicate)) {
-						String rightIndTerm = getTermAtPos(otherLiteral, rightIndAttNumber);
+					// Check if IND is satisfied
+					boolean indSatisfied = false;
+					for (int j = 0; j < clauseLiteralsList.size(); j++) {
+						Literal otherLiteral = clauseLiteralsList.get(j);
+						String otherPredicate = getPredicate(otherLiteral);
 						
-						if (leftIndTerm.equals(rightIndTerm)) {
-							// IND satisfied
-							indSatisfied = true;
-							break;
+						if (otherPredicate.equals(rightIndPredicate)) {
+							String rightIndTerm = getTermAtPos(otherLiteral, rightIndAttNumber);
+							
+							if (leftIndTerm.equals(rightIndTerm)) {
+								// IND satisfied
+								indSatisfied = true;
+								break;
+							}
 						}
 					}
-				}
-				
-				// If IND is not satisfied, add literals that make IND satisfied
-				if (!indSatisfied) {
-					// Get constant value
-					String value;
-					if (isVariable(leftIndTerm)) {
-						value = hashVariableToConstant.get(leftIndTerm);
-					} else {
-						value = leftIndTerm.substring(1, leftIndTerm.length()-1);
-					}
 					
-					String[] modes = modesTogether.split(";");
-					for (int k = 0; k < modes.length; k++) {
-						modeBOperationForInd(recall, clauseLiterals, clauseLiteralsByRelation, hashConstantToVariable, hashVariableToConstant, value, newInTerms, distinctTerms, modes[k], sqlStatement, rightIndAttNumber);
+					// If IND is not satisfied, add literals that make IND satisfied
+					if (!indSatisfied) {
+						// Get constant value
+						String value;
+						if (isVariable(leftIndTerm)) {
+							value = hashVariableToConstant.get(leftIndTerm);
+						} else {
+							value = leftIndTerm.substring(1, leftIndTerm.length()-1);
+						}
+						
+						String[] modes = modesTogether.split(";");
+						for (int k = 0; k < modes.length; k++) {
+							modeBOperationForInd(recall, clauseLiterals, clauseLiteralsByRelation, hashConstantToVariable, hashVariableToConstant, value, newInTerms, distinctTerms, modes[k], sqlStatement, rightIndAttNumber);
+						}
 					}
 				}
 			}
@@ -204,21 +200,19 @@ public class $name$ extends VoltProcedure {
 	/*
 	 * Apply a mode operation and add literals to clause
 	 */
-	private List<Literal> modeBOperation(int recall, Set<Literal> clauseLiterals, Map<String,Set<Literal\>> clauseLiteralsByRelation, Map<String,String> hashConstantToVariable, Map<String, String> hashVariableToConstant, Map<String,Set<String\>> inTerms, Map<String,Set<String\>> newInTerms, Set<String> distinctTerms, String modeBString, SQLStmt sqlStatement, int attributeNumber) {
+	private void modeBOperation(int recall, Set<Literal> clauseLiterals, Map<String,Set<Literal\>> clauseLiteralsByRelation, Map<String,String> hashConstantToVariable, Map<String, String> hashVariableToConstant, Map<String,Set<String\>> inTerms, Map<String,Set<String\>> newInTerms, Set<String> distinctTerms, String modeBString, SQLStmt sqlStatement, int attributeNumber) {
 		String[] modeBTokens = modeBString.split("\\\\(|\\\\)");
 		String modeBPredicate = modeBTokens[0];
 		String[] modeBArguments = modeBTokens[1].split(",|\\\\s+");
 		String attributeType = getArgumentType(modeBArguments[attributeNumber]);
-		List<Literal> newLiterals = new LinkedList<Literal>();
 		if (inTerms.containsKey(attributeType)) {
 			String[] knownTerms = inTerms.get(attributeType).toArray(new String[inTerms.get(attributeType).size()]);
             voltQueueSQL(sqlStatement, (Object)knownTerms);
             VoltTable[] response = voltExecuteSQL();
-    		newLiterals.addAll(createLiteralsFromResponse(recall, hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, response[0], modeBPredicate, modeBArguments));
+    		List<Literal> newLiterals = createLiteralsFromResponse(recall, hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, response[0], modeBPredicate, modeBArguments);
     		//clauseLiterals.addAll(newLiterals);
     		addNotRepeated(clauseLiterals, clauseLiteralsByRelation, newLiterals);
 		}
-		return newLiterals;
 	}
 	
 	/*

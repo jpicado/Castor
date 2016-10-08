@@ -52,6 +52,7 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 	private static final String SP_BOTTOMCLAUSE_MODE_TEMPLATE =					"spBottomClauseModeTemplate";
 	private static final String SP_BOTTOMCLAUSE_INCLUSIONDEPENDENCY_TEMPLATE =	"spBottomClauseInclusionDependencyTemplate";
 	private static final String SP_BOTTOMCLAUSE_PROCEDURE_TEMPLATE =			"spBottomClauseProcedureTemplate";
+	private static final String SP_BOTTOMCLAUSE_GROUPEDMODES_TEMPLATE =			"spNewListeralsForGroupedModesInstantiation";
 	private static final String RELATION_ARG_NAME =			"relation";
 	private static final String ATTRIBUTE_ARG_NAME =		"attribute";
 	private static final String ATTRIBUTENUMBER_ARG_NAME = 	"attributeNumber";
@@ -125,6 +126,9 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 	    while (it.hasNext()) {
 	    	Map.Entry<String,List<Mode>> pair = it.next();
 	    	String modePredicate = pair.getKey();
+	    	
+	    	final ST groupedModesLiteralListTemplate = stGroup.getInstanceOf(SP_BOTTOMCLAUSE_GROUPEDMODES_TEMPLATE);
+	    	modesOperationsBuilder.append(groupedModesLiteralListTemplate.render() + "\n");
 	    	
 	    	for (Mode mode : pair.getValue()) {
 				// Create SQL statements
@@ -258,6 +262,9 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 	    while (it.hasNext()) {
 	    	Map.Entry<String,List<Mode>> pair = it.next();
 	    	String modePredicate = pair.getKey();
+	    	
+	    	final ST groupedModesLiteralListTemplate = stGroup.getInstanceOf(SP_BOTTOMCLAUSE_GROUPEDMODES_TEMPLATE);
+	    	modesOperationsBuilder.append(groupedModesLiteralListTemplate.render() + "\n");
 	    	
 	    	for (Mode mode : pair.getValue()) {
 	    		//String groundMode = mode.toGroundModeString();

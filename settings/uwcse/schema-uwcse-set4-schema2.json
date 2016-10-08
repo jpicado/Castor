@@ -1,0 +1,244 @@
+{
+	"name": "Schema1",
+	"relations": [
+		{
+			"name": "advisedby_train_pos",
+			"attributes": [
+				"student",
+				"advisor"
+			]
+		},
+		{
+			"name": "advisedby_train_neg",
+			"attributes": [
+				"student",
+				"advisor"
+			]
+		},
+		{
+			"name": "advisedby_test_pos",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_test_neg",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold1_train_pos",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold1_train_neg",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold1_test_pos",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold1_test_neg",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold2_train_pos",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold2_train_neg",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold2_test_pos",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold2_test_neg",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold3_train_pos",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold3_train_neg",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold3_test_pos",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold3_test_neg",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold4_train_pos",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold4_train_neg",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold4_test_pos",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold4_test_neg",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold5_train_pos",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold5_train_neg",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold5_test_pos",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+		{
+			"name": "advisedby_fold5_test_neg",
+			"attributes": [
+				"student",
+   				"advisor"
+   			]
+		},
+   		{
+   			"name": "taughtby",
+			"attributes": [
+				"course",
+   				"professor",
+   				"term"
+   			]
+   		},
+   		{
+   			"name": "courselevel",
+			"attributes": [
+				"course",
+   				"level"
+   			]
+   		},
+   		{
+   			"name": "professor",
+			"attributes": [
+				"professor",
+   				"pos"
+   			]
+   		},
+   		{
+			"name": "studentinfo",
+			"attributes": [
+				"student",
+   				"phase",
+   				"years"
+   			]
+   		},
+   		{
+   			"name": "ta",
+			"attributes": [
+				"course",
+   				"student",
+   				"term"
+   			]
+   		},
+   		{
+   			"name": "publication",
+			"attributes": [
+				"publication",
+   				"author"
+   			]
+   		}
+	],
+	"inds": [
+		{
+			"leftRelation": "courselevel",
+			"leftAttributeNumber": 0,
+			"rightRelation": "taughtby",
+			"rightAttributeNumber": 0
+		},
+		{
+			"leftRelation": "taughtby",
+			"leftAttributeNumber": 0,
+			"rightRelation": "courselevel",
+			"rightAttributeNumber": 0
+		},
+		{
+			"leftRelation": "professor",
+			"leftAttributeNumber": 0,
+			"rightRelation": "taughtby",
+			"rightAttributeNumber": 1
+		},
+		{
+			"leftRelation": "taughtby",
+			"leftAttributeNumber": 1,
+			"rightRelation": "professor",
+			"rightAttributeNumber": 0
+		}
+	]
+}
