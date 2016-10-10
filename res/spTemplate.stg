@@ -12,7 +12,7 @@ newLiteralsForGroupedModes.addAll(modeBOperation(recall, clauseLiterals, clauseL
 >>
 
 spBottomClauseInclusionDependencyTemplate(leftIndPredicate,leftIndAttNumber,rightIndPredicate,rightIndAttNumber,modesForRightIndPredicate) ::= <<
-applyInclusionDependency(recall, clauseLiterals, clauseLiteralsByRelation, hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, "$leftIndPredicate$", $leftIndAttNumber$, "$rightIndPredicate$", $rightIndAttNumber$, "$modesForRightIndPredicate$", SQL_$rightIndPredicate$_$rightIndAttNumber$, newLiteralsForGroupedModes);
+newLiteralsForGroupedModes.addAll(applyInclusionDependency(recall, clauseLiterals, clauseLiteralsByRelation, hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, "$leftIndPredicate$", $leftIndAttNumber$, "$rightIndPredicate$", $rightIndAttNumber$, "$modesForRightIndPredicate$", SQL_$rightIndPredicate$_$rightIndAttNumber$, newLiteralsForGroupedModes));
 >>
 
 
@@ -149,10 +149,12 @@ public class $name$ extends VoltProcedure {
 	/*
 	 * Apply an inclusion dependency: leftIndPredicate:leftIndAttNumber \subset rightIndPredicate:rightIndAttNumber
 	 */
-	private void applyInclusionDependency(int recall, Set<Literal> clauseLiterals, Map<String,Set<Literal\>> clauseLiteralsByRelation,
+	private List<Literal> applyInclusionDependency(int recall, Set<Literal> clauseLiterals, Map<String,Set<Literal\>> clauseLiteralsByRelation,
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant, Map<String, Set<String\>> newInTerms, Set<String> distinctTerms,
 			String leftIndPredicate, int leftIndAttNumber, String rightIndPredicate, int rightIndAttNumber, 
 			String modesTogether, SQLStmt sqlStatement, List<Literal> newLiteralsForGroupedModes) {
+		
+		List<Literal> newLiterals = new LinkedList<Literal>();
 		
 		// For each literal with predicate equal to leftIndPredicate, check if IND holds
 		//TODO creating list to get element at position. Ideally, we wouldn't have to create a new list.
@@ -194,17 +196,20 @@ public class $name$ extends VoltProcedure {
 					
 					String[] modes = modesTogether.split(";");
 					for (int k = 0; k < modes.length; k++) {
-						modeBOperationForInd(recall, clauseLiterals, clauseLiteralsByRelation, hashConstantToVariable, hashVariableToConstant, value, newInTerms, distinctTerms, modes[k], sqlStatement, rightIndAttNumber);
+						List<Literal> modeBLiterals = modeBOperationForInd(recall, clauseLiterals, clauseLiteralsByRelation, hashConstantToVariable, hashVariableToConstant, value, newInTerms, distinctTerms, modes[k], sqlStatement, rightIndAttNumber);
+						addNotRepeated(newLiterals, modeBLiterals);
 					}
 				}
 			}
 		}
+		return newLiterals;
 	}
 	
 	/*
 	 * Apply a mode operation and add literals to clause
 	 */
 	private List<Literal> modeBOperation(int recall, Set<Literal> clauseLiterals, Map<String,Set<Literal\>> clauseLiteralsByRelation, Map<String,String> hashConstantToVariable, Map<String, String> hashVariableToConstant, Map<String,Set<String\>> inTerms, Map<String,Set<String\>> newInTerms, Set<String> distinctTerms, String modeBString, SQLStmt sqlStatement, int attributeNumber) {
+		//System.out.println("MODE:"+modeBString);
 		String[] modeBTokens = modeBString.split("\\\\(|\\\\)");
 		String modeBPredicate = modeBTokens[0];
 		String[] modeBArguments = modeBTokens[1].split(",|\\\\s+");
@@ -214,9 +219,10 @@ public class $name$ extends VoltProcedure {
 			String[] knownTerms = inTerms.get(attributeType).toArray(new String[inTerms.get(attributeType).size()]);
             voltQueueSQL(sqlStatement, (Object)knownTerms);
             VoltTable[] response = voltExecuteSQL();
-    		newLiterals.addAll(createLiteralsFromResponse(recall, hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, response[0], modeBPredicate, modeBArguments));
+    		List<Literal> responseLiterals = createLiteralsFromResponse(recall, hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, response[0], modeBPredicate, modeBArguments);
+    		addNotRepeated(newLiterals, responseLiterals);
     		//clauseLiterals.addAll(newLiterals);
-    		addNotRepeated(clauseLiterals, clauseLiteralsByRelation, newLiterals);
+    		addNotRepeated(clauseLiterals, clauseLiteralsByRelation, responseLiterals);
 		}
 		return newLiterals;
 	}
@@ -224,7 +230,8 @@ public class $name$ extends VoltProcedure {
 	/*
 	 * Apply a mode operation for inclusion dependency and add literals to clause
 	 */
-	private void modeBOperationForInd(int recall, Set<Literal> clauseLiterals, Map<String,Set<Literal\>> clauseLiteralsByRelation, Map<String,String> hashConstantToVariable, Map<String, String> hashVariableToConstant, String value, Map<String,Set<String\>> newInTerms, Set<String> distinctTerms, String modeBString, SQLStmt sqlStatement, int attributeNumber) {
+	private List<Literal> modeBOperationForInd(int recall, Set<Literal> clauseLiterals, Map<String,Set<Literal\>> clauseLiteralsByRelation, Map<String,String> hashConstantToVariable, Map<String, String> hashVariableToConstant, String value, Map<String,Set<String\>> newInTerms, Set<String> distinctTerms, String modeBString, SQLStmt sqlStatement, int attributeNumber) {
+		//System.out.println("INDS:"+modeBString);
 		String[] modeBTokens = modeBString.split("\\\\(|\\\\)");
 		String modeBPredicate = modeBTokens[0];
 		String[] modeBArguments = modeBTokens[1].split(",|\\\\s+");
@@ -236,6 +243,7 @@ public class $name$ extends VoltProcedure {
 		List<Literal> newLiterals = createLiteralsFromResponse(recall, hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, response[0], modeBPredicate, modeBArguments);
 		//clauseLiterals.addAll(newLiterals);
 		addNotRepeated(clauseLiterals, clauseLiteralsByRelation, newLiterals);
+		return newLiterals;
 	}
 	
 	/*
@@ -279,6 +287,7 @@ public class $name$ extends VoltProcedure {
     		}
 //        	String literal = modeBPredicate + "(" + String.join(",", terms) + ")";
 //    		literals.add(literal);
+			//System.out.println(modeBPredicate + "(" + String.join(",", terms) + ")");
         	literals.add(new Literal(modeBPredicate, terms));
     		solutionsCounter++;
 		}
@@ -317,6 +326,17 @@ public class $name$ extends VoltProcedure {
 			}
 		}
 		return modified;
+	}
+	
+	/*
+	 * Add non-repeated newLiterals to literals
+	 */
+	private void addNotRepeated(List<Literal> literals, List<Literal> newLiterals) {
+		for (Literal newLiteral : newLiterals) {
+			if (!literals.contains(newLiteral)) {
+				literals.add(newLiteral);
+			}
+		}
 	}
 
 	/*
