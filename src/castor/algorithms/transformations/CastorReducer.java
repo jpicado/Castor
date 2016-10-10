@@ -77,7 +77,7 @@ public class CastorReducer {
 				
 				// Compute best variation of bestChain
 				//TODO not used in HIV, but used in other datasets
-//					bestChain = ReducerUsingChains.computeBestVariationOfChain(client, coverageEngine, schema, clause, posExamplesRelation, negExamplesRelation, allChains, bestChain, bestChainPosition);
+//				bestChain = CastorReducer.computeBestVariationOfChain(genericDAO, coverageEngine, schema, clause, posExamplesRelation, negExamplesRelation, allChains, bestChain, bestChainPosition);
 				
 				// Put head connecting chains and best chain together
 				List<List<Literal>> chainsToKeep = new LinkedList<List<Literal>>();
