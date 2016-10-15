@@ -1,0 +1,623 @@
+{
+	"name": "Schema1",
+	"relations": [
+		{
+			"name": "dramadirectors_fold1_test_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold1_test_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold1_train_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold1_train_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold2_test_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold2_test_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold2_train_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold2_train_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold3_test_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold3_test_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold3_train_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold3_train_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold4_test_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold4_test_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold4_train_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold4_train_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold5_test_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold5_test_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold5_train_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold5_train_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold6_test_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold6_test_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold6_train_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold6_train_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold7_test_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold7_test_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold7_train_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold7_train_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold8_test_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold8_test_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold8_train_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold8_train_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold9_test_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold9_test_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold9_train_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold9_train_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold10_test_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold10_test_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold10_train_neg",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "dramadirectors_fold10_train_pos",
+		    "attributes": [
+			"directorid"
+			]
+		},
+		{
+			"name": "actors",
+		    "attributes": [
+			"actid",
+		    	"name",
+		    "sex"
+			]
+		},
+		{
+			"name": "altversions",
+		    "attributes": [
+			"movieid",
+		    "version"
+			]
+		},
+		{
+			"name": "business",
+		    "attributes": [
+			"movieid",
+		    "business"
+			]
+		},
+		{
+			"name": "certificates",
+		    "attributes": [
+			"movieid",
+		    "country",
+		    "certification"
+			]
+		},
+		{
+			"name": "colorinfo",
+		    "attributes": [
+			"colorid",
+		    "color"
+			]
+		},
+		{
+			"name": "countries",
+		    "attributes": [
+			"countryid",
+		    "country"
+			]
+		},
+		{
+			"name": "directors",
+		    "attributes": [
+			"directorid",
+		    	"name"
+			]
+		},
+		{
+			"name": "genres",
+		    "attributes": [
+			"genreid",
+		    "genre"
+			]
+		},
+		{
+			"name": "movies",
+		    "attributes": [
+			"movieid",
+		    "title",
+		    "year"
+			]
+		},
+		{
+			"name": "movies2actors",
+		    "attributes": [
+			"movieid",
+		    "actorid",
+		    "as_character"
+			]
+		},
+		{
+			"name": "movies2directors",
+		    "attributes": [
+			"movieid",
+		    "directorid"
+			]
+		},
+		{
+			"name": "movies2producers",
+		    "attributes": [
+			"movieid",
+		    "producerid"
+			]
+		},
+		{
+			"name": "movies2writers",
+		    "attributes": [
+			"movieid",
+		    "writerid"
+			]
+		},
+		{
+			"name": "plots",
+		    "attributes": [
+			"movieid",
+		    "plot"
+			]
+		},
+		{
+			"name": "prodcompanies",
+		    "attributes": [
+			"prodcompanyid",
+		    "prodcompany"
+			]
+		},
+		{
+			"name": "producers",
+		    "attributes": [
+			"producerid",
+		    	"name"
+			]
+		},
+		{
+			"name": "ratings",
+		    "attributes": [
+			"movieid",
+		    "rank",
+		    "votes"
+			]
+		},
+		{
+			"name": "runningtimes",
+		    "attributes": [
+			"movieid",
+		    "time"
+			]
+		},
+		{
+			"name": "writers",
+		    "attributes": [
+			"writerid",
+		    	"name"
+			]
+		},
+		{
+			"name": "akanames",
+		    "attributes": [
+				"name",
+		    "akaname"
+			]
+		},
+		{
+			"name": "akatitles",
+		    "attributes": [
+			"movieid",
+		    "language",
+		    "title"
+			]
+		},
+		{
+			"name": "biographies",
+		    "attributes": [
+			"bioid",
+		    	"name",
+		    "biotext"
+			]
+		},
+		{
+			"name": "cinematgrs",
+		    "attributes": [
+			"cinematid",
+		    	"name"
+			]
+		},
+		{
+			"name": "composers",
+		    "attributes": [
+			"composerid",
+		    	"name"
+			]
+		},
+		{
+			"name": "costdesigners",
+		    "attributes": [
+			"costdesid",
+		    	"name"
+			]
+		},
+		{
+			"name": "distributors",
+		    "attributes": [
+			"movieid",
+		    	"name"
+			]
+		},
+		{
+			"name": "editors",
+		    "attributes": [
+			"editorid",
+		    	"name"
+			]
+		},
+		{
+			"name": "language",
+		    "attributes": [
+			"languageid",
+		    "language"
+			]
+		},
+		{
+			"name": "misc",
+		    "attributes": [
+			"miscid",
+		    	"name"
+			]
+		},
+		{
+			"name": "movies2cinematgrs",
+		    "attributes": [
+			"movieid",
+		    "cinematid"
+			]
+		},
+		{
+			"name": "movies2composers",
+		    "attributes": [
+			"movieid",
+		    "composerid"
+			]
+		},
+		{
+			"name": "movies2costdes",
+		    "attributes": [
+			"movieid",
+		    "costdesid"
+			]
+		},
+		{
+			"name": "movies2editors",
+		    "attributes": [
+			"movieid",
+		    "editorid"
+			]
+		},
+		{
+			"name": "movies2misc",
+		    "attributes": [
+			"movieid",
+		    "miscid"
+			]
+		},
+		{
+			"name": "movies2proddes",
+		    "attributes": [
+			"movieid",
+		    "proddesid"
+			]
+		},
+		{
+			"name": "mpaaratings",
+		    "attributes": [
+			"movieid",
+		    "reasontext"
+			]
+		},
+		{
+			"name": "proddesigners",
+		    "attributes": [
+			"proddesid",
+		    	"name"
+			]
+		},
+		{
+			"name": "releasedates",
+		    "attributes": [
+			"movieid",
+		    "countryid",
+		    "releasedates"
+			]
+		},
+		{
+			"name": "technical",
+		    "attributes": [
+			"movieid",
+		    	"name"
+			]
+		},
+		{
+			"name": "movies2colors",
+		    "attributes": [
+			"movieid",
+		    "colorid"
+			]
+		},
+		{
+			"name": "movies2countries",
+		    "attributes": [
+			"movieid",
+		    "countryid"
+			]
+		},
+		{
+			"name": "movies2genres",
+		    "attributes": [
+			"movieid",
+		    "genreid"
+			]
+		},
+		{
+			"name": "movies2languages",
+		    "attributes": [
+			"movieid",
+		    "languageid"
+			]
+		},
+		{
+			"name": "movies2prodcompanies",
+		    "attributes": [
+			"movieid",
+		    "prodcompanyid"
+			]
+		}
+	],
+	"inds": [
+		{
+			"leftRelation": "movies",
+			"leftAttributeNumber": 0,
+			"rightRelation": "movies2genres",
+			"rightAttributeNumber": 0
+		},
+		{
+			"leftRelation": "movies2genres",
+			"leftAttributeNumber": 0,
+			"rightRelation": "movies",
+			"rightAttributeNumber": 0
+		},
+		{
+			"leftRelation": "movies",
+			"leftAttributeNumber": 0,
+			"rightRelation": "movies2colors",
+			"rightAttributeNumber": 0
+		},
+		{
+			"leftRelation": "movies2colors",
+			"leftAttributeNumber": 0,
+			"rightRelation": "movies",
+			"rightAttributeNumber": 0
+		},
+		{
+			"leftRelation": "movies",
+			"leftAttributeNumber": 0,
+			"rightRelation": "movies2prodcompanies",
+			"rightAttributeNumber": 0
+		},
+		{
+			"leftRelation": "movies2prodcompanies",
+			"leftAttributeNumber": 0,
+			"rightRelation": "movies",
+			"rightAttributeNumber": 0
+		},
+		{
+			"leftRelation": "movies",
+			"leftAttributeNumber": 0,
+			"rightRelation": "movies2directors",
+			"rightAttributeNumber": 0
+		},
+		{
+			"leftRelation": "movies2directors",
+			"leftAttributeNumber": 0,
+			"rightRelation": "movies",
+			"rightAttributeNumber": 0
+		},
+		{
+			"leftRelation": "movies",
+			"leftAttributeNumber": 0,
+			"rightRelation": "movies2producers",
+			"rightAttributeNumber": 0
+		},
+		{
+			"leftRelation": "movies2producers",
+			"leftAttributeNumber": 0,
+			"rightRelation": "movies",
+			"rightAttributeNumber": 0
+		}
+	]
+}

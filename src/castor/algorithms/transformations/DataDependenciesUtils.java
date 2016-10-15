@@ -108,7 +108,7 @@ public class DataDependenciesUtils {
 			// Add literal to used predicates (a chain cannot have another literal with same predicate name)
 			Set<String> usedPredicates = new HashSet<String>();
 			usedPredicates.add(literal.getAtomicSentence().getSymbolicName());
-			
+			System.out.println("Calling aux for:"+literal.getAtomicSentence().getSymbolicName());
 			DataDependenciesUtils.findInclusionChainsAux(schema, clause, allChains, currentChain, usedPredicates);
 		}
 		
@@ -185,7 +185,8 @@ public class DataDependenciesUtils {
 	// This implementation is faster
 	private static void findInclusionChainsAux(Schema schema, MyClause clause, List<List<Literal>> chains, List<Literal> currentChain, Set<String> usedPredicates) {
 		boolean chainExtended = false;
-		
+//		System.out.println("recursive call");
+//		System.out.println(usedPredicates.toString());
 		for (Literal literal : currentChain) {
 			String predicate = literal.getAtomicSentence().getSymbolicName();
 			
