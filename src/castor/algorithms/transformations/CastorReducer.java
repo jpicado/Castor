@@ -48,8 +48,8 @@ public class CastorReducer {
 	 */
 	public static MyClause negativeReduce(GenericDAO genericDAO, CoverageEngine coverageEngine, MyClause clause, Schema schema, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, CastorReducer.MEASURE measure, ClauseEvaluator evaluator) {
 		TimeWatch tw = TimeWatch.start();
-		System.out.println("Finding all inclusion chains");
-		System.out.println(Formatter.prettyPrint(clause));
+//		System.out.println("Finding all inclusion chains");
+//		System.out.println(Formatter.prettyPrint(clause));
 		List<List<Literal>> allChains = DataDependenciesUtils.findAllInclusionChains(schema, clause);
 		
 		// Get negative examples covered by clause (only used if measure is consistency)
@@ -63,7 +63,7 @@ public class CastorReducer {
 		if (clause.getNumberNegativeLiterals() > 0) {
 			int previousLength = 0;
 			while(true) {
-				System.out.println("iteration, length: "+previousLength);
+//				System.out.println("iteration, length: "+previousLength);
 				int bestChainPosition;
 				if (measure.equals(CastorReducer.MEASURE.CONSISTENCY)) {
 					// Find first literal such that the negative coverage of the clause is equal to negative coverage of original clause

@@ -108,7 +108,7 @@ public class DataDependenciesUtils {
 			// Add literal to used predicates (a chain cannot have another literal with same predicate name)
 			Set<String> usedPredicates = new HashSet<String>();
 			usedPredicates.add(literal.getAtomicSentence().getSymbolicName());
-			System.out.println("Calling aux for:"+literal.getAtomicSentence().getSymbolicName());
+//			System.out.println("Calling aux for:"+literal.getAtomicSentence().getSymbolicName());
 			DataDependenciesUtils.findInclusionChainsAux(schema, clause, allChains, currentChain, usedPredicates);
 		}
 		
