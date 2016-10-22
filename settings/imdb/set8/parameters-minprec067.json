@@ -8,7 +8,7 @@
 	"beam": 1,
 	"minimizeBottomClause": false,
 	"threads": 1,
-	"reductionMethod": "consistency",
+	"reductionMethod": "precision",
 	"recall": 10,
 	"useInds": true,
 	"dbURL": "localhost"
