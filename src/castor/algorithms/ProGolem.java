@@ -27,7 +27,6 @@ import castor.algorithms.clauseevaluation.EvaluationFunctions;
 import castor.algorithms.clauseevaluation.GenericEvaluator;
 import castor.algorithms.coverageengines.CoverageEngine;
 import castor.algorithms.transformations.ClauseTransformations;
-import castor.algorithms.transformations.DataDependenciesUtils;
 import castor.algorithms.transformations.Reducer;
 import castor.algorithms.transformations.ReductionMethods;
 import castor.db.dataaccess.GenericDAO;
@@ -314,11 +313,6 @@ public class ProGolem {
 			logger.debug("Transformed bottom clause:\n"+ Formatter.prettyPrint(bottomClause));
 		}
 		
-		// Reorder bottom clause
-		// NOTE: this is needed for some datasets (e.g. HIV-small, fold 2)
-		logger.info("Reordering bottom clause...");
-		bottomClause = this.reorderAccordingToINDs(schema, bottomClause);
-		
 		logger.info("Generalizing clause...");
 		
 		List<ClauseInfo> bestARMGs = new LinkedList<ClauseInfo>();
@@ -388,36 +382,12 @@ public class ProGolem {
 	}
 	
 	/*
-	 * Reorder clause so that all literals in same inclusion chain are together
-	 */
-	private MyClause reorderAccordingToINDs(Schema schema, MyClause clause) {
-		List<Literal> newLiterals = new LinkedList<Literal>();
-
-		for (Literal literal : clause.getNegativeLiterals()) {	
-			if (!newLiterals.contains(literal)) {
-				List<Literal> chainLiterals = DataDependenciesUtils.findLiteralsInInclusionChain(schema, clause, literal);
-				
-				// Add all literals
-				newLiterals.addAll(chainLiterals);
-			}			
-		}
-		
-		// Add positive literals and create clause
-		newLiterals.addAll(clause.getPositiveLiterals());
-		MyClause newClause = new MyClause(newLiterals);
-		return newClause;
-	}
-	
-	/*
 	 * Transform a clause: minimization, reordering, etc.
 	 */
 	private MyClause transform(Schema schema, MyClause clause) {
 		TimeWatch tw = TimeWatch.start();
 		// Minimize using theta-transformation 
 		clause = ClauseTransformations.minimize(clause);
-		// Reorder to delay cartesian products
-		// IF REORDERED, NEGATIVE REDUCTION IS AFFECTED
-		//clause = ClauseTransformations.reorder(clause);
 		TimeKeeper.transformationTime += tw.time();
 		return clause;
 	}
