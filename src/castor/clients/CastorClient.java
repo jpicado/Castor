@@ -189,8 +189,7 @@ public class CastorClient {
 //          CoverageEngine coverageEngine = new CoverageBySubsumptionOptimizedParallel1_HIVSmallHardcoded(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true, posExamplesFlags, negExamplesFlags);
             TimeKeeper.creatingCoverageTime = tw.time();
             
-            CastorLearner learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, this.parameters.getMinPrecision(), this.parameters.getMinRecall(), this.parameters.isMinimizeBottomClause());
-//            ProGolem learner = new ProGolem(genericDAO, coverageEngine, this.minPrecision, this.minRecall, this.minimizeBottomClause);
+            CastorLearner learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, this.parameters);
             
             // Learn
             logger.info("Learning...");

@@ -1,3 +1,11 @@
+/*
+ * Castor's implementation of ProGolem (http://ilp.doc.ic.ac.uk/ProGolem/)
+ * Differences from CastorLearner:
+ * -Does not consider inclusion dependencies for: bottom-clause construction, negative reduction, armg.
+ * -Uses original bottom-clause construction algorithm.
+ * -Does not reuse coverage testing info (uses GenericEvaluator instead of BottomUpEvaluator).
+ * -Optional minimization (original ProGolem does not talk about optimization).
+ */
 package castor.algorithms;
 
 import java.util.HashSet;
@@ -14,12 +22,14 @@ import org.apache.log4j.Logger;
 import aima.core.logic.fol.kb.data.Literal;
 import aima.core.logic.fol.parsing.ast.Term;
 import castor.algorithms.bottomclause.BottomClauseGeneratorOriginalAlgorithm;
-import castor.algorithms.clauseevaluation.BottomUpEvaluator;
 import castor.algorithms.clauseevaluation.ClauseEvaluator;
 import castor.algorithms.clauseevaluation.EvaluationFunctions;
+import castor.algorithms.clauseevaluation.GenericEvaluator;
 import castor.algorithms.coverageengines.CoverageEngine;
 import castor.algorithms.transformations.ClauseTransformations;
+import castor.algorithms.transformations.DataDependenciesUtils;
 import castor.algorithms.transformations.Reducer;
+import castor.algorithms.transformations.ReductionMethods;
 import castor.db.dataaccess.GenericDAO;
 import castor.hypotheses.ClauseInfo;
 import castor.hypotheses.MyClause;
@@ -27,6 +37,7 @@ import castor.language.Mode;
 import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
+import castor.settings.Parameters;
 import castor.utils.Formatter;
 import castor.utils.TimeKeeper;
 import castor.utils.TimeWatch;
@@ -34,44 +45,20 @@ import castor.wrappers.EvaluationResult;
 
 public class ProGolem {
 	
-	// Default values
-	private static final boolean CHECK_PRECISION_CONDITION	= true;
-	private static final boolean CHECK_RECALL_CONDITION		= true;
-	private static final boolean CHECK_NOISE				= false;// currently not used
-	private static final boolean CHECK_MCC_CONDITION		= false;// currently not used
-	private static final double NOISE 	= 0.5;
-	private static final double MINMCC 	= 0;
-	private static final int MINPOS 	= 2;
-	
-	// Reduction methods
-	public static final String NEGATIVE_REDUCTION_NONE 			= "none";
-	public static final String NEGATIVE_REDUCTION_CONSISTENCY	= "consistency";
-	public static final String NEGATIVE_REDUCTION_PRECISION 	= "precision";
-	
-	private static final int RANDOM_SEED = 1;
-	
-	private boolean minimizeBottomClause;
-	private double minPrecision;
-	private double minRecall;
-	
-	// Logger
 	private static Logger logger = Logger.getLogger(ProGolem.class);
 	
+	private Parameters parameters;
 	private GenericDAO genericDAO;
 	private CoverageEngine coverageEngine;
 	private Random randomGenerator;
 	private ClauseEvaluator evaluator;
 
-	public ProGolem(GenericDAO genericDAO, CoverageEngine coverageEngine, double minPrecision, double minRecall, boolean minimizeBottomClause) {
+	public ProGolem(GenericDAO genericDAO, CoverageEngine coverageEngine, Parameters parameters) {
+		this.parameters = parameters;
 		this.genericDAO = genericDAO;
 		this.coverageEngine = coverageEngine;
-		this.randomGenerator = new Random(RANDOM_SEED);
-		
-		this.minimizeBottomClause = minimizeBottomClause;
-		this.minPrecision = minPrecision;
-		this.minRecall = minRecall;
-		
-		this.evaluator = new BottomUpEvaluator();
+		this.randomGenerator = new Random(parameters.getRandomSeed());
+		this.evaluator = new GenericEvaluator();
 	}
 	
 	/*
@@ -206,29 +193,20 @@ public class ProGolem {
 			// Recall over all examples
 			double recall = EvaluationFunctions.score(EvaluationFunctions.FUNCTION.RECALL, truePositiveAll, falsePositiveAll, trueNegative, falseNegative);
 			
-			// Compute thresholds
-//			double posprior = ((double)coverageEngine.getAllPosExamples().size()) / ((double)coverageEngine.getAllPosExamples().size()+coverageEngine.getAllNegExamples().size());
-//			double minPrec = Math.max(MINPRECISION, Math.max(posprior, 1.0 - posprior));
-//			double minPrec = Math.max(MINPREC, posprior);
-			double minPrec = minPrecision;
-			
 			logger.info("Stats before reduction: Precision(new)="+precision+", F1(new)="+f1+", Recall(all)="+recall);
 			
 			// Reduce clause only if it satisfies conditions
-			if (satisfiesConditions(minPrec, truePositive, falsePositive, trueNegative, falseNegative, newPosCoveredCount, precision, recall)) {
-				if (!reductionMethod.equals(ProGolem.NEGATIVE_REDUCTION_NONE)) {
+			if (satisfiesConditions(truePositive, falsePositive, trueNegative, falseNegative, newPosCoveredCount, precision, recall)) {
+				if (!reductionMethod.equals(ReductionMethods.NEGATIVE_REDUCTION_NONE)) {
 					// Compute negative based reduction
 					// Add 1 to scores to count seed example, which is not in remainingPosExamples
 					double beforeReduceScore = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, clauseInfo) + 1;
 					logger.info("Before reduction - NumLits:"+clauseInfo.getClause().getNumberLiterals()+", Score:"+beforeReduceScore);
 					logger.debug("Before reduction:\n"+Formatter.prettyPrint(clauseInfo.getClause()));
 					
-					// TWO TYPES OF NEGATIVE REDUCTION (MUST UNCOMMENT ONE):
-					if (reductionMethod.equals(NEGATIVE_REDUCTION_CONSISTENCY)) {
-						// 1. REDUCE USING CONSISTENCY (AS IN GOLEM). IT IS IN TERMS OF LITERALS. MUST CHECK SCHEMA INDEPENDENCE.
+					if (reductionMethod.equals(ReductionMethods.NEGATIVE_REDUCTION_CONSISTENCY)) {
 						clauseInfo.setMoreGeneralClause(Reducer.negativeReduce(genericDAO, this.coverageEngine, clauseInfo.getClause(), schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, Reducer.MEASURE.CONSISTENCY, evaluator));
-					} else if (reductionMethod.equals(NEGATIVE_REDUCTION_PRECISION)) {
-						// 2. REDUCE BY LOOKING FOR CHAIN THAT HAS BEST SCORE - PRECISION (AS IN PROGOLEM). IT IS IN TERMS OF CHAINS TO BE SCHEMA INDEPENDENT. 
+					} else if (reductionMethod.equals(ReductionMethods.NEGATIVE_REDUCTION_PRECISION)) {
 						clauseInfo.setMoreGeneralClause(Reducer.negativeReduce(genericDAO, this.coverageEngine, clauseInfo.getClause(), schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, Reducer.MEASURE.PRECISION, evaluator));
 					}
 					
@@ -241,9 +219,6 @@ public class ProGolem {
 				clauseInfo.setMoreGeneralClause(this.transform(schema, clauseInfo.getClause()));
 				logger.info("After minimization - NumLits:"+clauseInfo.getClause().getNumberLiterals());
 				logger.debug("After minimization:\n"+ Formatter.prettyPrint(clauseInfo.getClause()));
-				
-				// Check minimum conditions again to accept clause
-				// These statistics change after reduction and minimization
 				
 				// Get new positive examples covered
 				// Adding 1 to count seed example
@@ -269,7 +244,7 @@ public class ProGolem {
 				
 				logger.info("Stats: Score=" + score + ", Precision(new)="+precision+", F1(new)="+f1+", Recall(all)="+recall);
 				
-				if (satisfiesConditions(minPrec, truePositive, falsePositive, trueNegative, falseNegative, newPosCoveredCount, precision, recall)) {
+				if (satisfiesConditions(truePositive, falsePositive, trueNegative, falseNegative, newPosCoveredCount, precision, recall)) {
 					// Add clause to definition
 					definition.add(clauseInfo);
 					logger.info("New clause added to theory:\n" + Formatter.prettyPrint(clauseInfo.getClause()));
@@ -290,36 +265,26 @@ public class ProGolem {
 	/*
 	 * Check if given the numbers, the minimum conditions are satisfied
 	 */
-	private boolean satisfiesConditions(double minPrec, int truePositive, int falsePositive, int trueNegative, int falseNegative, int newPosCoveredCount, double precision, double recall) {
+	private boolean satisfiesConditions(int truePositive, int falsePositive, int trueNegative, int falseNegative, int newPosCoveredCount, double precision, double recall) {
 		boolean satisfiesPrecision = true;
-		if (CHECK_PRECISION_CONDITION) {
-			if (precision < minPrec)
-				satisfiesPrecision = false;
-		}
+		if (precision < parameters.getMinPrecision())
+			satisfiesPrecision = false;
 		
 		boolean satisfiesRecall = true;
-		if (CHECK_RECALL_CONDITION) {
-			if (recall < this.minRecall)
-				satisfiesRecall = false;
-		}
+		if (recall < parameters.getMinRecall())
+			satisfiesRecall = false;
+		
+		boolean satisfiesMinPos = true;
+		if (newPosCoveredCount < parameters.getMinPos())
+			satisfiesMinPos = false;
 		
 		double noise = 1.0 - precision;
 		boolean satisfiesNoise = true;
-		if (CHECK_NOISE) {
-			if (noise > NOISE)
-				satisfiesNoise = false;
-		}
-		
-		double mcc = 1.0;
-		boolean satisfiesMCC = true;
-		if (CHECK_MCC_CONDITION) {
-			mcc = EvaluationFunctions.score(EvaluationFunctions.FUNCTION.MCC, truePositive, falsePositive, trueNegative, falseNegative);
-			if (mcc < MINMCC)
-				satisfiesMCC = false;
-		}
+		if (noise > parameters.getMaxNoise())
+			satisfiesNoise = false;
 		
 		boolean satisfiesConditions = false;
-		if(satisfiesPrecision && satisfiesNoise && satisfiesRecall && satisfiesMCC && newPosCoveredCount >= MINPOS) {
+		if(satisfiesPrecision && satisfiesRecall && satisfiesMinPos && satisfiesNoise) {
 			satisfiesConditions = true;
 		}
 		return satisfiesConditions;
@@ -339,16 +304,20 @@ public class ProGolem {
 		logger.info("Literals: " + bottomClause.getNumberLiterals());
 		logger.info("Saturation time: " + tw.time(TimeUnit.MILLISECONDS) + " milliseconds.");
 		
-		//TURNED OFF FOR PROGOLEM
 		// MINIMIZATION CAN BE USEFUL WHEN THERE ARE NO ISSUES IF LITERALS WITH VARIABLES ARE REMOVED BECAUSE THERE ARE LITERALS WITH CONSTANTS.
 		// IF LITERALS WITH VARIABLES ARE IMPORTANT (E.G. TO BE MORE GENERAL), MINIMIZATION SHOULD BE TURNED OFF.
 		// Minimize bottom clause
-		if (this.minimizeBottomClause) {
+		if (parameters.isMinimizeBottomClause()) {
 			logger.info("Transforming bottom clause...");
 			bottomClause = this.transform(schema, bottomClause);
 			logger.info("Literals of transformed clause: " + bottomClause.getNumberLiterals());
 			logger.debug("Transformed bottom clause:\n"+ Formatter.prettyPrint(bottomClause));
 		}
+		
+		// Reorder bottom clause
+		// NOTE: this is needed for some datasets (e.g. HIV-small, fold 2)
+		logger.info("Reordering bottom clause...");
+		bottomClause = this.reorderAccordingToINDs(schema, bottomClause);
 		
 		logger.info("Generalizing clause...");
 		
@@ -416,6 +385,27 @@ public class ProGolem {
 		}
 		
 		return bestClauseInfo;
+	}
+	
+	/*
+	 * Reorder clause so that all literals in same inclusion chain are together
+	 */
+	private MyClause reorderAccordingToINDs(Schema schema, MyClause clause) {
+		List<Literal> newLiterals = new LinkedList<Literal>();
+
+		for (Literal literal : clause.getNegativeLiterals()) {	
+			if (!newLiterals.contains(literal)) {
+				List<Literal> chainLiterals = DataDependenciesUtils.findLiteralsInInclusionChain(schema, clause, literal);
+				
+				// Add all literals
+				newLiterals.addAll(chainLiterals);
+			}			
+		}
+		
+		// Add positive literals and create clause
+		newLiterals.addAll(clause.getPositiveLiterals());
+		MyClause newClause = new MyClause(newLiterals);
+		return newClause;
 	}
 	
 	/*
@@ -628,15 +618,12 @@ public class ProGolem {
 	 * Compute score of a clause
 	 */
 	private double computeScore(Schema schema, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, ClauseInfo clauseInfo) {
-		TimeWatch tw = TimeWatch.start();
 		double score;
 		if (clauseInfo.getScore() == null) {
 			score = evaluator.computeScore(genericDAO, coverageEngine, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, clauseInfo, EvaluationFunctions.FUNCTION.COVERAGE);
 		} else {
 			score = clauseInfo.getScore();
 		}
-		
-		TimeKeeper.scoringTime += tw.time();
 		return score;
 	}
 	
@@ -644,9 +631,6 @@ public class ProGolem {
 	 * Check if a clause entials an example
 	 */
 	private boolean entails(GenericDAO genericDAO, CoverageEngine coverageEngine, Schema schema, ClauseInfo clauseInfo, Tuple exampleTuple, Relation posExamplesRelation) {
-		TimeWatch tw = TimeWatch.start();
-		boolean entails = evaluator.entails(genericDAO, coverageEngine, schema, clauseInfo, exampleTuple, posExamplesRelation);
-		TimeKeeper.entailmentTime += tw.time();
-		return entails;
+		return evaluator.entails(genericDAO, coverageEngine, schema, clauseInfo, exampleTuple, posExamplesRelation);
 	}
 }

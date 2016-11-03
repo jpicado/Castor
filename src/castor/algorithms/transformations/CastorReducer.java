@@ -24,7 +24,6 @@ import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
 import castor.utils.Commons;
-import castor.utils.Formatter;
 import castor.utils.TimeKeeper;
 import castor.utils.TimeWatch;
 

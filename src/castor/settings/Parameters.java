@@ -1,22 +1,26 @@
 package castor.settings;
 
-import castor.algorithms.CastorLearner;
+import castor.algorithms.transformations.ReductionMethods;
 
 public class Parameters {
 
+	// Default values for parameters
 	private boolean createStoredProcedure = true;
 	private double minPrecision = 0.5;
 	private double minRecall = 0;
+	private int minPos = 2;
+	private double maxNoise = 1.0;
 	private int sample = 1;
 	private int beam = 1;
 	private int threads = 1;
 	private boolean minimizeBottomClause = false;
-	private String reductionMethod = CastorLearner.NEGATIVE_REDUCTION_PRECISION;
+	private String reductionMethod = ReductionMethods.NEGATIVE_REDUCTION_CONSISTENCY;
 	private int iterations = 2;
 	private int recall = 10;
 	private int maxterms = 1000;
 	private boolean useInds = true;
 	private String dbURL = "localhost";
+	private int randomSeed = 1;
 	
 	public boolean isCreateStoredProcedure() {
 		return createStoredProcedure;
@@ -35,6 +39,18 @@ public class Parameters {
 	}
 	public void setMinRecall(double minRecall) {
 		this.minRecall = minRecall;
+	}
+	public int getMinPos() {
+		return minPos;
+	}
+	public void setMinPos(int minPos) {
+		this.minPos = minPos;
+	}
+	public double getMaxNoise() {
+		return maxNoise;
+	}
+	public void setMaxNoise(double maxNoise) {
+		this.maxNoise = maxNoise;
 	}
 	public int getSample() {
 		return sample;
@@ -65,11 +81,11 @@ public class Parameters {
 	}
 	public void setReductionMethod(String reductionMethod) {
 		if (reductionMethod.equals("consistency")) {
-			this.reductionMethod = CastorLearner.NEGATIVE_REDUCTION_CONSISTENCY;
+			this.reductionMethod = ReductionMethods.NEGATIVE_REDUCTION_CONSISTENCY;
 		} else if (reductionMethod.equals("precision")) {
-			this.reductionMethod = CastorLearner.NEGATIVE_REDUCTION_PRECISION;
+			this.reductionMethod = ReductionMethods.NEGATIVE_REDUCTION_PRECISION;
 		} else if (reductionMethod.equals("none")) {
-			this.reductionMethod = CastorLearner.NEGATIVE_REDUCTION_NONE;
+			this.reductionMethod = ReductionMethods.NEGATIVE_REDUCTION_NONE;
 		} else {
 			throw new IllegalArgumentException("Unknown reduction method.");
 		}
@@ -103,5 +119,11 @@ public class Parameters {
 	}
 	public void setDbURL(String dbURL) {
 		this.dbURL = dbURL;
+	}
+	public int getRandomSeed() {
+		return randomSeed;
+	}
+	public void setRandomSeed(int randomSeed) {
+		this.randomSeed = randomSeed;
 	}
 }

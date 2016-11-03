@@ -143,7 +143,7 @@ public class CastorCmd {
             CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), createFullCoverageEngine);
             TimeKeeper.creatingCoverageTime = tw.time();
             
-            CastorLearner castor = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, this.parameters.getMinPrecision(), this.parameters.getMinRecall(), this.parameters.isMinimizeBottomClause());
+            CastorLearner castor = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
             
             if (saturation) {
             	// BOTTOM CLAUSE

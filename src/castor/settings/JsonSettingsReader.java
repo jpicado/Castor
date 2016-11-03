@@ -30,6 +30,12 @@ public class JsonSettingsReader {
 		if (parametersJson.get("minrec") != null) {
 			parameters.setMinRecall(parametersJson.get("minrec").getAsDouble());
 		}
+		if (parametersJson.get("minpos") != null) {
+			parameters.setMinPos(parametersJson.get("minpos").getAsInt());
+		}
+		if (parametersJson.get("noise") != null) {
+			parameters.setMaxNoise(parametersJson.get("noise").getAsDouble());
+		}
 		if (parametersJson.get("sample") != null) {
 			parameters.setSample(parametersJson.get("sample").getAsInt());
 		}
@@ -59,6 +65,9 @@ public class JsonSettingsReader {
 		}
 		if (parametersJson.get("dbURL") != null) {
 			parameters.setDbURL(parametersJson.get("dbURL").getAsString());
+		}
+		if (parametersJson.get("randomSeed") != null) {
+			parameters.setRandomSeed(parametersJson.get("randomSeed").getAsInt());
 		}
 		
 		return parameters;

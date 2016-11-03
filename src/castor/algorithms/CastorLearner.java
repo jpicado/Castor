@@ -1,3 +1,11 @@
+/*
+ * CastorLearner: Castor learning algorithm. Similar to ProGolem, but uses inclusion dependencies and some optimizations.
+ * -Uses inclusion dependencies to be schema independent.
+ * -Optimization:
+ * --Reuse coverage testing: uses BottomUpEvaluator.
+ * --If run on VoltDB, uses bottom-clause construction inside a stored procedure.
+ * --Minimizes bottom-clauses.
+ */
 package castor.algorithms;
 
 import java.util.ArrayList;
@@ -27,6 +35,7 @@ import castor.algorithms.coverageengines.CoverageEngine;
 import castor.algorithms.transformations.CastorReducer;
 import castor.algorithms.transformations.ClauseTransformations;
 import castor.algorithms.transformations.DataDependenciesUtils;
+import castor.algorithms.transformations.ReductionMethods;
 import castor.db.dataaccess.BottomClauseConstructionDAO;
 import castor.db.dataaccess.GenericDAO;
 import castor.hypotheses.ClauseInfo;
@@ -36,6 +45,7 @@ import castor.language.Mode;
 import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
+import castor.settings.Parameters;
 import castor.utils.Formatter;
 import castor.utils.TimeKeeper;
 import castor.utils.TimeWatch;
@@ -43,45 +53,21 @@ import castor.wrappers.EvaluationResult;
 
 public class CastorLearner {
 	
-	// Default values
-	private static final boolean CHECK_PRECISION_CONDITION	= true;
-	private static final boolean CHECK_RECALL_CONDITION		= true;
-	private static final boolean CHECK_NOISE				= false;// currently not used
-	private static final boolean CHECK_MCC_CONDITION		= false;// currently not used
-	private static final double NOISE 	= 0.5;
-	private static final double MINMCC 	= 0;
-	private static final int MINPOS 	= 2;
-	
-	// Reduction methods
-	public static final String NEGATIVE_REDUCTION_NONE 			= "none";
-	public static final String NEGATIVE_REDUCTION_CONSISTENCY	= "consistency";
-	public static final String NEGATIVE_REDUCTION_PRECISION 	= "precision";
-	
-	private static final int RANDOM_SEED = 1;
-	
-	private boolean minimizeBottomClause;
-	private double minPrecision;
-	private double minRecall;
-	
-	// Logger
 	private static Logger logger = Logger.getLogger(CastorLearner.class);
 	
+	private Parameters parameters;
 	private GenericDAO genericDAO;
 	private BottomClauseConstructionDAO bottomClauseConstructionDAO;
 	private CoverageEngine coverageEngine;
 	private Random randomGenerator;
 	private ClauseEvaluator evaluator;
 
-	public CastorLearner(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseContructionDAO, CoverageEngine coverageEngine, double minPrecision, double minRecall, boolean minimizeBottomClause) {
+	public CastorLearner(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseContructionDAO, CoverageEngine coverageEngine, Parameters parameters) {
+		this.parameters = parameters;
 		this.genericDAO = genericDAO;
 		this.bottomClauseConstructionDAO = bottomClauseContructionDAO;
 		this.coverageEngine = coverageEngine;
-		this.randomGenerator = new Random(RANDOM_SEED);
-		
-		this.minimizeBottomClause = minimizeBottomClause;
-		this.minPrecision = minPrecision;
-		this.minRecall = minRecall;
-		
+		this.randomGenerator = new Random(parameters.getRandomSeed());
 		this.evaluator = new BottomUpEvaluator();
 	}
 	
@@ -217,29 +203,20 @@ public class CastorLearner {
 			// Recall over all examples
 			double recall = EvaluationFunctions.score(EvaluationFunctions.FUNCTION.RECALL, truePositiveAll, falsePositiveAll, trueNegative, falseNegative);
 			
-			// Compute thresholds
-//			double posprior = ((double)coverageEngine.getAllPosExamples().size()) / ((double)coverageEngine.getAllPosExamples().size()+coverageEngine.getAllNegExamples().size());
-//			double minPrec = Math.max(MINPRECISION, Math.max(posprior, 1.0 - posprior));
-//			double minPrec = Math.max(MINPREC, posprior);
-			double minPrec = minPrecision;
-			
 			logger.info("Stats before reduction: Precision(new)="+precision+", F1(new)="+f1+", Recall(all)="+recall);
 			
 			// Reduce clause only if it satisfies conditions
-			if (satisfiesConditions(minPrec, truePositive, falsePositive, trueNegative, falseNegative, newPosCoveredCount, precision, recall)) {
-				if (!reductionMethod.equals(CastorLearner.NEGATIVE_REDUCTION_NONE)) {
+			if (satisfiesConditions(truePositive, falsePositive, trueNegative, falseNegative, newPosCoveredCount, precision, recall)) {
+				if (!reductionMethod.equals(ReductionMethods.NEGATIVE_REDUCTION_NONE)) {
 					// Compute negative based reduction
 					// Add 1 to scores to count seed example, which is not in remainingPosExamples
 					double beforeReduceScore = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, clauseInfo) + 1;
 					logger.info("Before reduction - NumLits:"+clauseInfo.getClause().getNumberLiterals()+", Score:"+beforeReduceScore);
 					logger.debug("Before reduction:\n"+Formatter.prettyPrint(clauseInfo.getClause()));
 					
-					// TWO TYPES OF NEGATIVE REDUCTION (MUST UNCOMMENT ONE):
-					if (reductionMethod.equals(NEGATIVE_REDUCTION_CONSISTENCY)) {
-						// 1. REDUCE USING CONSISTENCY (AS IN GOLEM). IT IS IN TERMS OF LITERALS. MUST CHECK SCHEMA INDEPENDENCE.
+					if (reductionMethod.equals(ReductionMethods.NEGATIVE_REDUCTION_CONSISTENCY)) {
 						clauseInfo.setMoreGeneralClause(CastorReducer.negativeReduce(genericDAO, this.coverageEngine, clauseInfo.getClause(), schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, CastorReducer.MEASURE.CONSISTENCY, evaluator));
-					} else if (reductionMethod.equals(NEGATIVE_REDUCTION_PRECISION)) {
-						// 2. REDUCE BY LOOKING FOR CHAIN THAT HAS BEST SCORE - PRECISION (AS IN PROGOLEM). IT IS IN TERMS OF CHAINS TO BE SCHEMA INDEPENDENT. 
+					} else if (reductionMethod.equals(ReductionMethods.NEGATIVE_REDUCTION_PRECISION)) {
 						clauseInfo.setMoreGeneralClause(CastorReducer.negativeReduce(genericDAO, this.coverageEngine, clauseInfo.getClause(), schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, CastorReducer.MEASURE.PRECISION, evaluator));
 					}
 					
@@ -252,9 +229,6 @@ public class CastorLearner {
 				clauseInfo.setMoreGeneralClause(this.transform(schema, clauseInfo.getClause()));
 				logger.info("After minimization - NumLits:"+clauseInfo.getClause().getNumberLiterals());
 				logger.debug("After minimization:\n"+ Formatter.prettyPrint(clauseInfo.getClause()));
-				
-				// Check minimum conditions again to accept clause
-				// These statistics change after reduction and minimization
 				
 				// Get new positive examples covered
 				// Adding 1 to count seed example
@@ -280,7 +254,7 @@ public class CastorLearner {
 				
 				logger.info("Stats: Score=" + score + ", Precision(new)="+precision+", F1(new)="+f1+", Recall(all)="+recall);
 				
-				if (satisfiesConditions(minPrec, truePositive, falsePositive, trueNegative, falseNegative, newPosCoveredCount, precision, recall)) {
+				if (satisfiesConditions(truePositive, falsePositive, trueNegative, falseNegative, newPosCoveredCount, precision, recall)) {
 					// Add clause to definition
 					definition.add(clauseInfo);
 					logger.info("New clause added to theory:\n" + Formatter.prettyPrint(clauseInfo.getClause()));
@@ -301,36 +275,26 @@ public class CastorLearner {
 	/*
 	 * Check if given the numbers, the minimum conditions are satisfied
 	 */
-	private boolean satisfiesConditions(double minPrec, int truePositive, int falsePositive, int trueNegative, int falseNegative, int newPosCoveredCount, double precision, double recall) {
+	private boolean satisfiesConditions(int truePositive, int falsePositive, int trueNegative, int falseNegative, int newPosCoveredCount, double precision, double recall) {
 		boolean satisfiesPrecision = true;
-		if (CHECK_PRECISION_CONDITION) {
-			if (precision < minPrec)
-				satisfiesPrecision = false;
-		}
+		if (precision < parameters.getMinPrecision())
+			satisfiesPrecision = false;
 		
 		boolean satisfiesRecall = true;
-		if (CHECK_RECALL_CONDITION) {
-			if (recall < this.minRecall)
-				satisfiesRecall = false;
-		}
+		if (recall < parameters.getMinRecall())
+			satisfiesRecall = false;
+		
+		boolean satisfiesMinPos = true;
+		if (newPosCoveredCount < parameters.getMinPos())
+			satisfiesMinPos = false;
 		
 		double noise = 1.0 - precision;
 		boolean satisfiesNoise = true;
-		if (CHECK_NOISE) {
-			if (noise > NOISE)
-				satisfiesNoise = false;
-		}
-		
-		double mcc = 1.0;
-		boolean satisfiesMCC = true;
-		if (CHECK_MCC_CONDITION) {
-			mcc = EvaluationFunctions.score(EvaluationFunctions.FUNCTION.MCC, truePositive, falsePositive, trueNegative, falseNegative);
-			if (mcc < MINMCC)
-				satisfiesMCC = false;
-		}
+		if (noise > parameters.getMaxNoise())
+			satisfiesNoise = false;
 		
 		boolean satisfiesConditions = false;
-		if(satisfiesPrecision && satisfiesNoise && satisfiesRecall && satisfiesMCC && newPosCoveredCount >= MINPOS) {
+		if(satisfiesPrecision && satisfiesRecall && satisfiesMinPos && satisfiesNoise) {
 			satisfiesConditions = true;
 		}
 		return satisfiesConditions;
@@ -353,7 +317,7 @@ public class CastorLearner {
 		// MINIMIZATION CAN BE USEFUL WHEN THERE ARE NO ISSUES IF LITERALS WITH VARIABLES ARE REMOVED BECAUSE THERE ARE LITERALS WITH CONSTANTS.
 		// IF LITERALS WITH VARIABLES ARE IMPORTANT (E.G. TO BE MORE GENERAL), MINIMIZATION SHOULD BE TURNED OFF.
 		// Minimize bottom clause
-		if (this.minimizeBottomClause) {
+		if (parameters.isMinimizeBottomClause()) {
 			logger.info("Transforming bottom clause...");
 			bottomClause = this.transform(schema, bottomClause);
 			logger.info("Literals of transformed clause: " + bottomClause.getNumberLiterals());
@@ -448,7 +412,7 @@ public class CastorLearner {
 		// MINIMIZATION CAN BE USEFUL WHEN THERE ARE NO ISSUES IF LITERALS WITH VARIABLES ARE REMOVED BECAUSE THERE ARE LITERALS WITH CONSTANTS.
 		// IF LITERALS WITH VARIABLES ARE IMPORTANT (E.G. TO BE MORE GENERAL), MINIMIZATION SHOULD BE TURNED OFF.
 		// Minimize bottom clause
-		if (this.minimizeBottomClause) {
+		if (parameters.isMinimizeBottomClause()) {
 			logger.info("Transforming bottom clause...");
 			bottomClause = this.transform(schema, bottomClause);
 			logger.info("Literals of transformed clause: " + bottomClause.getNumberLiterals());
