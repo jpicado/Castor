@@ -9,13 +9,12 @@
 package castor.algorithms;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
@@ -31,7 +30,6 @@ import castor.algorithms.clauseevaluation.ClauseEvaluator;
 import castor.algorithms.clauseevaluation.EvaluationFunctions;
 import castor.algorithms.coverageengines.CoverageEngine;
 import castor.algorithms.transformations.ClauseTransformations;
-import castor.algorithms.transformations.DataDependenciesUtils;
 import castor.db.dataaccess.BottomClauseConstructionDAO;
 import castor.db.dataaccess.GenericDAO;
 import castor.hypotheses.ClauseInfo;
@@ -173,8 +171,8 @@ public class Golem {
 		while (remainingPosExamples.size() > 0) {
 			logger.info("Remaining uncovered examples: " + remainingPosExamples.size());
 			
-			// Compute best ARMG
-			ClauseInfo clauseInfo = beamSearchIteratedARMG(schema, modeH, modesB, remainingPosExamples, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, maxRecall, maxterms, sampleSize, beamWidth);
+			// Learn clause
+			ClauseInfo clauseInfo = learnClause(schema, modeH, modesB, remainingPosExamples, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, maxRecall, maxterms, sampleSize, beamWidth);
 			
 			// Get new positive examples covered
 			// Adding 1 to count seed example
@@ -260,50 +258,109 @@ public class Golem {
 		return null;
 	}
 	
-	private List<ClauseInfo> generateCandidateClauses(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples) {
+	private List<ClauseInfo> generateCandidateClauses(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
+		List<ClauseInfo> newClauses = new LinkedList<ClauseInfo>();
 		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
 		
-		for (int i = 0; i < remainingPosExamples.size(); i++) {
-			for (int j = 0; j < remainingPosExamples.size(); j++) {
+		// Generate random sequence of indexes to access examples
+		List<Integer> indexes1 = generateSequence(remainingPosExamples.size());
+		List<Integer> indexes2 = generateSequence(remainingPosExamples.size());
+		Collections.shuffle(indexes1, randomGenerator);
+		Collections.shuffle(indexes2, randomGenerator);
+		
+		for (int i = 0; i < indexes1.size(); i++) {
+			for (int j = 0; j < indexes2.size(); j++) {
 				if (i != j) {
+					Tuple example1 = remainingPosExamples.get(i);
+					Tuple example2 = remainingPosExamples.get(j);
 					
+					// Saturate examples
+					MyClause clause1 = saturator.generateBottomClause(bottomClauseConstructionDAO, example1, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+					MyClause clause2 = saturator.generateBottomClause(bottomClauseConstructionDAO, example2, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+					
+					// Generalize
+					MyClause newClause = generalize(clause1, clause2);
+					ClauseInfo newClauseInfo = new ClauseInfo(newClause, coverageEngine.getAllPosExamples().size(), coverageEngine.getAllNegExamples().size());
+					
+					// Add clause if it satisfies minimum conditions
+					if (candidateSatisfiesConditions(newClauseInfo, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation)) {
+						newClauses.add(newClauseInfo);
+					}
+					
+					if (newClauses.size() >= parameters.getBeam())
+						break;
 				}
 			}
-		}
-		
-		int foundCandidates = 0;
-		while(foundCandidates < 5) {
-			int exampleIndex1 = randomGenerator.nextInt(remainingPosExamples.size());
-			int exampleIndex2 = randomGenerator.nextInt(remainingPosExamples.size());
 			
-			if (exampleIndex1 != exampleIndex2) {
-				Tuple example1 = remainingPosExamples.get(exampleIndex1);
-				Tuple example2 = remainingPosExamples.get(exampleIndex2);
-				
-				MyClause clause1 = saturator.generateBottomClause(bottomClauseConstructionDAO, example1, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
-				MyClause clause2 = saturator.generateBottomClause(bottomClauseConstructionDAO, example2, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
-				
-				MyClause lgg = generalize(clause1, clause2);
-			}
+			if (newClauses.size() >= parameters.getBeam())
+				break;
 		}
 		
+		return newClauses;
+	}
+	
+	/*
+	 * Generate List containing sequence of numbers
+	 */
+	private List<Integer> generateSequence(int n) {
+		List<Integer> array = new ArrayList<Integer>();
+		for (int i = 0; i < n; i++) {
+			array.set(i, i);
+		}
+		return array;
+	}
+	
+	/*
+	 * Check conditions for potential candidates
+	 * Currently, only checking minimum precision
+	 */
+	private boolean candidateSatisfiesConditions(ClauseInfo clauseInfo, Schema schema, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
+		// Get new positive examples covered
+		// Adding 1 to count seed example
+		int newPosTotal = remainingPosExamples.size() + 1;
+		int newPosCoveredCount = coverageEngine.countCoveredExamplesFromList(genericDAO, schema, clauseInfo, remainingPosExamples, posExamplesRelation, true) + 1;
 		
-		return null;
+		// Get total negative examples covered
+		int totalNeg = coverageEngine.getAllNegExamples().size();
+		int negCoveredCount = coverageEngine.countCoveredExamplesFromRelation(genericDAO, schema, clauseInfo, negExamplesRelation, false);
+		
+		// Compute statistics
+		int truePositive = newPosCoveredCount;
+		int falsePositive = negCoveredCount;
+		int trueNegative = totalNeg - negCoveredCount;
+		int falseNegative = newPosTotal - newPosCoveredCount;
+		
+		double precision = EvaluationFunctions.score(EvaluationFunctions.FUNCTION.PRECISION, truePositive, falsePositive, trueNegative, falseNegative);
+		
+		boolean satisfiesPrecision = true;
+		if (precision < parameters.getMinPrecision())
+			satisfiesPrecision = false;
+		
+		boolean satisfiesConditions = false;
+		if(satisfiesPrecision) {
+			satisfiesConditions = true;
+		}
+		return satisfiesConditions;
 	}
 	
 	private MyClause generalize(MyClause clause1, MyClause clause2) {
 		MyClause clause = lgg(clause1, clause2);
 		clause = ClauseTransformations.minimize(clause);
-		return null;
+		return clause;
 	}
 
 	private MyClause lgg(MyClause clause1, MyClause clause2) {
 		List<Literal> literals = new LinkedList<Literal>();
 		
+		// Find maximum variable name in clauses
+		int maxVar = Commons.getMaxVarValue(clause1);
+		maxVar = Math.max(maxVar, Commons.getMaxVarValue(clause2));
+		maxVar += 1;
+		
 		Map<String, String> variableMap = new HashMap<String, String>();
 		for (Literal literal1 : clause1.getLiterals()) {
 			for (Literal literal2 : clause2.getLiterals()) {
-				Literal newLiteral = lgg(literal1, literal2, variableMap);
+				Literal newLiteral = lgg(literal1, literal2, variableMap, maxVar);
 				if (newLiteral != null)
 					literals.add(newLiteral);
 			}
@@ -312,33 +369,32 @@ public class Golem {
 		return newClause;
 	}
 
-	private Literal lgg(Literal literal1, Literal literal2, Map<String, String> variableMap) {
+	private Literal lgg(Literal literal1, Literal literal2, Map<String, String> variableMap, int maxVar) {
 		Literal literal;
 		if ( (literal1.isPositiveLiteral() && literal2.isNegativeLiteral()) || (literal1.isNegativeLiteral() && literal2.isPositiveLiteral()) ) {
 			literal = null;
 		} else {
-			AtomicSentence atom = lgg(literal1.getAtomicSentence(), literal2.getAtomicSentence(), variableMap);
+			AtomicSentence atom = lgg(literal1.getAtomicSentence(), literal2.getAtomicSentence(), variableMap, maxVar);
 			if (atom == null) {
 				literal = null;
 			} else {
-				boolean isNegative = false;
-				if (literal1.isNegativeLiteral())
-					isNegative = true;
+				boolean isNegative = literal1.isNegativeLiteral();
 				literal = new Literal(atom, isNegative);
 			}
 		}
 		return literal;
 	}
 
-	private AtomicSentence lgg(AtomicSentence atom1, AtomicSentence atom2, Map<String, String> variableMap) {
+	private AtomicSentence lgg(AtomicSentence atom1, AtomicSentence atom2, Map<String, String> variableMap, int maxVar) {
 		AtomicSentence atom;
-		if (!atom1.getSymbolicName().equals(atom2.getSymbolicName())) {
+		if (!atom1.getSymbolicName().equals(atom2.getSymbolicName()) ||
+				atom1.getArgs().size() != atom2.getArgs().size()) {
 			// Undefined
 			atom = null;
 		} else {
 			List<Term> terms = new ArrayList<Term>();
-			for (int i=0; i<atom1.getArgs().size(); i++) {
-				Term term = lgg(atom1.getArgs().get(i), atom2.getArgs().get(i), variableMap);
+			for (int i=0; i < atom1.getArgs().size(); i++) {
+				Term term = lgg(atom1.getArgs().get(i), atom2.getArgs().get(i), variableMap, maxVar);
 				terms.add(term);
 			}
 			atom = new Predicate(atom1.getSymbolicName(), terms);
@@ -346,7 +402,7 @@ public class Golem {
 		return atom;
 	}
 
-	private Term lgg(Term term1, Term term2, Map<String, String> variableMap) {
+	private Term lgg(Term term1, Term term2, Map<String, String> variableMap, int maxVar) {
 		Term term;
 		if (term1.equals(term2)) {
 			term = term1;
@@ -369,223 +425,14 @@ public class Golem {
 			if (variableMap.containsKey(key)) {
 				newTermSymbol = variableMap.get(key);
 			} else {
-				//newTermSymbol = "v_"+key;
-				newTermSymbol = "v_"+variableCounter;
-				variableCounter++;
+				int realMaxVar = maxVar + variableMap.keySet().size();
+				newTermSymbol = Commons.newVariable(realMaxVar);
 				variableMap.put(key, newTermSymbol);
 			}
 			
 			term = new Variable(newTermSymbol);
 		}
 		return term;
-	}
-
-	/*
-	 * Perform generalization using beam search + ARMG
-	 */
-	private ClauseInfo beamSearchIteratedARMG(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth) {
-		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
-		
-		// First unseen positive example (pop)
-		Tuple exampleTuple = remainingPosExamples.remove(0);
-		
-		// Generate bottom clause
-		TimeWatch tw = TimeWatch.start();
-		logger.info("Generating bottom clause for "+exampleTuple.getValues().toString()+"...");
-		MyClause bottomClause = saturator.generateBottomClause(bottomClauseConstructionDAO, exampleTuple, spNameTemplate, iterations, recall, maxterms);
-		logger.debug("Bottom clause: \n"+ Formatter.prettyPrint(bottomClause));
-		logger.info("Literals: " + bottomClause.getNumberLiterals());
-		logger.info("Saturation time: " + tw.time(TimeUnit.MILLISECONDS) + " milliseconds.");
-		
-		// MINIMIZATION CAN BE USEFUL WHEN THERE ARE NO ISSUES IF LITERALS WITH VARIABLES ARE REMOVED BECAUSE THERE ARE LITERALS WITH CONSTANTS.
-		// IF LITERALS WITH VARIABLES ARE IMPORTANT (E.G. TO BE MORE GENERAL), MINIMIZATION SHOULD BE TURNED OFF.
-		// Minimize bottom clause
-		if (parameters.isMinimizeBottomClause()) {
-			logger.info("Transforming bottom clause...");
-			bottomClause = this.transform(schema, bottomClause);
-			logger.info("Literals of transformed clause: " + bottomClause.getNumberLiterals());
-			logger.debug("Transformed bottom clause:\n"+ Formatter.prettyPrint(bottomClause));
-		}
-		
-		// Reorder bottom clause
-		// NOTE: this is needed for some datasets (e.g. HIV-small, fold 2)
-		logger.info("Reordering bottom clause...");
-		bottomClause = this.reorderAccordingToINDs(schema, bottomClause);
-		
-		logger.info("Generalizing clause...");
-		
-		List<ClauseInfo> bestARMGs = new LinkedList<ClauseInfo>();
-		bestARMGs.add(new ClauseInfo(bottomClause, this.coverageEngine.getAllPosExamples().size(), this.coverageEngine.getAllNegExamples().size()));
-		
-		boolean createdNewARMGS = true;
-		int iters = 0;
-		// Add 1 to scores to count seed example, which is not in remainingPosExamples
-		double clauseScore = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, bestARMGs.get(0)) + 1;
-		logger.info("Best armg at iter "+iters+" - NumLits:"+bestARMGs.get(0).getClause().getNumberLiterals()+", Score:"+clauseScore);
-		
-		// Generalize only if there are more examples
-		if (remainingPosExamples.size() > 0) {
-			while(createdNewARMGS) {
-				iters++;
-				createdNewARMGS = false;
-				
-				// Compute best score of clauses in bestARMGs
-				double bestScore = Double.NEGATIVE_INFINITY;
-				for (ClauseInfo clauseInfo : bestARMGs) {
-					double score = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, clauseInfo);
-					bestScore = Math.max(bestScore, score);
-				}
-				
-				// Select K random examples
-				List<Tuple> sample = selectRandomExamples(posExamplesRelation, sampleSize);
-				
-				// Generalize each clause in ARMG using examples in sample
-				List<ClauseInfo> newARMGs = new LinkedList<ClauseInfo>();
-				for (ClauseInfo clauseInfo : bestARMGs) {
-					for (Tuple tuple : sample) {
-						// Perform ARMG
-						ClauseInfo newClauseInfo = armg(schema, clauseInfo, tuple, posExamplesRelation);
-						
-						// Keep clause only if its score is better tahn current best score
-						double score = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, newClauseInfo);
-						if (score > bestScore) {
-							newARMGs.add(newClauseInfo);
-						}
-					}
-				}
-				
-				if (!newARMGs.isEmpty()) {
-					// Keep highest scoring N clauses from newARMGs
-					bestARMGs.clear();
-					bestARMGs.addAll(this.getHighestScoring(newARMGs, beamWidth, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation));
-					createdNewARMGS = true;
-				}
-				
-				clauseScore = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, bestARMGs.get(0)) + 1;
-				logger.info("Best armg at iter "+iters+" - NumLits:"+bestARMGs.get(0).getClause().getNumberLiterals()+", Score:"+clauseScore);
-			}
-		}
-		
-		// Get highest scoring clause from bestARMGs
-		ClauseInfo bestClauseInfo = null;
-		double bestScore = Double.NEGATIVE_INFINITY;
-		for (ClauseInfo clauseInfo : bestARMGs) {
-			double score = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, clauseInfo);
-			if (score > bestScore) {
-				bestClauseInfo = clauseInfo;
-				bestScore = score;
-			}
-		}
-		
-		return bestClauseInfo;
-	}
-	
-	/*
-	 * Reorder clause so that all literals in same inclusion chain are together
-	 */
-	private MyClause reorderAccordingToINDs(Schema schema, MyClause clause) {
-		List<Literal> newLiterals = new LinkedList<Literal>();
-
-		for (Literal literal : clause.getNegativeLiterals()) {	
-			if (!newLiterals.contains(literal)) {
-				List<Literal> chainLiterals = DataDependenciesUtils.findLiteralsInInclusionChain(schema, clause, literal);
-				
-				// Add all literals
-				newLiterals.addAll(chainLiterals);
-			}			
-		}
-		
-		// Add positive literals and create clause
-		newLiterals.addAll(clause.getPositiveLiterals());
-		MyClause newClause = new MyClause(newLiterals);
-		return newClause;
-	}
-	
-	/*
-	 * Transform a clause: minimization, reordering, etc.
-	 */
-	private MyClause transform(Schema schema, MyClause clause) {
-		TimeWatch tw = TimeWatch.start();
-		// Minimize using theta-transformation 
-		clause = ClauseTransformations.minimize(clause);
-		// Reorder to delay cartesian products
-		// IF REORDERED, NEGATIVE REDUCTION IS AFFECTED
-		//clause = ClauseTransformations.reorder(clause);
-		TimeKeeper.transformationTime += tw.time();
-		return clause;
-	}
-	
-	/*
-	 * Get a list of the N highest scoring clauses from a list of clauses, using the given evaluation function
-	 */
-	private List<ClauseInfo> getHighestScoring(List<ClauseInfo> clausesInfos, int beamWidth, Schema schema, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
-		List<ClauseInfo> bestClauses = new LinkedList<ClauseInfo>();
-		Double[] clausesScores = new Double[clausesInfos.size()];
-		
-		if (beamWidth >= clausesInfos.size()) {
-			// Return all clauses, order does not matter
-			bestClauses.addAll(clausesInfos);
-		} else {
-			// Use selection score, stopping when beamWidth is reached
-			for (int i = 0; i < beamWidth && i < clausesInfos.size() - 1; i++)
-	        {
-	            int index = i;
-	            for (int j = i + 1; j < clausesInfos.size(); j++) {
-	            	if (clausesScores[j] == null) {
-	            		double score = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, clausesInfos.get(j));
-	            		clausesScores[j] = score;
-	            	}
-	            	if (clausesScores[index] == null) {
-	            		double score = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, clausesInfos.get(index));
-	            		clausesScores[index] = score;
-	            	}
-	                if (clausesScores[j] > clausesScores[index]) {
-	                    index = j;
-	                }
-	            }
-	      
-	            // Switch positions for clauses and scores
-	            ClauseInfo betterClause = clausesInfos.get(index);
-	            Double betterClauseScore = clausesScores[index];
-	            clausesInfos.set(index, clausesInfos.get(i));
-	            clausesScores[index] = clausesScores[i];
-	            clausesInfos.set(i, betterClause);
-	            clausesScores[i] = betterClauseScore;
-	            
-	            bestClauses.add(betterClause);
-	        }
-		}
-        return bestClauses;
-    }
-	
-	/*
-	 * Select K random examples from the given relation
-	 */
-	private List<Tuple> selectRandomExamples(Relation posExamplesRelation, int sampleSize) {
-		List<Tuple> examples = new LinkedList<Tuple>();
-		Set<Integer> randomPositions = generateListOfRandomNumbers(this.coverageEngine.getAllPosExamples().size(), sampleSize);
-		for (Integer pos : randomPositions) {
-			examples.add(this.coverageEngine.getAllPosExamples().get(pos));
-		}
-		return examples;
-	}
-	
-	/*
-	 * Generate a list of random numbers of the given size
-	 */
-	private Set<Integer> generateListOfRandomNumbers(int max, int size) {
-		Set<Integer> generated = new TreeSet<Integer>();
-		if (size > max) {
-			for (int i = 0; i <= max; i++) {
-				generated.add(i);
-			}
-		} else {
-			while (generated.size() < size) {
-			    Integer next = randomGenerator.nextInt(max);
-			    generated.add(next);
-			}
-		}
-		return generated;
 	}
 		
 	/*
