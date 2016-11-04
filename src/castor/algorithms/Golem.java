@@ -271,6 +271,7 @@ public class Golem {
 		for (int i = 0; i < indexes1.size(); i++) {
 			for (int j = 0; j < indexes2.size(); j++) {
 				if (i != j) {
+					// Get random examples
 					Tuple example1 = remainingPosExamples.get(i);
 					Tuple example2 = remainingPosExamples.get(j);
 					
@@ -290,6 +291,37 @@ public class Golem {
 					if (newClauses.size() >= parameters.getBeam())
 						break;
 				}
+			}
+			
+			if (newClauses.size() >= parameters.getBeam())
+				break;
+		}
+		
+		return newClauses;
+	}
+	
+	private List<ClauseInfo> generateCandidateClausesFromClause(MyClause clause, Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
+		List<ClauseInfo> newClauses = new LinkedList<ClauseInfo>();
+		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
+		
+		// Generate random sequence of indexes to access examples
+		List<Integer> indexes = generateSequence(remainingPosExamples.size());
+		Collections.shuffle(indexes, randomGenerator);
+		
+		for (int i = 0; i < indexes.size(); i++) {
+			// Get random example
+			Tuple example = remainingPosExamples.get(i);
+			
+			// Saturate example
+			MyClause candidate = saturator.generateBottomClause(bottomClauseConstructionDAO, example, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+			
+			// Generalize
+			MyClause newClause = generalize(clause, candidate);
+			ClauseInfo newClauseInfo = new ClauseInfo(newClause, coverageEngine.getAllPosExamples().size(), coverageEngine.getAllNegExamples().size());
+			
+			// Add clause if it satisfies minimum conditions
+			if (candidateSatisfiesConditions(newClauseInfo, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation)) {
+				newClauses.add(newClauseInfo);
 			}
 			
 			if (newClauses.size() >= parameters.getBeam())
