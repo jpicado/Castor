@@ -8,7 +8,6 @@
  */
 package castor.algorithms;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -16,11 +15,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
@@ -169,16 +163,13 @@ public class CastorLearner {
 		List<ClauseInfo> definition = new LinkedList<ClauseInfo>();
 		
 		// Get all positive examples from database and keep them in memory
-		List<Tuple> remainingPosExamples = new LinkedList<Tuple>(this.coverageEngine.getAllPosExamples());
+		List<Tuple> remainingPosExamples = new LinkedList<Tuple>(coverageEngine.getAllPosExamples());
 		
 		while (remainingPosExamples.size() > 0) {
 			logger.info("Remaining uncovered examples: " + remainingPosExamples.size());
-
-			// First unseen positive example (pop)
-			Tuple example = remainingPosExamples.remove(0);
 			
 			// Compute best ARMG
-			ClauseInfo clauseInfo = beamSearchIteratedARMG(schema, example, modeH, modesB, remainingPosExamples, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, maxRecall, maxterms, sampleSize, beamWidth);
+			ClauseInfo clauseInfo = beamSearchIteratedARMG(schema, modeH, modesB, remainingPosExamples, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, maxRecall, maxterms, sampleSize, beamWidth);
 			
 			// Get new positive examples covered
 			// Adding 1 to count seed example
@@ -219,9 +210,9 @@ public class CastorLearner {
 					logger.debug("Before reduction:\n"+Formatter.prettyPrint(clauseInfo.getClause()));
 					
 					if (reductionMethod.equals(ReductionMethods.NEGATIVE_REDUCTION_CONSISTENCY)) {
-						clauseInfo.setMoreGeneralClause(CastorReducer.negativeReduce(genericDAO, this.coverageEngine, clauseInfo.getClause(), schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, CastorReducer.MEASURE.CONSISTENCY, evaluator));
+						clauseInfo.setMoreGeneralClause(CastorReducer.negativeReduce(genericDAO, coverageEngine, clauseInfo.getClause(), schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, CastorReducer.MEASURE.CONSISTENCY, evaluator));
 					} else if (reductionMethod.equals(ReductionMethods.NEGATIVE_REDUCTION_PRECISION)) {
-						clauseInfo.setMoreGeneralClause(CastorReducer.negativeReduce(genericDAO, this.coverageEngine, clauseInfo.getClause(), schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, CastorReducer.MEASURE.PRECISION, evaluator));
+						clauseInfo.setMoreGeneralClause(CastorReducer.negativeReduce(genericDAO, coverageEngine, clauseInfo.getClause(), schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, CastorReducer.MEASURE.PRECISION, evaluator));
 					}
 					
 					double afterReduceScore = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, clauseInfo) + 1;
@@ -307,8 +298,11 @@ public class CastorLearner {
 	/*
 	 * Perform generalization using beam search + ARMG
 	 */
-	private ClauseInfo beamSearchIteratedARMG(Schema schema, Tuple exampleTuple, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth) {
+	private ClauseInfo beamSearchIteratedARMG(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth) {
 		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
+		
+		// First unseen positive example (pop)
+		Tuple exampleTuple = remainingPosExamples.remove(0);
 		
 		// Generate bottom clause
 		TimeWatch tw = TimeWatch.start();
@@ -400,135 +394,6 @@ public class CastorLearner {
 		
 		return bestClauseInfo;
 	}
-	
-	private ClauseInfo beamSearchIteratedARMG_Parallel(Schema schema, Tuple exampleTuple, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth, ClauseEvaluator evaluator) {
-		TimeWatch watch;
-		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
-		
-		// Generate bottom clause
-		watch = TimeWatch.start();
-		logger.info("Generating bottom clause for "+exampleTuple.toString()+"...");
-		MyClause bottomClause = saturator.generateBottomClause(bottomClauseConstructionDAO, exampleTuple, spNameTemplate, iterations, recall, maxterms);
-		logger.debug("Bottom clause: \n"+ Formatter.prettyPrint(bottomClause));
-		logger.info("Literals: " + bottomClause.getNumberLiterals());
-		logger.info("Saturation time: " + watch.time(TimeUnit.MILLISECONDS) + " milliseconds.");
-		
-		// MINIMIZATION CAN BE USEFUL WHEN THERE ARE NO ISSUES IF LITERALS WITH VARIABLES ARE REMOVED BECAUSE THERE ARE LITERALS WITH CONSTANTS.
-		// IF LITERALS WITH VARIABLES ARE IMPORTANT (E.G. TO BE MORE GENERAL), MINIMIZATION SHOULD BE TURNED OFF.
-		// Minimize bottom clause
-		if (parameters.isMinimizeBottomClause()) {
-			logger.info("Transforming bottom clause...");
-			bottomClause = this.transform(schema, bottomClause);
-			logger.info("Literals of transformed clause: " + bottomClause.getNumberLiterals());
-			logger.debug("Transformed bottom clause:\n"+ Formatter.prettyPrint(bottomClause));
-		}
-		
-		// Reorder bottom clause
-		logger.info("Reordering bottom clause...");
-		bottomClause = this.reorderAccordingToINDs(schema, bottomClause);
-		
-		logger.info("Generalizing clause...");
-		
-		List<ClauseInfo> bestARMGs = new LinkedList<ClauseInfo>();
-		bestARMGs.add(new ClauseInfo(bottomClause, this.coverageEngine.getAllPosExamples().size(), this.coverageEngine.getAllNegExamples().size()));
-		
-		boolean createdNewARMGS = true;
-		int iters = 0;
-		// Add 1 to scores to count seed example, which is not in remainingPosExamples
-		double clauseScore = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, bestARMGs.get(0)) + 1;
-		logger.info("Best armg at iter "+iters+" - NumLits:"+bestARMGs.get(0).getClause().getNumberLiterals()+", Score:"+clauseScore);
-		
-		// Generalize only if there are more examples
-		if (remainingPosExamples.size() > 0) {
-			while(createdNewARMGS) {
-				iters++;
-				createdNewARMGS = false;
-				
-				// Compute best score of clauses in bestARMGs
-				double bestScore = Double.NEGATIVE_INFINITY;
-				for (ClauseInfo clauseInfo : bestARMGs) {
-					double score = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, clauseInfo);
-					bestScore = Math.max(bestScore, score);
-				}
-				
-				// Select K random examples
-				List<Tuple> sample = selectRandomExamples(posExamplesRelation, sampleSize);
-				
-				// Create list of tasks
-				List<Callable<Result>> tasks = new ArrayList<Callable<Result>>();
-				
-				// Generalize each clause in ARMG using examples in sample
-				List<ClauseInfo> newARMGs = new LinkedList<ClauseInfo>();
-				for (ClauseInfo clauseInfo : bestARMGs) {
-					for (Tuple tuple : sample) {
-						Callable<Result> callable = new Callable<Result>() {
-					        @Override
-					        public Result call() throws Exception {
-					        	ClauseInfo newClauseInfo = armg(schema, clauseInfo, tuple, posExamplesRelation);
-								double score = computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, newClauseInfo);
-					            return new Result(newClauseInfo, score);
-					        }
-					    };
-					    tasks.add(callable);
-					}
-				}
-				
-				// Perform all tasks in parallel
-				try {
-					//TODO number of threads should be set with parameters
-					ExecutorService executor = Executors.newFixedThreadPool(2);
-					List<Future<Result>> results;
-					results = executor.invokeAll(tasks);
-					executor.shutdown();
-			    	  
-					// Process results
-					for (Future<Result> futureResult : results) {              
-						if (futureResult.get().score > bestScore) {
-							newARMGs.add(futureResult.get().clauseInfo);
-						}
-					}
-				} catch (InterruptedException | ExecutionException e) {
-					throw new RuntimeException(e);
-				}
-				
-				if (!newARMGs.isEmpty()) {
-					// Keep highest scoring N clauses from newARMGs
-					bestARMGs.clear();
-					bestARMGs.addAll(this.getHighestScoring(newARMGs, beamWidth, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation));
-					createdNewARMGS = true;
-				}
-				
-				clauseScore = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, bestARMGs.get(0)) + 1;
-				logger.info("Best armg at iter "+iters+" - NumLits:"+bestARMGs.get(0).getClause().getNumberLiterals()+", Score:"+clauseScore);
-			}
-		}
-		
-		// Get highest scoring clause from bestARMGs
-		ClauseInfo bestClauseInfo = null;
-		double bestScore = Double.NEGATIVE_INFINITY;
-		for (ClauseInfo clauseInfo : bestARMGs) {
-			double score = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, clauseInfo);
-			if (score > bestScore) {
-				bestClauseInfo = clauseInfo;
-				bestScore = score;
-			}
-		}
-		
-		return bestClauseInfo;
-	}
-	
-	/*
-	 * Class used for parallel processing in beam search
-	 */
-	private static class Result {
-    	private final ClauseInfo clauseInfo;
-        private final double score;
-        
-        public Result(ClauseInfo clauseInfo, double score) {
-            this.clauseInfo = clauseInfo;
-            this.score = score;
-        }
-    }
 	
 	/*
 	 * Reorder clause so that all literals in same inclusion chain are together

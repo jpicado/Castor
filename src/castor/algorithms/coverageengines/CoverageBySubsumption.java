@@ -56,8 +56,8 @@ public class CoverageBySubsumption implements CoverageEngine {
 		
 		// Generate ground bottom clause for all examples, create clauses for each example, add to lists
 		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
-		List<Clause> posExamples = new LinkedList<>();
-		List<Clause> negExamples = new LinkedList<>();
+		List<Clause> posExamples = new LinkedList<Clause>();
+		List<Clause> negExamples = new LinkedList<Clause>();
 		int counter = 0;
 		for (Tuple exampleTuple : posExamplesTuples) {
 			try {

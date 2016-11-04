@@ -1,9 +1,18 @@
+/*
+ * CastorLearner: Castor learning algorithm. Similar to ProGolem, but uses inclusion dependencies and some optimizations.
+ * -Uses inclusion dependencies to be schema independent.
+ * -Optimization:
+ * --Reuse coverage testing: uses BottomUpEvaluator.
+ * --If run on VoltDB, uses bottom-clause construction inside a stored procedure.
+ * --Minimizes bottom-clauses.
+ */
 package castor.algorithms;
 
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
@@ -12,15 +21,18 @@ import java.util.concurrent.TimeUnit;
 import org.apache.log4j.Logger;
 
 import aima.core.logic.fol.kb.data.Literal;
+import aima.core.logic.fol.parsing.ast.AtomicSentence;
+import aima.core.logic.fol.parsing.ast.Predicate;
 import aima.core.logic.fol.parsing.ast.Term;
-import castor.algorithms.bottomclause.BottomClauseGeneratorOriginalAlgorithm;
+import aima.core.logic.fol.parsing.ast.Variable;
+import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
+import castor.algorithms.clauseevaluation.BottomUpEvaluator;
 import castor.algorithms.clauseevaluation.ClauseEvaluator;
 import castor.algorithms.clauseevaluation.EvaluationFunctions;
-import castor.algorithms.clauseevaluation.GenericEvaluator;
 import castor.algorithms.coverageengines.CoverageEngine;
 import castor.algorithms.transformations.ClauseTransformations;
-import castor.algorithms.transformations.Reducer;
-import castor.algorithms.transformations.ReductionMethods;
+import castor.algorithms.transformations.DataDependenciesUtils;
+import castor.db.dataaccess.BottomClauseConstructionDAO;
 import castor.db.dataaccess.GenericDAO;
 import castor.hypotheses.ClauseInfo;
 import castor.hypotheses.MyClause;
@@ -28,7 +40,9 @@ import castor.language.Mode;
 import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
+import castor.settings.DataModel;
 import castor.settings.Parameters;
+import castor.utils.Commons;
 import castor.utils.Formatter;
 import castor.utils.TimeKeeper;
 import castor.utils.TimeWatch;
@@ -39,17 +53,25 @@ public class Golem {
 	private static Logger logger = Logger.getLogger(Golem.class);
 	
 	private Parameters parameters;
+	private DataModel dataModel;
 	private GenericDAO genericDAO;
+	private BottomClauseConstructionDAO bottomClauseConstructionDAO;
 	private CoverageEngine coverageEngine;
 	private Random randomGenerator;
 	private ClauseEvaluator evaluator;
 
-	public Golem(GenericDAO genericDAO, CoverageEngine coverageEngine, Parameters parameters) {
+	public Golem(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseContructionDAO, CoverageEngine coverageEngine, DataModel dataModel, Parameters parameters) {
+		this.dataModel = dataModel;
 		this.parameters = parameters;
 		this.genericDAO = genericDAO;
+		this.bottomClauseConstructionDAO = bottomClauseContructionDAO;
 		this.coverageEngine = coverageEngine;
 		this.randomGenerator = new Random(parameters.getRandomSeed());
-		this.evaluator = new GenericEvaluator();
+		this.evaluator = new BottomUpEvaluator();
+	}
+	
+	public Parameters getParameters() {
+		return parameters;
 	}
 	
 	/*
@@ -146,21 +168,18 @@ public class Golem {
 		List<ClauseInfo> definition = new LinkedList<ClauseInfo>();
 		
 		// Get all positive examples from database and keep them in memory
-		List<Tuple> remainingPosExamples = new LinkedList<Tuple>(this.coverageEngine.getAllPosExamples());
+		List<Tuple> remainingPosExamples = new LinkedList<Tuple>(coverageEngine.getAllPosExamples());
 		
 		while (remainingPosExamples.size() > 0) {
 			logger.info("Remaining uncovered examples: " + remainingPosExamples.size());
-
-			// First unseen positive example (pop)
-			Tuple example = remainingPosExamples.remove(0);
 			
 			// Compute best ARMG
-			ClauseInfo clauseInfo = this.beamSearchIteratedARMG(schema, example, modeH, modesB, remainingPosExamples, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, maxRecall, maxterms, sampleSize, beamWidth);
+			ClauseInfo clauseInfo = beamSearchIteratedARMG(schema, modeH, modesB, remainingPosExamples, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, maxRecall, maxterms, sampleSize, beamWidth);
 			
 			// Get new positive examples covered
 			// Adding 1 to count seed example
 			int newPosTotal = remainingPosExamples.size() + 1;
-			int newPosCoveredCount = this.coverageEngine.countCoveredExamplesFromList(genericDAO, schema, clauseInfo, remainingPosExamples, posExamplesRelation, true) + 1;
+			int newPosCoveredCount = coverageEngine.countCoveredExamplesFromList(genericDAO, schema, clauseInfo, remainingPosExamples, posExamplesRelation, true) + 1;
 			
 			// Get total positive examples covered
 			int totalPos = coverageEngine.getAllPosExamples().size();
@@ -183,71 +202,24 @@ public class Golem {
 			double f1 = EvaluationFunctions.score(EvaluationFunctions.FUNCTION.F1, truePositive, falsePositive, trueNegative, falseNegative);
 			// Recall over all examples
 			double recall = EvaluationFunctions.score(EvaluationFunctions.FUNCTION.RECALL, truePositiveAll, falsePositiveAll, trueNegative, falseNegative);
+		
+			// Adding 1 to count seed example
+			double score = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, clauseInfo) + 1;
+		
+			logger.info("Stats: Score=" + score + ", Precision(new)="+precision+", F1(new)="+f1+", Recall(all)="+recall);
 			
-			logger.info("Stats before reduction: Precision(new)="+precision+", F1(new)="+f1+", Recall(all)="+recall);
-			
-			// Reduce clause only if it satisfies conditions
 			if (satisfiesConditions(truePositive, falsePositive, trueNegative, falseNegative, newPosCoveredCount, precision, recall)) {
-				if (!reductionMethod.equals(ReductionMethods.NEGATIVE_REDUCTION_NONE)) {
-					// Compute negative based reduction
-					// Add 1 to scores to count seed example, which is not in remainingPosExamples
-					double beforeReduceScore = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, clauseInfo) + 1;
-					logger.info("Before reduction - NumLits:"+clauseInfo.getClause().getNumberLiterals()+", Score:"+beforeReduceScore);
-					logger.debug("Before reduction:\n"+Formatter.prettyPrint(clauseInfo.getClause()));
-					
-					if (reductionMethod.equals(ReductionMethods.NEGATIVE_REDUCTION_CONSISTENCY)) {
-						clauseInfo.setMoreGeneralClause(Reducer.negativeReduce(genericDAO, this.coverageEngine, clauseInfo.getClause(), schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, Reducer.MEASURE.CONSISTENCY, evaluator));
-					} else if (reductionMethod.equals(ReductionMethods.NEGATIVE_REDUCTION_PRECISION)) {
-						clauseInfo.setMoreGeneralClause(Reducer.negativeReduce(genericDAO, this.coverageEngine, clauseInfo.getClause(), schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, Reducer.MEASURE.PRECISION, evaluator));
-					}
-					
-					double afterReduceScore = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, clauseInfo) + 1;
-					logger.info("After reduction - NumLits:"+clauseInfo.getClause().getNumberLiterals()+", Score:"+afterReduceScore);
-					logger.debug("After reduction:\n"+Formatter.prettyPrint(clauseInfo.getClause()));
+				// Add clause to definition
+				definition.add(clauseInfo);
+				logger.info("New clause added to theory:\n" + Formatter.prettyPrint(clauseInfo.getClause()));
+				logger.info("New pos cover = " + newPosCoveredCount + ", Total pos cover = " + posCoveredCount + ", Total neg cover = " + negCoveredCount);
+				
+				// Remove covered positive examples
+				List<Tuple> coveredExamples = this.coverageEngine.coveredExamplesTuplesFromRelation(genericDAO, schema, clauseInfo, posExamplesRelation, true);
+				for (Tuple coveredExample : coveredExamples) {
+					remainingPosExamples.remove(coveredExample);
 				}
-				
-				// Final minimization to remove redundant literals
-				clauseInfo.setMoreGeneralClause(this.transform(schema, clauseInfo.getClause()));
-				logger.info("After minimization - NumLits:"+clauseInfo.getClause().getNumberLiterals());
-				logger.debug("After minimization:\n"+ Formatter.prettyPrint(clauseInfo.getClause()));
-				
-				// Get new positive examples covered
-				// Adding 1 to count seed example
-				newPosCoveredCount = coverageEngine.countCoveredExamplesFromList(genericDAO, schema, clauseInfo, remainingPosExamples, posExamplesRelation, true) + 1;
-				posCoveredCount = coverageEngine.countCoveredExamplesFromRelation(genericDAO, schema, clauseInfo, posExamplesRelation, true);
-
-				// Compute statistics
-				truePositive = newPosCoveredCount;
-				falsePositive = negCoveredCount;
-				trueNegative = totalNeg - negCoveredCount;
-				falseNegative = newPosTotal - newPosCoveredCount;
-				truePositiveAll = posCoveredCount;
-				falsePositiveAll = totalPos = posCoveredCount;
-				
-				// Adding 1 to count seed example
-				double score = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, clauseInfo) + 1;
-				
-				// Precision and F1 over new (uncovered) examples
-				precision = EvaluationFunctions.score(EvaluationFunctions.FUNCTION.PRECISION, truePositive, falsePositive, trueNegative, falseNegative);
-				f1 = EvaluationFunctions.score(EvaluationFunctions.FUNCTION.F1, truePositive, falsePositive, trueNegative, falseNegative);
-				// Recall over all examples
-				recall = EvaluationFunctions.score(EvaluationFunctions.FUNCTION.RECALL, truePositiveAll, falsePositiveAll, trueNegative, falseNegative);
-				
-				logger.info("Stats: Score=" + score + ", Precision(new)="+precision+", F1(new)="+f1+", Recall(all)="+recall);
-				
-				if (satisfiesConditions(truePositive, falsePositive, trueNegative, falseNegative, newPosCoveredCount, precision, recall)) {
-					// Add clause to definition
-					definition.add(clauseInfo);
-					logger.info("New clause added to theory:\n" + Formatter.prettyPrint(clauseInfo.getClause()));
-					logger.info("New pos cover = " + newPosCoveredCount + ", Total pos cover = " + posCoveredCount + ", Total neg cover = " + negCoveredCount);
-					
-					// Remove covered positive examples
-					List<Tuple> coveredExamples = this.coverageEngine.coveredExamplesTuplesFromRelation(genericDAO, schema, clauseInfo, posExamplesRelation, true);
-					for (Tuple coveredExample : coveredExamples) {
-						remainingPosExamples.remove(coveredExample);
-					}
-				}
-			}// end condition
+			}
 		}
 		
 		return definition;
@@ -281,16 +253,146 @@ public class Golem {
 		return satisfiesConditions;
 	}
 	
+	private ClauseInfo learnClause(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth) {
+		
+		
+		
+		return null;
+	}
+	
+	private List<ClauseInfo> generateCandidateClauses(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples) {
+		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
+		
+		for (int i = 0; i < remainingPosExamples.size(); i++) {
+			for (int j = 0; j < remainingPosExamples.size(); j++) {
+				if (i != j) {
+					
+				}
+			}
+		}
+		
+		int foundCandidates = 0;
+		while(foundCandidates < 5) {
+			int exampleIndex1 = randomGenerator.nextInt(remainingPosExamples.size());
+			int exampleIndex2 = randomGenerator.nextInt(remainingPosExamples.size());
+			
+			if (exampleIndex1 != exampleIndex2) {
+				Tuple example1 = remainingPosExamples.get(exampleIndex1);
+				Tuple example2 = remainingPosExamples.get(exampleIndex2);
+				
+				MyClause clause1 = saturator.generateBottomClause(bottomClauseConstructionDAO, example1, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+				MyClause clause2 = saturator.generateBottomClause(bottomClauseConstructionDAO, example2, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+				
+				MyClause lgg = generalize(clause1, clause2);
+			}
+		}
+		
+		
+		return null;
+	}
+	
+	private MyClause generalize(MyClause clause1, MyClause clause2) {
+		MyClause clause = lgg(clause1, clause2);
+		clause = ClauseTransformations.minimize(clause);
+		return null;
+	}
+
+	private MyClause lgg(MyClause clause1, MyClause clause2) {
+		List<Literal> literals = new LinkedList<Literal>();
+		
+		Map<String, String> variableMap = new HashMap<String, String>();
+		for (Literal literal1 : clause1.getLiterals()) {
+			for (Literal literal2 : clause2.getLiterals()) {
+				Literal newLiteral = lgg(literal1, literal2, variableMap);
+				if (newLiteral != null)
+					literals.add(newLiteral);
+			}
+		}
+		MyClause newClause = new MyClause(literals);
+		return newClause;
+	}
+
+	private Literal lgg(Literal literal1, Literal literal2, Map<String, String> variableMap) {
+		Literal literal;
+		if ( (literal1.isPositiveLiteral() && literal2.isNegativeLiteral()) || (literal1.isNegativeLiteral() && literal2.isPositiveLiteral()) ) {
+			literal = null;
+		} else {
+			AtomicSentence atom = lgg(literal1.getAtomicSentence(), literal2.getAtomicSentence(), variableMap);
+			if (atom == null) {
+				literal = null;
+			} else {
+				boolean isNegative = false;
+				if (literal1.isNegativeLiteral())
+					isNegative = true;
+				literal = new Literal(atom, isNegative);
+			}
+		}
+		return literal;
+	}
+
+	private AtomicSentence lgg(AtomicSentence atom1, AtomicSentence atom2, Map<String, String> variableMap) {
+		AtomicSentence atom;
+		if (!atom1.getSymbolicName().equals(atom2.getSymbolicName())) {
+			// Undefined
+			atom = null;
+		} else {
+			List<Term> terms = new ArrayList<Term>();
+			for (int i=0; i<atom1.getArgs().size(); i++) {
+				Term term = lgg(atom1.getArgs().get(i), atom2.getArgs().get(i), variableMap);
+				terms.add(term);
+			}
+			atom = new Predicate(atom1.getSymbolicName(), terms);
+		}
+		return atom;
+	}
+
+	private Term lgg(Term term1, Term term2, Map<String, String> variableMap) {
+		Term term;
+		if (term1.equals(term2)) {
+			term = term1;
+		} else {
+			// Compute key by ordering names
+			String key;
+			if (!Commons.isVariable(term1) && !Commons.isVariable(term2)) {
+				// If both are constants, use order in which they're coming
+				key = term1.getSymbolicName()+"_"+term2.getSymbolicName();
+			} else {
+				// If two vars, or constant and var, set lexicographic order
+				if (term1.getSymbolicName().compareTo(term2.getSymbolicName()) < 0) {
+					key = term1.getSymbolicName()+"_"+term2.getSymbolicName(); 
+				} else {
+					key = term2.getSymbolicName()+"_"+term1.getSymbolicName();
+				}
+			}
+			// Check if variable already exists or create new one	
+			String newTermSymbol;
+			if (variableMap.containsKey(key)) {
+				newTermSymbol = variableMap.get(key);
+			} else {
+				//newTermSymbol = "v_"+key;
+				newTermSymbol = "v_"+variableCounter;
+				variableCounter++;
+				variableMap.put(key, newTermSymbol);
+			}
+			
+			term = new Variable(newTermSymbol);
+		}
+		return term;
+	}
+
 	/*
 	 * Perform generalization using beam search + ARMG
 	 */
-	private ClauseInfo beamSearchIteratedARMG(Schema schema, Tuple exampleTuple, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth) {
-		BottomClauseGeneratorOriginalAlgorithm saturator = new BottomClauseGeneratorOriginalAlgorithm();
+	private ClauseInfo beamSearchIteratedARMG(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth) {
+		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
+		
+		// First unseen positive example (pop)
+		Tuple exampleTuple = remainingPosExamples.remove(0);
 		
 		// Generate bottom clause
 		TimeWatch tw = TimeWatch.start();
 		logger.info("Generating bottom clause for "+exampleTuple.getValues().toString()+"...");
-		MyClause bottomClause = saturator.generateBottomClause(genericDAO, exampleTuple, schema, modeH, modesB, iterations, recall);
+		MyClause bottomClause = saturator.generateBottomClause(bottomClauseConstructionDAO, exampleTuple, spNameTemplate, iterations, recall, maxterms);
 		logger.debug("Bottom clause: \n"+ Formatter.prettyPrint(bottomClause));
 		logger.info("Literals: " + bottomClause.getNumberLiterals());
 		logger.info("Saturation time: " + tw.time(TimeUnit.MILLISECONDS) + " milliseconds.");
@@ -304,6 +406,11 @@ public class Golem {
 			logger.info("Literals of transformed clause: " + bottomClause.getNumberLiterals());
 			logger.debug("Transformed bottom clause:\n"+ Formatter.prettyPrint(bottomClause));
 		}
+		
+		// Reorder bottom clause
+		// NOTE: this is needed for some datasets (e.g. HIV-small, fold 2)
+		logger.info("Reordering bottom clause...");
+		bottomClause = this.reorderAccordingToINDs(schema, bottomClause);
 		
 		logger.info("Generalizing clause...");
 		
@@ -374,12 +481,36 @@ public class Golem {
 	}
 	
 	/*
+	 * Reorder clause so that all literals in same inclusion chain are together
+	 */
+	private MyClause reorderAccordingToINDs(Schema schema, MyClause clause) {
+		List<Literal> newLiterals = new LinkedList<Literal>();
+
+		for (Literal literal : clause.getNegativeLiterals()) {	
+			if (!newLiterals.contains(literal)) {
+				List<Literal> chainLiterals = DataDependenciesUtils.findLiteralsInInclusionChain(schema, clause, literal);
+				
+				// Add all literals
+				newLiterals.addAll(chainLiterals);
+			}			
+		}
+		
+		// Add positive literals and create clause
+		newLiterals.addAll(clause.getPositiveLiterals());
+		MyClause newClause = new MyClause(newLiterals);
+		return newClause;
+	}
+	
+	/*
 	 * Transform a clause: minimization, reordering, etc.
 	 */
 	private MyClause transform(Schema schema, MyClause clause) {
 		TimeWatch tw = TimeWatch.start();
 		// Minimize using theta-transformation 
 		clause = ClauseTransformations.minimize(clause);
+		// Reorder to delay cartesian products
+		// IF REORDERED, NEGATIVE REDUCTION IS AFFECTED
+		//clause = ClauseTransformations.reorder(clause);
 		TimeKeeper.transformationTime += tw.time();
 		return clause;
 	}
@@ -456,126 +587,7 @@ public class Golem {
 		}
 		return generated;
 	}
-	
-	/*
-	 * ARMG construction algorithm
-	 * Assumes that the example tuple corresponds to a relation that matches the head predicate of the clause
-	 */
-	private ClauseInfo armg(Schema schema, ClauseInfo clauseInfo, Tuple exampleTuple, Relation posExamplesRelation) {
-		ClauseInfo newClauseInfo = new ClauseInfo(clauseInfo.getClause(), clauseInfo.getPosExamplesCovered().clone(), clauseInfo.getNegExamplesCovered().clone(), clauseInfo.getPosExamplesEvaluated().clone(), clauseInfo.getNegExamplesEvaluated().clone());
-		while(!this.entails(genericDAO, coverageEngine, schema, newClauseInfo, exampleTuple, posExamplesRelation)) {
-			// If body is empty and still example wasn't entailed, it means that head was restrictive (e.g. same variable for multiple attributes)
-			if (newClauseInfo.getClause().getNumberNegativeLiterals() == 0) 
-				break;
-			int blockingLiteralPosition = findFirstBlockingLiteral(schema, newClauseInfo, exampleTuple, posExamplesRelation);
-			
-			MyClause newClause = removeLiteralAtPosition(newClauseInfo.getClause(), blockingLiteralPosition);
-			newClause = removeNotHeadConnectedLiterals(newClause);
-			
-			// Set more general clause (reuse information about already covered examples)
-			newClauseInfo.setMoreGeneralClause(newClause);
-		}
-		return newClauseInfo;
-	}
-	
-	/*
-	 * Given clause C, first remove literal at specified position, then remove literals that are not head-connected
-	 */
-	private MyClause removeLiteralAtPosition(MyClause clause, int position) {
-		// MyClause's list of literals is unmodifiable, so must create a new list
-		List<Literal> newClauseLiterals = new LinkedList<Literal>();
-		newClauseLiterals.addAll(clause.getNegativeLiterals());
 		
-		// Remove negative literal at position
-		newClauseLiterals.remove(position);
-		newClauseLiterals.addAll(clause.getPositiveLiterals());
-		MyClause newClause = new MyClause(newClauseLiterals);
-		
-		return newClause;
-	}
-	
-	/*
-	 * Remove literals that are not head-conneted from clause
-	 */
-	private MyClause removeNotHeadConnectedLiterals(MyClause clause) {
-		Set<String> seenVariables = new HashSet<String>();
-		
-		// Add head variables to seen variables
-		for (Term term : clause.getPositiveLiterals().get(0).getAtomicSentence().getArgs()) {
-			seenVariables.add(term.getSymbolicName());
-		}
-		
-		// MyClause's list of literals is unmodifiable, so must create a new list
-		List<Literal> newClauseLiterals = new LinkedList<Literal>();
-		newClauseLiterals.addAll(clause.getNegativeLiterals());
-		
-		// Iterate through negative literals and remove not head-connected from list
-		Iterator<Literal> iterator = newClauseLiterals.iterator();
-		while (iterator.hasNext()) {
-		   Literal literal = iterator.next();
-
-		   boolean headConnected = false;
-		   Set<String> literalVariables = new HashSet<String>();
-		   for (Term term : literal.getAtomicSentence().getArgs()) {
-			   literalVariables.add(term.getSymbolicName());
-			   if (seenVariables.contains(term.getSymbolicName())) {
-				   // Literal is head-connected
-				   headConnected = true;
-			   }
-		   }
-		   
-		   if (headConnected) {
-			   // Literal is head-connected, so add its variables to seen variables
-			   seenVariables.addAll(literalVariables);
-		   } else {
-			   // Remove literal because it is not head-connected
-			   iterator.remove();
-		   }
-		}
-		
-		newClauseLiterals.addAll(clause.getPositiveLiterals());
-		MyClause newClause = new MyClause(newClauseLiterals);
-		
-		return newClause;
-	}
-	
-	/*
-	 * Given bottom clause C and example e, find position of first blocking literal of C w.r.t. e
-	 */
-	private int findFirstBlockingLiteral(Schema schema, ClauseInfo clauseInfo, Tuple exampleTuple, Relation posExamplesRelation) {
-		int lowerbound = 0;
-		int upperbound = clauseInfo.getClause().getNumberNegativeLiterals() - 1;
-		
-		boolean[] originalPosExamplesCovered = clauseInfo.getPosExamplesCovered();
-		boolean[] originalNegExamplesCovered = clauseInfo.getNegExamplesCovered();
-		
-		while(lowerbound != upperbound) {
-			int n = (lowerbound + upperbound) / 2;
-			
-			// Create new clause with first n body literals from clause
-			List<Literal> literals = new LinkedList<Literal>();
-			literals.add(clauseInfo.getClause().getPositiveLiterals().get(0));
-			for (int i = 0; i <= n; i++) {
-				literals.add((clauseInfo.getClause().getNegativeLiterals().get(i)));
-			}
-			MyClause newClause = new MyClause(literals);
-			ClauseInfo newClauseInfo = new ClauseInfo(
-					newClause, 
-					originalPosExamplesCovered.clone(), 
-					originalNegExamplesCovered.clone(),
-					new boolean[originalPosExamplesCovered.length],
-					new boolean[originalNegExamplesCovered.length]);
-			
-			if (this.entails(genericDAO, coverageEngine, schema, newClauseInfo, exampleTuple, posExamplesRelation)) {
-				lowerbound = n + 1;
-			} else {
-				upperbound = n;
-			}			
-		}
-		
-		return lowerbound;
-	}
-	
 	/*
 	 * Compute score of a clause
 	 */

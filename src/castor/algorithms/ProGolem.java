@@ -154,21 +154,18 @@ public class ProGolem {
 		List<ClauseInfo> definition = new LinkedList<ClauseInfo>();
 		
 		// Get all positive examples from database and keep them in memory
-		List<Tuple> remainingPosExamples = new LinkedList<Tuple>(this.coverageEngine.getAllPosExamples());
+		List<Tuple> remainingPosExamples = new LinkedList<Tuple>(coverageEngine.getAllPosExamples());
 		
 		while (remainingPosExamples.size() > 0) {
 			logger.info("Remaining uncovered examples: " + remainingPosExamples.size());
-
-			// First unseen positive example (pop)
-			Tuple example = remainingPosExamples.remove(0);
 			
 			// Compute best ARMG
-			ClauseInfo clauseInfo = this.beamSearchIteratedARMG(schema, example, modeH, modesB, remainingPosExamples, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, maxRecall, maxterms, sampleSize, beamWidth);
+			ClauseInfo clauseInfo = beamSearchIteratedARMG(schema, modeH, modesB, remainingPosExamples, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, maxRecall, maxterms, sampleSize, beamWidth);
 			
 			// Get new positive examples covered
 			// Adding 1 to count seed example
 			int newPosTotal = remainingPosExamples.size() + 1;
-			int newPosCoveredCount = this.coverageEngine.countCoveredExamplesFromList(genericDAO, schema, clauseInfo, remainingPosExamples, posExamplesRelation, true) + 1;
+			int newPosCoveredCount = coverageEngine.countCoveredExamplesFromList(genericDAO, schema, clauseInfo, remainingPosExamples, posExamplesRelation, true) + 1;
 			
 			// Get total positive examples covered
 			int totalPos = coverageEngine.getAllPosExamples().size();
@@ -292,8 +289,11 @@ public class ProGolem {
 	/*
 	 * Perform generalization using beam search + ARMG
 	 */
-	private ClauseInfo beamSearchIteratedARMG(Schema schema, Tuple exampleTuple, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth) {
+	private ClauseInfo beamSearchIteratedARMG(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth) {
 		BottomClauseGeneratorOriginalAlgorithm saturator = new BottomClauseGeneratorOriginalAlgorithm();
+		
+		// First unseen positive example (pop)
+		Tuple exampleTuple = remainingPosExamples.remove(0);
 		
 		// Generate bottom clause
 		TimeWatch tw = TimeWatch.start();

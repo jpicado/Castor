@@ -1,5 +1,7 @@
 package castor.utils;
 
+import castor.hypotheses.MyClause;
+import aima.core.logic.fol.kb.data.Literal;
 import aima.core.logic.fol.parsing.ast.Term;
 
 public class Commons {
@@ -40,5 +42,22 @@ public class Commons {
 	 */
 	public static String newAlias(int tableCounter) {
 		return ALIAS_PREFIX + tableCounter;
+	}
+	
+	/*
+	 * Gets the maximum value of any variable in the clause
+	 */
+	public static int getMaxVarValue(MyClause clause) {
+		int max = Integer.MIN_VALUE;
+		
+		for (Literal literal : clause.getLiterals()) {
+			for (Term term : literal.getAtomicSentence().getArgs()) {
+				if (Commons.isVariable(term.getSymbolicName())) {
+					int value = Integer.parseInt(term.getSymbolicName().replace(Commons.VARIABLE_PREFIX, ""));
+					max = Math.max(max, value);
+				}
+			}
+		}
+		return max;
 	}
 }

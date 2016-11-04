@@ -31,7 +31,7 @@ import com.google_voltpatches.common.collect.Sets;
 
 public class CastorReducer {
 	
-	public enum MEASURE {
+	public static enum MEASURE {
 		CONSISTENCY,
 		PRECISION
 	}
@@ -161,7 +161,7 @@ public class CastorReducer {
 			
 			// Get maximum value of variable and; add 1 to name new variable
 			// Will be used to create new variables
-			int varCounter = CastorReducer.getMaxVarValue(clause) + 1;
+			int varCounter = Commons.getMaxVarValue(clause) + 1;
 			// Keep hash map from constants to variable name
 			Map<String, String> hash = new HashMap<String, String>();
 			
@@ -320,23 +320,6 @@ public class CastorReducer {
 		}
 		
 		return bestPosition;
-	}
-	
-	/*
-	 * Gets the maximum value of any variable in the clause
-	 */
-	private static int getMaxVarValue(MyClause clause) {
-		int max = Integer.MIN_VALUE;
-		
-		for (Literal literal : clause.getLiterals()) {
-			for (Term term : literal.getAtomicSentence().getArgs()) {
-				if (Commons.isVariable(term.getSymbolicName())) {
-					int value = Integer.parseInt(term.getSymbolicName().replace(Commons.VARIABLE_PREFIX, ""));
-					max = Math.max(max, value);
-				}
-			}
-		}
-		return max;
 	}
 	
 	/*

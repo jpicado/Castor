@@ -80,8 +80,8 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 		
 		// Generate ground bottom clause for all examples, create clauses for each example, add to lists
 		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
-		List<Clause> posExamples = new LinkedList<>();
-		List<Clause> negExamples = new LinkedList<>();
+		List<Clause> posExamples = new LinkedList<Clause>();
+		List<Clause> negExamples = new LinkedList<Clause>();
 		int counter = 0;
 		for (Tuple exampleTuple : posExamplesTuples) {
 			try {
@@ -136,7 +136,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 				end = posExamples.size();
 			}
 			// Create list of examples for current matching
-			List<Clause> examplesForMatching = new LinkedList<>();
+			List<Clause> examplesForMatching = new LinkedList<Clause>();
 			for (int j = start; j < end; j++) {
 				examplesForMatching.add(posExamples.get(j));
 			}
@@ -153,7 +153,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 				end = negExamples.size();
 			}
 			// Create list of examples for current matching
-			List<Clause> examplesForMatching = new LinkedList<>();
+			List<Clause> examplesForMatching = new LinkedList<Clause>();
 			for (int j = start; j < end; j++) {
 				examplesForMatching.add(negExamples.get(j));
 			}
