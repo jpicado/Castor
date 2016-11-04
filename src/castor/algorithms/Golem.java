@@ -252,10 +252,33 @@ public class Golem {
 	}
 	
 	private ClauseInfo learnClause(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth) {
+		// Create local copy of remaining positive examples
+		List<Tuple> localPosExamples = new LinkedList<Tuple>(remainingPosExamples);
 		
+		// Create candidate clauses by doing RLGG of pairs ef examples
+		List<ClauseInfo> candidates = this.generateCandidateClauses(schema, modeH, modesB, localPosExamples, posExamplesRelation, negExamplesRelation);
 		
+		ClauseInfo bestClauseInfo = null;
+		double bestScore = Double.MIN_VALUE;
+		while (candidates.isEmpty()) {
+			// Find clause with best score among candidates
+			for (ClauseInfo clauseInfo : candidates) {
+				double score = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, clauseInfo);
+				if (score > bestScore) {
+					bestClauseInfo = clauseInfo;
+					bestScore = score;
+				}
+			}
+			
+			// Remove covered positive examples
+			List<Tuple> coveredExamples = this.coverageEngine.coveredExamplesTuplesFromList(genericDAO, schema, bestClauseInfo, localPosExamples, posExamplesRelation, true);
+			localPosExamples.removeAll(coveredExamples);
+			
+			// Generate new candidate clauses using LGG between bestClause and other pos examples
+			candidates = this.generateCandidateClausesFromClause(bestClauseInfo, schema, modeH, modesB, localPosExamples, posExamplesRelation, negExamplesRelation);
+		}
 		
-		return null;
+		return bestClauseInfo;
 	}
 	
 	private List<ClauseInfo> generateCandidateClauses(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
@@ -300,7 +323,7 @@ public class Golem {
 		return newClauses;
 	}
 	
-	private List<ClauseInfo> generateCandidateClausesFromClause(MyClause clause, Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
+	private List<ClauseInfo> generateCandidateClausesFromClause(ClauseInfo clauseInfo, Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
 		List<ClauseInfo> newClauses = new LinkedList<ClauseInfo>();
 		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
 		
@@ -316,8 +339,10 @@ public class Golem {
 			MyClause candidate = saturator.generateBottomClause(bottomClauseConstructionDAO, example, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
 			
 			// Generalize
-			MyClause newClause = generalize(clause, candidate);
-			ClauseInfo newClauseInfo = new ClauseInfo(newClause, coverageEngine.getAllPosExamples().size(), coverageEngine.getAllNegExamples().size());
+			MyClause newClause = generalize(clauseInfo.getClause(), candidate);
+//			ClauseInfo newClauseInfo = new ClauseInfo(newClause, coverageEngine.getAllPosExamples().size(), coverageEngine.getAllNegExamples().size());
+			// Create new clauseInfo, reusing coverage information from previous clause (new clause is generalization of old clause)
+			ClauseInfo newClauseInfo = new ClauseInfo(newClause, clauseInfo.getPosExamplesCovered(), clauseInfo.getNegExamplesCovered(), clauseInfo.getPosExamplesEvaluated(), clauseInfo.getNegExamplesEvaluated());
 			
 			// Add clause if it satisfies minimum conditions
 			if (candidateSatisfiesConditions(newClauseInfo, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation)) {
@@ -478,12 +503,5 @@ public class Golem {
 			score = clauseInfo.getScore();
 		}
 		return score;
-	}
-	
-	/*
-	 * Check if a clause entials an example
-	 */
-	private boolean entails(GenericDAO genericDAO, CoverageEngine coverageEngine, Schema schema, ClauseInfo clauseInfo, Tuple exampleTuple, Relation posExamplesRelation) {
-		return evaluator.entails(genericDAO, coverageEngine, schema, clauseInfo, exampleTuple, posExamplesRelation);
 	}
 }

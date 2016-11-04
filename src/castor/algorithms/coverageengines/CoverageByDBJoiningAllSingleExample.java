@@ -1,5 +1,6 @@
 package castor.algorithms.coverageengines;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -148,5 +149,19 @@ public class CoverageByDBJoiningAllSingleExample implements CoverageEngine {
 			}
 		}
 		return coveredExamples;
+	}
+	
+	@Override
+	public List<Tuple> coveredExamplesTuplesFromList(GenericDAO genericDAO, Schema schema, ClauseInfo clauseInfo, List<Tuple> examples, Relation examplesRelation, boolean positiveRelation) {
+		List<Tuple> coveredExamplesTuples = new ArrayList<Tuple>();
+		
+		// Compute positive coverage
+		for (Tuple example : examples) {
+			if (ExamplesCoverage.clauseCoversExample(genericDAO, schema, clauseInfo.getClause(), example, examplesRelation)) {
+				coveredExamplesTuples.add(example);
+			}
+		}
+
+		return coveredExamplesTuples;
 	}
 }

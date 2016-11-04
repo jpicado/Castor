@@ -144,4 +144,13 @@ public class CoverageByDBJoiningAll implements CoverageEngine {
 		}
 		return coveredExamples;
 	}
+	
+	@Override
+	public List<Tuple> coveredExamplesTuplesFromList(GenericDAO genericDAO, Schema schema, ClauseInfo clauseInfo, List<Tuple> examples, Relation examplesRelation, boolean positiveRelation) {
+		String query = QueryGenerator.generateQueryFromClauseAndCoverageTable(schema, clauseInfo.getClause(), examplesRelation, false);
+		GenericTableObject result = genericDAO.executeQuery(query);
+		List<Tuple> coveredPosExamples = result.getTable();
+		coveredPosExamples.retainAll(examples);
+		return coveredPosExamples;
+	}
 }
