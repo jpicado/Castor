@@ -143,8 +143,6 @@ public class CastorCmd {
             CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), createFullCoverageEngine);
             TimeKeeper.creatingCoverageTime = tw.time();
             
-            CastorLearner castor = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
-            
             if (saturation) {
             	// BOTTOM CLAUSE
             	BottomClauseUtil.generateBottomClauseForExample(BottomClauseUtil.ALGORITHMS.INSIDE_STORED_PROCEDURE, genericDAO, bottomClauseConstructionDAO, coverageEngine.getAllPosExamples().get(this.exampleForSaturation), this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), this.parameters.getIterations(), this.dataModel.getSpName(), this.parameters.getRecall(), this.parameters.getMaxterms());
@@ -153,8 +151,9 @@ public class CastorCmd {
             	BottomClauseUtil.generateGroundBottomClauseForExample(BottomClauseUtil.ALGORITHMS.INSIDE_STORED_PROCEDURE, genericDAO, bottomClauseConstructionDAO, coverageEngine.getAllPosExamples().get(this.exampleForSaturation), this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), this.parameters.getIterations(), this.dataModel.getSpName(), this.parameters.getRecall(), this.parameters.getMaxterms());
             } else {
 	            // LEARN
-	            logger.info("Learning...");
-	            List<ClauseInfo> definition = castor.learn(this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getMaxterms(), this.parameters.getSample(), this.parameters.getBeam(), this.parameters.getReductionMethod());
+            	logger.info("Learning...");
+            	CastorLearner castor = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
+	            List<ClauseInfo> definition = castor.learn(this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName());
 	            TimeKeeper.totalTime += tw.time();
 	            
 	            logger.info("Total time: " + TimeKeeper.totalTime);

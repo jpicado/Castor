@@ -71,16 +71,20 @@ public class CastorLearner {
 		this.evaluator = new BottomUpEvaluator();
 	}
 	
+	public Parameters getParameters() {
+		return parameters;
+	}
+	
 	/*
 	 * Run learning algorithm
 	 */
-	public List<ClauseInfo> learn(Schema schema, Mode modeH, List<Mode> modesB, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth, String reductionMethod) {
+	public List<ClauseInfo> learn(Schema schema, Mode modeH, List<Mode> modesB, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate) {
 		TimeWatch tw = TimeWatch.start();
 		
 		List<ClauseInfo> definition = new LinkedList<ClauseInfo>();
 		
 		// Call covering approach
-		definition.addAll(this.learnUsingCovering(schema, modeH, modesB, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, recall, maxterms, sampleSize, beamWidth, reductionMethod));
+		definition.addAll(this.learnUsingCovering(schema, modeH, modesB, posExamplesRelation, negExamplesRelation, spNameTemplate, parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms(), parameters.getSample(), parameters.getBeam(), parameters.getReductionMethod()));
 	
 		// Get string representation of definition
 		StringBuilder sb = new StringBuilder();
@@ -174,12 +178,12 @@ public class CastorLearner {
 			Tuple example = remainingPosExamples.remove(0);
 			
 			// Compute best ARMG
-			ClauseInfo clauseInfo = this.beamSearchIteratedARMG(schema, example, modeH, modesB, remainingPosExamples, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, maxRecall, maxterms, sampleSize, beamWidth);
+			ClauseInfo clauseInfo = beamSearchIteratedARMG(schema, example, modeH, modesB, remainingPosExamples, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, maxRecall, maxterms, sampleSize, beamWidth);
 			
 			// Get new positive examples covered
 			// Adding 1 to count seed example
 			int newPosTotal = remainingPosExamples.size() + 1;
-			int newPosCoveredCount = this.coverageEngine.countCoveredExamplesFromList(genericDAO, schema, clauseInfo, remainingPosExamples, posExamplesRelation, true) + 1;
+			int newPosCoveredCount = coverageEngine.countCoveredExamplesFromList(genericDAO, schema, clauseInfo, remainingPosExamples, posExamplesRelation, true) + 1;
 			
 			// Get total positive examples covered
 			int totalPos = coverageEngine.getAllPosExamples().size();

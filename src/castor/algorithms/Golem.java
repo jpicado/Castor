@@ -1,11 +1,3 @@
-/*
- * Castor's implementation of ProGolem (http://ilp.doc.ic.ac.uk/ProGolem/)
- * Differences from CastorLearner:
- * -Does not consider inclusion dependencies for: bottom-clause construction, negative reduction, armg.
- * -Uses original bottom-clause construction algorithm.
- * -Does not reuse coverage testing info (uses GenericEvaluator instead of BottomUpEvaluator).
- * -Optional minimization (original ProGolem does not talk about optimization).
- */
 package castor.algorithms;
 
 import java.util.HashSet;
@@ -42,9 +34,9 @@ import castor.utils.TimeKeeper;
 import castor.utils.TimeWatch;
 import castor.wrappers.EvaluationResult;
 
-public class ProGolem {
+public class Golem {
 	
-	private static Logger logger = Logger.getLogger(ProGolem.class);
+	private static Logger logger = Logger.getLogger(Golem.class);
 	
 	private Parameters parameters;
 	private GenericDAO genericDAO;
@@ -52,7 +44,7 @@ public class ProGolem {
 	private Random randomGenerator;
 	private ClauseEvaluator evaluator;
 
-	public ProGolem(GenericDAO genericDAO, CoverageEngine coverageEngine, Parameters parameters) {
+	public Golem(GenericDAO genericDAO, CoverageEngine coverageEngine, Parameters parameters) {
 		this.parameters = parameters;
 		this.genericDAO = genericDAO;
 		this.coverageEngine = coverageEngine;

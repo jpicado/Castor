@@ -193,7 +193,7 @@ public class CastorClient {
             
             // Learn
             logger.info("Learning...");
-            List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getMaxterms(), this.parameters.getSample(), this.parameters.getBeam(), this.parameters.getReductionMethod());
+            List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName());
             TimeKeeper.totalTime += tw.time();
             
             logger.info("Total time: " + TimeKeeper.totalTime);
