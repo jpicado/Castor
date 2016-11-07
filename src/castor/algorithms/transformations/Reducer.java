@@ -23,7 +23,7 @@ import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
 import castor.utils.Commons;
-import castor.utils.TimeKeeper;
+import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
 
 public class Reducer {
@@ -122,7 +122,7 @@ public class Reducer {
 			}
 		}
 		
-		TimeKeeper.reducerTime += tw.time();
+		NumbersKeeper.reducerTime += tw.time();
 		return reducedClause;
 	}
 	
@@ -326,7 +326,7 @@ public class Reducer {
 			reducedClause = newClause;
 		}
 
-		TimeKeeper.reducerTime += tw.time();
+		NumbersKeeper.reducerTime += tw.time();
 		return reducedClause;
 	}
 	

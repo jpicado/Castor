@@ -23,7 +23,7 @@ import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
 import castor.mappings.MyClauseToIDAClause;
-import castor.utils.TimeKeeper;
+import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
 
 public class CoverageBySubsumption implements CoverageEngine {
@@ -505,8 +505,8 @@ public class CoverageBySubsumption implements CoverageEngine {
 			subsumptionResult = negativeMatching.evaluateOnExamples(convertedClause, undecided);
 		}
 		
-		TimeKeeper.coverageTime += tw.time();
-		TimeKeeper.coverageCalls++;
+		NumbersKeeper.coverageTime += tw.time();
+		NumbersKeeper.coverageCalls++;
 		
 		return subsumptionResult;
 	}

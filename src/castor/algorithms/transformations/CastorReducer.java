@@ -24,7 +24,7 @@ import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
 import castor.utils.Commons;
-import castor.utils.TimeKeeper;
+import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
 
 import com.google_voltpatches.common.collect.Sets;
@@ -123,7 +123,7 @@ public class CastorReducer {
 		}
 		MyClause newClause = new MyClause(allLiterals);
 		
-		TimeKeeper.reducerTime += tw.time();
+		NumbersKeeper.reducerTime += tw.time();
 		return newClause;
 	}
 

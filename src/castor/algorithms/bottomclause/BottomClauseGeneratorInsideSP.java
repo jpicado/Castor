@@ -64,6 +64,48 @@ public class BottomClauseGeneratorInsideSP {
 		return clause;
 	}
 	
+	public MyClause generateGroundBottomClause(BottomClauseConstructionDAO bottomClauseConstructionDAO, Tuple exampleTuple, String spNameTemplate, int iterations, int recall, int maxterms) {
+		MyClause clause = new MyClause();
+		
+		// Call procedure that creates bottom clause
+		String example = String.join(DBCommons.ATTRIBUTE_DELIMITER, exampleTuple.getValues());
+		String spName = spNameTemplate + DBCommons.GROUND_BOTTONCLAUSE_PROCEDURE_SUFFIX;
+        GenericTableObject result = bottomClauseConstructionDAO.executeStoredProcedure(spName, example, iterations, recall, maxterms);
+        
+        // Process results, which should contain a single row
+        if (result != null && result.getTable().size() > 0) {
+        	// Each column is the string representation of a literal
+        	Tuple row = result.getTable().get(0);
+        	for (int i = 0; i < row.getValues().size(); i++) {
+				String column = row.getValues().get(i);
+        		// Extract predicate name and arguments from column
+        		String[] tokens = column.split("\\(", 2);
+    			String predicate = tokens[0];
+    			String arguments = tokens[1].substring(0, tokens[1].length()-1);
+    			Matcher matcher = Pattern.compile("([^\"'][^,]+|\".+?\"|'.+?')[,\\s]*").matcher(arguments);
+    			List<Term> terms = new LinkedList<Term>();
+                while (matcher.find()) {
+                	String term = matcher.group(1);
+                	if (Commons.isVariable(term)) {
+    					terms.add(new Variable(term));
+    				} else {
+    					terms.add(new Constant(term));
+    				}
+                }
+				
+				Predicate newPredicate = new Predicate(predicate, terms);
+				if (i == 0) {
+					// First literal is the head
+					clause.addPositiveLiteral(newPredicate);
+				} else {
+					clause.addNegativeLiteral(newPredicate);
+				}
+			}
+        }
+		
+		return clause;
+	}
+	
 	public String generateGroundBottomClauseString(BottomClauseConstructionDAO bottomClauseConstructionDAO, Tuple exampleTuple, String spNameTemplate, int iterations, int recall, int maxterms) {
 		StringBuilder sb = new StringBuilder();
 		

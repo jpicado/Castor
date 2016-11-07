@@ -15,6 +15,8 @@ import aima.core.logic.fol.parsing.ast.AtomicSentence;
 import aima.core.logic.fol.parsing.ast.Term;
 import aima.core.logic.fol.parsing.ast.Variable;
 import castor.hypotheses.MyClause;
+import castor.utils.NumbersKeeper;
+import castor.utils.TimeWatch;
 
 public class ClauseTransformations {
 
@@ -25,6 +27,7 @@ public class ClauseTransformations {
 	 * Minimize clause using theta-subsumption (same as homomorphism)
 	 */
 	public static MyClause minimize(MyClause clause) {
+		TimeWatch tw = TimeWatch.start();
 		for (Literal literalToRemove : clause.getNegativeLiterals()) {
 			// Create new clause with head
 			MyClause tempClause = new MyClause(clause.getPositiveLiterals());
@@ -39,6 +42,7 @@ public class ClauseTransformations {
 				return minimize(tempClause);
 			}
 		}
+		NumbersKeeper.minimizationTime += tw.time();
 		return clause;
 	}
 	

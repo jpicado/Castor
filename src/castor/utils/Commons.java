@@ -46,9 +46,10 @@ public class Commons {
 	
 	/*
 	 * Gets the maximum value of any variable in the clause
+	 * Return value of -1 means that the clause does not have variables
 	 */
 	public static int getMaxVarValue(MyClause clause) {
-		int max = Integer.MIN_VALUE;
+		int max = -1;
 		
 		for (Literal literal : clause.getLiterals()) {
 			for (Term term : literal.getAtomicSentence().getArgs()) {

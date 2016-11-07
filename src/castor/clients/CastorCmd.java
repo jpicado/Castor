@@ -10,6 +10,7 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
 import castor.algorithms.CastorLearner;
+import castor.algorithms.Golem;
 import castor.algorithms.bottomclause.BottomClauseUtil;
 import castor.algorithms.coverageengines.CoverageBySubsumptionParallel;
 import castor.algorithms.coverageengines.CoverageEngine;
@@ -25,7 +26,7 @@ import castor.settings.DataModel;
 import castor.settings.JsonSettingsReader;
 import castor.settings.Parameters;
 import castor.utils.FileUtils;
-import castor.utils.TimeKeeper;
+import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
 
 import com.google.gson.JsonObject;
@@ -141,7 +142,7 @@ public class CastorCmd {
             
             boolean createFullCoverageEngine = !saturation && !groundSaturation;
             CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), createFullCoverageEngine);
-            TimeKeeper.creatingCoverageTime = tw.time();
+            NumbersKeeper.creatingCoverageTime = tw.time();
             
             if (saturation) {
             	// BOTTOM CLAUSE
@@ -152,24 +153,27 @@ public class CastorCmd {
             } else {
 	            // LEARN
             	logger.info("Learning...");
-            	CastorLearner castor = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
-	            List<ClauseInfo> definition = castor.learn(this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName());
-	            TimeKeeper.totalTime += tw.time();
+//            	CastorLearner learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
+//	            List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName());
+	            Golem learner = new Golem(genericDAO, bottomClauseConstructionDAO, coverageEngine, dataModel, parameters);
+	            List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName());
+	            NumbersKeeper.totalTime += tw.time();
 	            
-	            logger.info("Total time: " + TimeKeeper.totalTime);
-	            logger.info("Creating coverage engine time: " + TimeKeeper.creatingCoverageTime);
-	            logger.info("Learning time: " + TimeKeeper.learningTime);
-	            logger.info("Coverage time: " + TimeKeeper.coverageTime);
-	            logger.info("Coverage calls: " + TimeKeeper.coverageCalls);
-	            logger.info("Scoring time: " + TimeKeeper.scoringTime);
-	            logger.info("Entailment time: " + TimeKeeper.entailmentTime);
-	            logger.info("Transformation time: " + TimeKeeper.transformationTime);
-	            logger.info("Reduction time: " + TimeKeeper.reducerTime);
+	            logger.info("Total time: " + NumbersKeeper.totalTime);
+	            logger.info("Creating coverage engine time: " + NumbersKeeper.creatingCoverageTime);
+	            logger.info("Learning time: " + NumbersKeeper.learningTime);
+	            logger.info("Coverage time: " + NumbersKeeper.coverageTime);
+	            logger.info("Coverage calls: " + NumbersKeeper.coverageCalls);
+	            logger.info("Scoring time: " + NumbersKeeper.scoringTime);
+	            logger.info("Entailment time: " + NumbersKeeper.entailmentTime);
+	            logger.info("Minimization time: " + NumbersKeeper.minimizationTime);
+	            logger.info("Reduction time: " + NumbersKeeper.reducerTime);
+	            logger.info("LGG time: " + NumbersKeeper.lggTime);
 	            
 	            // EVALUATE DEFINITION
 	            logger.info("Evaluating on testing data...");
 	            CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTest, negTest, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true);
-	            castor.evaluate(testCoverageEngine, this.schema, definition, posTest, negTest);
+	            learner.evaluate(testCoverageEngine, this.schema, definition, posTest, negTest);
             }
         }
         catch (Exception e) {

@@ -30,6 +30,7 @@ import castor.algorithms.clauseevaluation.ClauseEvaluator;
 import castor.algorithms.clauseevaluation.EvaluationFunctions;
 import castor.algorithms.coverageengines.CoverageEngine;
 import castor.algorithms.transformations.ClauseTransformations;
+import castor.algorithms.transformations.Reducer;
 import castor.db.dataaccess.BottomClauseConstructionDAO;
 import castor.db.dataaccess.GenericDAO;
 import castor.hypotheses.ClauseInfo;
@@ -42,7 +43,7 @@ import castor.settings.DataModel;
 import castor.settings.Parameters;
 import castor.utils.Commons;
 import castor.utils.Formatter;
-import castor.utils.TimeKeeper;
+import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
 import castor.wrappers.EvaluationResult;
 
@@ -107,7 +108,7 @@ public class Golem {
         logger.info("Evaluating on training data...");
         this.evaluate(this.coverageEngine, schema, definition, posExamplesRelation, negExamplesRelation);
         
-        TimeKeeper.learningTime += tw.time(TimeUnit.MILLISECONDS);
+        NumbersKeeper.learningTime += tw.time(TimeUnit.MILLISECONDS);
 		
 		return definition;
 	}
@@ -168,11 +169,17 @@ public class Golem {
 		// Get all positive examples from database and keep them in memory
 		List<Tuple> remainingPosExamples = new LinkedList<Tuple>(coverageEngine.getAllPosExamples());
 		
-		while (remainingPosExamples.size() > 0) {
-			logger.info("Remaining uncovered examples: " + remainingPosExamples.size());
+		int iterationsCounter = remainingPosExamples.size();
+		while (remainingPosExamples.size() > 0 && iterationsCounter >= 0) {
+			logger.info("Remaining uncovered examples: " + remainingPosExamples.size() + ", remaining iterations: " + iterationsCounter);
 			
 			// Learn clause
 			ClauseInfo clauseInfo = learnClause(schema, modeH, modesB, remainingPosExamples, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, maxRecall, maxterms, sampleSize, beamWidth);
+			
+			// If clauseInfo is null, there are no more good clauses, so exit
+			if (clauseInfo == null) {
+				break;
+			}
 			
 			// Get new positive examples covered
 			// Adding 1 to count seed example
@@ -213,10 +220,11 @@ public class Golem {
 				logger.info("New pos cover = " + newPosCoveredCount + ", Total pos cover = " + posCoveredCount + ", Total neg cover = " + negCoveredCount);
 				
 				// Remove covered positive examples
-				List<Tuple> coveredExamples = this.coverageEngine.coveredExamplesTuplesFromRelation(genericDAO, schema, clauseInfo, posExamplesRelation, true);
-				for (Tuple coveredExample : coveredExamples) {
-					remainingPosExamples.remove(coveredExample);
-				}
+				List<Tuple> coveredExamples = this.coverageEngine.coveredExamplesTuplesFromList(genericDAO, schema, clauseInfo, remainingPosExamples, posExamplesRelation, true);
+				remainingPosExamples.removeAll(coveredExamples);
+				iterationsCounter -= coveredExamples.size();
+			} else {
+				iterationsCounter--;
 			}
 		}
 		
@@ -259,8 +267,12 @@ public class Golem {
 		List<ClauseInfo> candidates = this.generateCandidateClauses(schema, modeH, modesB, localPosExamples, posExamplesRelation, negExamplesRelation);
 		
 		ClauseInfo bestClauseInfo = null;
-		double bestScore = Double.MIN_VALUE;
-		while (candidates.isEmpty()) {
+		double bestScore = -1;
+		double previousBestScore = -2;
+		while (!candidates.isEmpty() && bestScore > previousBestScore) {
+			logger.info("Current # of candidates: "+candidates.size());
+			previousBestScore = bestScore;
+			
 			// Find clause with best score among candidates
 			for (ClauseInfo clauseInfo : candidates) {
 				double score = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, clauseInfo);
@@ -275,6 +287,7 @@ public class Golem {
 			localPosExamples.removeAll(coveredExamples);
 			
 			// Generate new candidate clauses using LGG between bestClause and other pos examples
+			logger.info("Best candidate has "+bestClauseInfo.getClause().getNumberLiterals() + " literals");
 			candidates = this.generateCandidateClausesFromClause(bestClauseInfo, schema, modeH, modesB, localPosExamples, posExamplesRelation, negExamplesRelation);
 		}
 		
@@ -295,15 +308,15 @@ public class Golem {
 			for (int j = 0; j < indexes2.size(); j++) {
 				if (i != j) {
 					// Get random examples
-					Tuple example1 = remainingPosExamples.get(i);
-					Tuple example2 = remainingPosExamples.get(j);
+					Tuple example1 = remainingPosExamples.get(indexes1.get(i));
+					Tuple example2 = remainingPosExamples.get(indexes2.get(j));
 					
 					// Saturate examples
-					MyClause clause1 = saturator.generateBottomClause(bottomClauseConstructionDAO, example1, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
-					MyClause clause2 = saturator.generateBottomClause(bottomClauseConstructionDAO, example2, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+					MyClause clause1 = saturator.generateGroundBottomClause(bottomClauseConstructionDAO, example1, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+					MyClause clause2 = saturator.generateGroundBottomClause(bottomClauseConstructionDAO, example2, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
 					
 					// Generalize
-					MyClause newClause = generalize(clause1, clause2);
+					MyClause newClause = generalize(clause1, clause2, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, Reducer.MEASURE.CONSISTENCY);
 					ClauseInfo newClauseInfo = new ClauseInfo(newClause, coverageEngine.getAllPosExamples().size(), coverageEngine.getAllNegExamples().size());
 					
 					// Add clause if it satisfies minimum conditions
@@ -311,12 +324,12 @@ public class Golem {
 						newClauses.add(newClauseInfo);
 					}
 					
-					if (newClauses.size() >= parameters.getBeam())
+					if (newClauses.size() >= parameters.getSample())
 						break;
 				}
 			}
 			
-			if (newClauses.size() >= parameters.getBeam())
+			if (newClauses.size() >= parameters.getSample())
 				break;
 		}
 		
@@ -333,23 +346,23 @@ public class Golem {
 		
 		for (int i = 0; i < indexes.size(); i++) {
 			// Get random example
-			Tuple example = remainingPosExamples.get(i);
+			Tuple example = remainingPosExamples.get(indexes.get(i));
 			
 			// Saturate example
-			MyClause candidate = saturator.generateBottomClause(bottomClauseConstructionDAO, example, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+			MyClause candidate = saturator.generateGroundBottomClause(bottomClauseConstructionDAO, example, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
 			
 			// Generalize
-			MyClause newClause = generalize(clauseInfo.getClause(), candidate);
-//			ClauseInfo newClauseInfo = new ClauseInfo(newClause, coverageEngine.getAllPosExamples().size(), coverageEngine.getAllNegExamples().size());
+			MyClause newClause = generalize(clauseInfo.getClause(), candidate, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, Reducer.MEASURE.CONSISTENCY);
+			ClauseInfo newClauseInfo = new ClauseInfo(newClause, coverageEngine.getAllPosExamples().size(), coverageEngine.getAllNegExamples().size());
 			// Create new clauseInfo, reusing coverage information from previous clause (new clause is generalization of old clause)
-			ClauseInfo newClauseInfo = new ClauseInfo(newClause, clauseInfo.getPosExamplesCovered(), clauseInfo.getNegExamplesCovered(), clauseInfo.getPosExamplesEvaluated(), clauseInfo.getNegExamplesEvaluated());
+//			ClauseInfo newClauseInfo = new ClauseInfo(newClause, clauseInfo.getPosExamplesCovered(), clauseInfo.getNegExamplesCovered(), clauseInfo.getPosExamplesEvaluated(), clauseInfo.getNegExamplesEvaluated());
 			
 			// Add clause if it satisfies minimum conditions
 			if (candidateSatisfiesConditions(newClauseInfo, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation)) {
 				newClauses.add(newClauseInfo);
 			}
 			
-			if (newClauses.size() >= parameters.getBeam())
+			if (newClauses.size() >= parameters.getSample())
 				break;
 		}
 		
@@ -362,7 +375,7 @@ public class Golem {
 	private List<Integer> generateSequence(int n) {
 		List<Integer> array = new ArrayList<Integer>();
 		for (int i = 0; i < n; i++) {
-			array.set(i, i);
+			array.add(i);
 		}
 		return array;
 	}
@@ -400,13 +413,15 @@ public class Golem {
 		return satisfiesConditions;
 	}
 	
-	private MyClause generalize(MyClause clause1, MyClause clause2) {
+	private MyClause generalize(MyClause clause1, MyClause clause2, Schema schema, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, Reducer.MEASURE measure) {
 		MyClause clause = lgg(clause1, clause2);
 		clause = ClauseTransformations.minimize(clause);
+//		clause = Reducer.negativeReduce(genericDAO, coverageEngine, clause, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, measure, evaluator);
 		return clause;
 	}
 
 	private MyClause lgg(MyClause clause1, MyClause clause2) {
+		TimeWatch tw = TimeWatch.start();
 		List<Literal> literals = new LinkedList<Literal>();
 		
 		// Find maximum variable name in clauses
@@ -423,6 +438,7 @@ public class Golem {
 			}
 		}
 		MyClause newClause = new MyClause(literals);
+		NumbersKeeper.lggTime += tw.time();
 		return newClause;
 	}
 

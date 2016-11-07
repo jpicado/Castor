@@ -19,7 +19,7 @@ import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
 import castor.mappings.MyClauseToIDAClause;
-import castor.utils.TimeKeeper;
+import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
 
 public class BottomUpEvaluator implements ClauseEvaluator {
@@ -144,7 +144,7 @@ public class BottomUpEvaluator implements ClauseEvaluator {
 		// Update cached clauses
 		cachedClauses.put(clauseString, examplesInfo);
 		
-		TimeKeeper.scoringTime += tw.time();
+		NumbersKeeper.scoringTime += tw.time();
 		return clauseInfo.getScore();
 	}
 	
@@ -182,7 +182,7 @@ public class BottomUpEvaluator implements ClauseEvaluator {
 			cachedClauses.put(clauseString, examplesInfo);
 		}
 		
-		TimeKeeper.entailmentTime += tw.time();
+		NumbersKeeper.entailmentTime += tw.time();
 		return entails;
 	}
 	

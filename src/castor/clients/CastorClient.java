@@ -20,7 +20,7 @@ import castor.settings.DataModel;
 import castor.settings.JsonSettingsReader;
 import castor.settings.Parameters;
 import castor.utils.FileUtils;
-import castor.utils.TimeKeeper;
+import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
 import castor.wrappers.EvaluationResult;
 import castor.wrappers.LearningResult;
@@ -187,24 +187,24 @@ public class CastorClient {
             CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true);
          // Use following line for demo of Castor using HIV-Small
 //          CoverageEngine coverageEngine = new CoverageBySubsumptionOptimizedParallel1_HIVSmallHardcoded(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true, posExamplesFlags, negExamplesFlags);
-            TimeKeeper.creatingCoverageTime = tw.time();
+            NumbersKeeper.creatingCoverageTime = tw.time();
             
             CastorLearner learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, this.parameters);
             
             // Learn
             logger.info("Learning...");
             List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName());
-            TimeKeeper.totalTime += tw.time();
+            NumbersKeeper.totalTime += tw.time();
             
-            logger.info("Total time: " + TimeKeeper.totalTime);
-            logger.info("Creating coverage engine time: " + TimeKeeper.creatingCoverageTime);
-            logger.info("Learning time: " + TimeKeeper.learningTime);
-            logger.info("Coverage time: " + TimeKeeper.coverageTime);
-            logger.info("Coverage calls: " + TimeKeeper.coverageCalls);
-            logger.info("Scoring time: " + TimeKeeper.scoringTime);
-            logger.info("Entailment time: " + TimeKeeper.entailmentTime);
-            logger.info("Transformation time: " + TimeKeeper.transformationTime);
-            logger.info("Reduction time: " + TimeKeeper.reducerTime);
+            logger.info("Total time: " + NumbersKeeper.totalTime);
+            logger.info("Creating coverage engine time: " + NumbersKeeper.creatingCoverageTime);
+            logger.info("Learning time: " + NumbersKeeper.learningTime);
+            logger.info("Coverage time: " + NumbersKeeper.coverageTime);
+            logger.info("Coverage calls: " + NumbersKeeper.coverageCalls);
+            logger.info("Scoring time: " + NumbersKeeper.scoringTime);
+            logger.info("Entailment time: " + NumbersKeeper.entailmentTime);
+            logger.info("Minimization time: " + NumbersKeeper.minimizationTime);
+            logger.info("Reduction time: " + NumbersKeeper.reducerTime);
             
             // Evaluate
             logger.info("Evaluating on testing data...");
@@ -231,7 +231,7 @@ public class CastorClient {
             learningResult.setPrecision(precision);
             learningResult.setRecall(recall);
             learningResult.setF1(f1);
-            learningResult.setTime(TimeKeeper.totalTime/1000);//transforming to seconds
+            learningResult.setTime(NumbersKeeper.totalTime/1000);//transforming to seconds
             learningResult.setDefinition(MyClauseToClauseAsString.parseDefinition(definition));
         }
         catch (Exception e) {

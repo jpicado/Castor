@@ -38,7 +38,7 @@ import castor.language.Schema;
 import castor.language.Tuple;
 import castor.settings.Parameters;
 import castor.utils.Formatter;
-import castor.utils.TimeKeeper;
+import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
 import castor.wrappers.EvaluationResult;
 
@@ -95,7 +95,7 @@ public class ProGolem {
         logger.info("Evaluating on training data...");
         this.evaluate(this.coverageEngine, schema, definition, posExamplesRelation, negExamplesRelation);
         
-        TimeKeeper.learningTime += tw.time(TimeUnit.MILLISECONDS);
+        NumbersKeeper.learningTime += tw.time(TimeUnit.MILLISECONDS);
 		
 		return definition;
 	}
@@ -160,7 +160,7 @@ public class ProGolem {
 			logger.info("Remaining uncovered examples: " + remainingPosExamples.size());
 			
 			// Compute best ARMG
-			ClauseInfo clauseInfo = beamSearchIteratedARMG(schema, modeH, modesB, remainingPosExamples, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, maxRecall, maxterms, sampleSize, beamWidth);
+			ClauseInfo clauseInfo = learnClause(schema, modeH, modesB, remainingPosExamples, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, maxRecall, maxterms, sampleSize, beamWidth);
 			
 			// Get new positive examples covered
 			// Adding 1 to count seed example
@@ -247,10 +247,8 @@ public class ProGolem {
 					logger.info("New pos cover = " + newPosCoveredCount + ", Total pos cover = " + posCoveredCount + ", Total neg cover = " + negCoveredCount);
 					
 					// Remove covered positive examples
-					List<Tuple> coveredExamples = this.coverageEngine.coveredExamplesTuplesFromRelation(genericDAO, schema, clauseInfo, posExamplesRelation, true);
-					for (Tuple coveredExample : coveredExamples) {
-						remainingPosExamples.remove(coveredExample);
-					}
+					List<Tuple> coveredExamples = this.coverageEngine.coveredExamplesTuplesFromList(genericDAO, schema, clauseInfo, remainingPosExamples, posExamplesRelation, true);
+					remainingPosExamples.removeAll(coveredExamples);
 				}
 			}// end condition
 		}
@@ -289,7 +287,7 @@ public class ProGolem {
 	/*
 	 * Perform generalization using beam search + ARMG
 	 */
-	private ClauseInfo beamSearchIteratedARMG(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth) {
+	private ClauseInfo learnClause(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth) {
 		BottomClauseGeneratorOriginalAlgorithm saturator = new BottomClauseGeneratorOriginalAlgorithm();
 		
 		// First unseen positive example (pop)
@@ -385,10 +383,8 @@ public class ProGolem {
 	 * Transform a clause: minimization, reordering, etc.
 	 */
 	private MyClause transform(Schema schema, MyClause clause) {
-		TimeWatch tw = TimeWatch.start();
 		// Minimize using theta-transformation 
 		clause = ClauseTransformations.minimize(clause);
-		TimeKeeper.transformationTime += tw.time();
 		return clause;
 	}
 	

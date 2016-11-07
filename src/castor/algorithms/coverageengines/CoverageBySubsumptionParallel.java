@@ -27,7 +27,7 @@ import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
 import castor.mappings.MyClauseToIDAClause;
-import castor.utils.TimeKeeper;
+import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
 
 public class CoverageBySubsumptionParallel implements CoverageEngine {
@@ -624,8 +624,8 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 			throw new RuntimeException(e);
 		}
 		
-		TimeKeeper.coverageTime += tw.time();
-		TimeKeeper.coverageCalls++;
+		NumbersKeeper.coverageTime += tw.time();
+		NumbersKeeper.coverageCalls++;
 		
 		return subsumptionResult;
 	}

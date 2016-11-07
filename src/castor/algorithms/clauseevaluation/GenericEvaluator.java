@@ -8,7 +8,7 @@ import castor.hypotheses.ClauseInfo;
 import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
-import castor.utils.TimeKeeper;
+import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
 
 public class GenericEvaluator implements ClauseEvaluator {
@@ -36,14 +36,14 @@ public class GenericEvaluator implements ClauseEvaluator {
 			clauseInfo.setScore(score);
 		}
 		
-		TimeKeeper.scoringTime += tw.time();
+		NumbersKeeper.scoringTime += tw.time();
 		return clauseInfo.getScore();
 	}
 	
 	public boolean entails(GenericDAO genericDAO, CoverageEngine coverageEngine, Schema schema, ClauseInfo clauseInfo, Tuple exampleTuple, Relation posExamplesRelation) {
 		TimeWatch tw = TimeWatch.start();
 		boolean entails = coverageEngine.entails(genericDAO, schema, clauseInfo, exampleTuple, posExamplesRelation, true);
-		TimeKeeper.entailmentTime += tw.time();
+		NumbersKeeper.entailmentTime += tw.time();
 		return entails;
 	}
 }
