@@ -626,6 +626,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 		
 		NumbersKeeper.coverageTime += tw.time();
 		NumbersKeeper.coverageCalls++;
+		NumbersKeeper.clauseLengthSum += clause.getNumberLiterals();
 		
 		return subsumptionResult;
 	}

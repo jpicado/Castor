@@ -15,6 +15,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
@@ -24,6 +26,7 @@ import aima.core.logic.fol.parsing.ast.AtomicSentence;
 import aima.core.logic.fol.parsing.ast.Predicate;
 import aima.core.logic.fol.parsing.ast.Term;
 import aima.core.logic.fol.parsing.ast.Variable;
+import aima.core.util.datastructure.Pair;
 import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
 import castor.algorithms.clauseevaluation.BottomUpEvaluator;
 import castor.algorithms.clauseevaluation.ClauseEvaluator;
@@ -260,6 +263,7 @@ public class Golem {
 	}
 	
 	private ClauseInfo learnClause(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth) {
+		TimeWatch tw = TimeWatch.start();
 		// Create local copy of remaining positive examples
 		List<Tuple> localPosExamples = new LinkedList<Tuple>(remainingPosExamples);
 		
@@ -290,11 +294,103 @@ public class Golem {
 			logger.info("Best candidate has "+bestClauseInfo.getClause().getNumberLiterals() + " literals");
 			candidates = this.generateCandidateClausesFromClause(bestClauseInfo, schema, modeH, modesB, localPosExamples, posExamplesRelation, negExamplesRelation);
 		}
-		
+		NumbersKeeper.learnClauseTime += tw.time();
 		return bestClauseInfo;
 	}
 	
 	private List<ClauseInfo> generateCandidateClauses(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
+		List<ClauseInfo> newClauses = new LinkedList<ClauseInfo>();
+		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
+		
+		// Get sample of pairs
+		List<Pair<Tuple,Tuple>> pairs = this.selectRandomExamplePairs(remainingPosExamples, this.parameters.getSample());
+		
+		for (Pair<Tuple, Tuple> pair : pairs) {
+			// Saturate examples
+			MyClause clause1 = saturator.generateGroundBottomClause(bottomClauseConstructionDAO, pair.getFirst(), dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+			MyClause clause2 = saturator.generateGroundBottomClause(bottomClauseConstructionDAO, pair.getSecond(), dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+			
+			// Generalize
+			MyClause newClause = generalize(clause1, clause2, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, Reducer.MEASURE.CONSISTENCY);
+			ClauseInfo newClauseInfo = new ClauseInfo(newClause, coverageEngine.getAllPosExamples().size(), coverageEngine.getAllNegExamples().size());
+			
+			// Add clause if it satisfies minimum conditions
+			if (candidateSatisfiesConditions(newClauseInfo, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation)) {
+				newClauses.add(newClauseInfo);
+			}
+		}
+		return newClauses;
+	}
+	
+	private List<ClauseInfo> generateCandidateClausesFromClause(ClauseInfo clauseInfo, Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
+		List<ClauseInfo> newClauses = new LinkedList<ClauseInfo>();
+		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
+		
+		// Get sample
+		List<Tuple> sample = this.selectRandomExamples(remainingPosExamples, this.parameters.getSample());
+		
+		for (Tuple example : sample) {
+			// Saturate example
+			MyClause candidate = saturator.generateGroundBottomClause(bottomClauseConstructionDAO, example, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+			
+			// Generalize
+			MyClause newClause = generalize(clauseInfo.getClause(), candidate, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, Reducer.MEASURE.CONSISTENCY);
+			ClauseInfo newClauseInfo = new ClauseInfo(newClause, coverageEngine.getAllPosExamples().size(), coverageEngine.getAllNegExamples().size());
+			// Create new clauseInfo, reusing coverage information from previous clause (new clause is generalization of old clause)
+//			ClauseInfo newClauseInfo = new ClauseInfo(newClause, clauseInfo.getPosExamplesCovered(), clauseInfo.getNegExamplesCovered(), clauseInfo.getPosExamplesEvaluated(), clauseInfo.getNegExamplesEvaluated());
+			
+			// Add clause if it satisfies minimum conditions
+			if (candidateSatisfiesConditions(newClauseInfo, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation)) {
+				newClauses.add(newClauseInfo);
+			}
+			
+			if (newClauses.size() >= parameters.getSample())
+				break;
+		}
+		return newClauses;
+	}
+	
+	private List<Pair<Tuple,Tuple>> selectRandomExamplePairs(List<Tuple> examples, int sampleSize) {
+		List<Pair<Tuple,Tuple>> sample = new LinkedList<Pair<Tuple,Tuple>>();
+		for (int i = 0; i < sampleSize; i++) {
+			Tuple example1 = examples.get(randomGenerator.nextInt(examples.size()));
+			Tuple example2 = examples.get(randomGenerator.nextInt(examples.size()));
+			sample.add(new Pair<Tuple,Tuple>(example1, example2));
+		}
+		return sample;
+	}
+	
+	/*
+	 * Select K random examples from the given relation
+	 */
+	private List<Tuple> selectRandomExamples(List<Tuple> examples, int sampleSize) {
+		List<Tuple> sample = new LinkedList<Tuple>();
+		Set<Integer> randomPositions = generateListOfRandomNumbers(examples.size(), sampleSize);
+		for (Integer pos : randomPositions) {
+			sample.add(examples.get(pos));
+		}
+		return sample;
+	}
+	
+	/*
+	 * Generate a list of random numbers of the given size
+	 */
+	private Set<Integer> generateListOfRandomNumbers(int max, int size) {
+		Set<Integer> generated = new TreeSet<Integer>();
+		if (size > max) {
+			for (int i = 0; i < max; i++) {
+				generated.add(i);
+			}
+		} else {
+			while (generated.size() < size) {
+			    Integer next = randomGenerator.nextInt(max);
+			    generated.add(next);
+			}
+		}
+		return generated;
+	}
+	
+	private List<ClauseInfo> generateCandidateClausesExhaustSample(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
 		List<ClauseInfo> newClauses = new LinkedList<ClauseInfo>();
 		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
 		
@@ -336,7 +432,7 @@ public class Golem {
 		return newClauses;
 	}
 	
-	private List<ClauseInfo> generateCandidateClausesFromClause(ClauseInfo clauseInfo, Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
+	private List<ClauseInfo> generateCandidateClausesFromClauseExhaustSample(ClauseInfo clauseInfo, Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
 		List<ClauseInfo> newClauses = new LinkedList<ClauseInfo>();
 		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
 		
@@ -349,15 +445,18 @@ public class Golem {
 			Tuple example = remainingPosExamples.get(indexes.get(i));
 			
 			// Saturate example
+			System.out.println("Generating bottom clause...");
 			MyClause candidate = saturator.generateGroundBottomClause(bottomClauseConstructionDAO, example, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
 			
 			// Generalize
+			System.out.println("Generalizing...");
 			MyClause newClause = generalize(clauseInfo.getClause(), candidate, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, Reducer.MEASURE.CONSISTENCY);
 			ClauseInfo newClauseInfo = new ClauseInfo(newClause, coverageEngine.getAllPosExamples().size(), coverageEngine.getAllNegExamples().size());
 			// Create new clauseInfo, reusing coverage information from previous clause (new clause is generalization of old clause)
 //			ClauseInfo newClauseInfo = new ClauseInfo(newClause, clauseInfo.getPosExamplesCovered(), clauseInfo.getNegExamplesCovered(), clauseInfo.getPosExamplesEvaluated(), clauseInfo.getNegExamplesEvaluated());
 			
 			// Add clause if it satisfies minimum conditions
+			System.out.println("Checking conditions...");
 			if (candidateSatisfiesConditions(newClauseInfo, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation)) {
 				newClauses.add(newClauseInfo);
 			}

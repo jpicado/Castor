@@ -449,7 +449,7 @@ public class ProGolem {
 	private Set<Integer> generateListOfRandomNumbers(int max, int size) {
 		Set<Integer> generated = new TreeSet<Integer>();
 		if (size > max) {
-			for (int i = 0; i <= max; i++) {
+			for (int i = 0; i < max; i++) {
 				generated.add(i);
 			}
 		} else {

@@ -154,8 +154,7 @@ public class CastorCmd {
 	            // LEARN
             	logger.info("Learning...");
 //            	CastorLearner learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
-//	            List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName());
-	            Golem learner = new Golem(genericDAO, bottomClauseConstructionDAO, coverageEngine, dataModel, parameters);
+            	Golem learner = new Golem(genericDAO, bottomClauseConstructionDAO, coverageEngine, dataModel, parameters);
 	            List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName());
 	            NumbersKeeper.totalTime += tw.time();
 	            
@@ -169,6 +168,10 @@ public class CastorCmd {
 	            logger.info("Minimization time: " + NumbersKeeper.minimizationTime);
 	            logger.info("Reduction time: " + NumbersKeeper.reducerTime);
 	            logger.info("LGG time: " + NumbersKeeper.lggTime);
+	            logger.info("LearnClause time: " + NumbersKeeper.learnClauseTime);
+	            
+	            logger.info("Avg clause length in coverage: " + (NumbersKeeper.clauseLengthSum / NumbersKeeper.coverageCalls));
+	            
 	            
 	            // EVALUATE DEFINITION
 	            logger.info("Evaluating on testing data...");

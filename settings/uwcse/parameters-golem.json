@@ -1,6 +1,6 @@
 {
 	"createStoredProcedure": false,
-	"iterations": 1,
+	"iterations": 2,
 	"minprec": 0.67,
 	"minrec": 0.33,
 	"maxterms": 5,

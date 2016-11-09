@@ -39,6 +39,7 @@ public class ClauseTransformations {
 			}
 			// If new clause subsumes original clause, start again with new clause
 			if (subsumes(clause, tempClause, literalToRemove)) {
+				NumbersKeeper.minimizationTime += tw.time();
 				return minimize(tempClause);
 			}
 		}
