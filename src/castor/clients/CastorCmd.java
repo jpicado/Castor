@@ -153,8 +153,8 @@ public class CastorCmd {
             } else {
 	            // LEARN
             	logger.info("Learning...");
-//            	CastorLearner learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
-            	Golem learner = new Golem(genericDAO, bottomClauseConstructionDAO, coverageEngine, dataModel, parameters);
+            	CastorLearner learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
+//            	Golem learner = new Golem(genericDAO, bottomClauseConstructionDAO, coverageEngine, dataModel, parameters);
 	            List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName());
 	            NumbersKeeper.totalTime += tw.time();
 	            
