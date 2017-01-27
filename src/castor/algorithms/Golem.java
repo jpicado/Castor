@@ -267,7 +267,7 @@ public class Golem {
 		// Create local copy of remaining positive examples
 		List<Tuple> localPosExamples = new LinkedList<Tuple>(remainingPosExamples);
 		
-		// Create candidate clauses by doing RLGG of pairs ef examples
+		// Create candidate clauses by doing RLGG of pairs of examples
 		List<ClauseInfo> candidates = this.generateCandidateClauses(schema, modeH, modesB, localPosExamples, posExamplesRelation, negExamplesRelation);
 		
 		ClauseInfo bestClauseInfo = null;
@@ -515,7 +515,7 @@ public class Golem {
 	private MyClause generalize(MyClause clause1, MyClause clause2, Schema schema, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, Reducer.MEASURE measure) {
 		MyClause clause = lgg(clause1, clause2);
 		clause = ClauseTransformations.minimize(clause);
-//		clause = Reducer.negativeReduce(genericDAO, coverageEngine, clause, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, measure, evaluator);
+		clause = Reducer.negativeReduce(genericDAO, coverageEngine, clause, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, measure, evaluator);
 		return clause;
 	}
 
