@@ -16,6 +16,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import aima.core.util.datastructure.Pair;
+import castor.algorithms.CastorLearner;
 import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
 import castor.db.QueryGenerator;
 import castor.db.dataaccess.BottomClauseConstructionDAO;
@@ -85,6 +86,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 		int counter = 0;
 		for (Tuple exampleTuple : posExamplesTuples) {
 			try {
+//				System.out.println("Generating ground bottom clause for positive example " + exampleTuple.getValues().toString()+"...");
 				String groundClause = saturator.generateGroundBottomClauseString(bottomClauseConstructionDAO, exampleTuple, spName, iterations, Integer.MAX_VALUE, maxterms);
 				
 				// IDA Clause parses does not handle single quotes well. Remove them from example. Note they should also be removed when evaluating a hypothesis.
@@ -106,6 +108,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 		counter = 0;
 		for (Tuple exampleTuple : negExamplesTuples) {
 			try {
+//				System.out.println("Generating ground bottom clause for negative example " + exampleTuple.getValues().toString()+"...");
 				String groundClause = saturator.generateGroundBottomClauseString(bottomClauseConstructionDAO, exampleTuple, spName, iterations, Integer.MAX_VALUE, maxterms);
 				
 				// IDA Clause parses does not handle single quotes well. Remove them from example. Note they should also be removed when evaluating a hypothesis.

@@ -308,12 +308,15 @@ public class Golem {
 		for (Pair<Tuple, Tuple> pair : pairs) {
 			// Saturate examples
 			MyClause clause1 = saturator.generateGroundBottomClause(bottomClauseConstructionDAO, pair.getFirst(), dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+//			System.out.println(clause1.getNumberLiterals());
 			MyClause clause2 = saturator.generateGroundBottomClause(bottomClauseConstructionDAO, pair.getSecond(), dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+//			System.out.println(clause2.getNumberLiterals());
 			
 			// Generalize
+//			System.out.println("Generalizing...");
 			MyClause newClause = generalize(clause1, clause2, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, Reducer.MEASURE.CONSISTENCY);
 			ClauseInfo newClauseInfo = new ClauseInfo(newClause, coverageEngine.getAllPosExamples().size(), coverageEngine.getAllNegExamples().size());
-			
+//			System.out.println("Done.");
 			// Add clause if it satisfies minimum conditions
 			if (candidateSatisfiesConditions(newClauseInfo, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation)) {
 				newClauses.add(newClauseInfo);
