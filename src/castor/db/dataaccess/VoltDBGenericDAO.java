@@ -36,5 +36,24 @@ public class VoltDBGenericDAO implements GenericDAO {
 		}
 		
 		return new GenericTableObject(result);
-	}	
+	}
+
+	@Override
+	public long executeScalarQuery(String query) {
+		long result = 0;
+		try {
+			// Run query
+			ClientResponse response = VoltDBConnectionContainer.getInstance().getClient().callProcedure(VoltDBGenericDAO.ADHOC_QUERY, query);
+			VoltTable table = response.getResults()[0];
+			
+			// Get result
+			table.advanceRow();
+			result = table.getLong(0);
+		} catch (IOException | ProcCallException e) {
+			throw new RuntimeException(e);
+		}
+    	
+		return result;
+	}
+	
 }

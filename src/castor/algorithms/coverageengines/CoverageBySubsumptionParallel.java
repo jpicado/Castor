@@ -16,7 +16,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import aima.core.util.datastructure.Pair;
-import castor.algorithms.CastorLearner;
 import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
 import castor.db.QueryGenerator;
 import castor.db.dataaccess.BottomClauseConstructionDAO;

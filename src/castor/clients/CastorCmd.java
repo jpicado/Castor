@@ -118,7 +118,6 @@ public class CastorCmd {
         		logger.error("Unable to connect to server with URL: " + this.parameters.getDbURL());
         		return;
         	}
-        	daoFactory.initConnection(this.parameters.getDbURL());
     		GenericDAO genericDAO = daoFactory.getGenericDAO();
             BottomClauseConstructionDAO bottomClauseConstructionDAO = daoFactory.getBottomClauseConstructionDAO();
         	
