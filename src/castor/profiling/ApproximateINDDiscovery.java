@@ -2,8 +2,9 @@ package castor.profiling;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
@@ -16,6 +17,7 @@ import castor.language.Relation;
 import castor.language.Schema;
 import castor.settings.JsonSettingsReader;
 import castor.utils.FileUtils;
+import castor.utils.TimeWatch;
 
 import com.google.gson.JsonObject;
 
@@ -33,6 +35,8 @@ public class ApproximateINDDiscovery {
 	}
 	
 	public void discoverApproximateINDs(String[] args) {
+		TimeWatch tw = TimeWatch.start();
+		
 		// Parse the arguments
         try {
         	CmdLineParser parser = new CmdLineParser(this);
@@ -53,9 +57,6 @@ public class ApproximateINDDiscovery {
 			e.printStackTrace();
 			return;
 		}
-        
-        Relation student = schema.getRelations().get("student");
-        Relation inphase = schema.getRelations().get("inphase");
 		
 		DAOFactory daoFactory = DAOFactory.getDAOFactory(DAOFactory.VOLTDB);
         try {
@@ -69,37 +70,21 @@ public class ApproximateINDDiscovery {
         		return;
         	}
     		GenericDAO genericDAO = daoFactory.getGenericDAO();
-//    		long numerator = genericDAO.executeScalarQuery("select count(distinct(s.student)) from (select student from student) s, (select student from inPhase) p where s.student=p.student;");
-//    		long denominator = genericDAO.executeScalarQuery("select count(distinct(student)) from student;");
-//    		double error = 1.0 - (double)(numerator/denominator);
-//    		System.out.println(error);
     		
-//        	String query;
-//        	ClientResponse response;
-//        	VoltTable table;
-//        	
-//    		query = "select count(distinct(s.student)) from (select student from student) s, (select student from inPhase) p where s.student=p.student;";
-//    		response = VoltDBConnectionContainer.getInstance().getClient().callProcedure(VoltDBGenericDAO.ADHOC_QUERY, query);
-//			table = response.getResults()[0];
-//			table.advanceRow();
-//			long numerator = table.getLong(0);
-//    		
-//    		query = "select count(distinct(student)) from student;";
-//    		response = VoltDBConnectionContainer.getInstance().getClient().callProcedure(VoltDBGenericDAO.ADHOC_QUERY, query);
-//			table = response.getResults()[0];
-//			table.advanceRow();
-//			long denominator = table.getLong(0);
-//			
-//			double error = 1.0 - (double)(numerator/denominator);
-//    		System.out.println(error);
-    		
+    		Set<String> relations = relationsToConsider();
     		
     		String numeratorQueryTemplate = "select count(distinct(r.{1})) from (select {1} from {0}) r, (select {3} from {2}) s where r.{1} = s.{3};";
     		String denominatorQueryTemplate = "select count(distinct({1})) from {0};";
     		for (Relation relation1 : schema.getRelations().values()) {
+//    			if (!relations.contains(relation1.getName()))
+//    				continue;
+    				
     		    for (String attribute1 : relation1.getAttributeNames()) {
     		    	
     		    	for (Relation relation2 : schema.getRelations().values()) {
+//    		    		if (!relations.contains(relation2.getName()))
+//    	    				continue;
+    		    		
     		    		for (String attribute2 : relation2.getAttributeNames()) {
     		    			
     		    			// If same relation and attribute, continue
@@ -120,6 +105,8 @@ public class ApproximateINDDiscovery {
     		        		
     		        		if (error <= 0.5)
     		        			System.out.println(relation1.getName()+"["+attribute1+"] < "+ relation2.getName()+"["+attribute2+"] - error: "+error);
+    		    			
+//    		    			System.out.println(relation1.getName()+"."+attribute1+" - "+relation2.getName()+"."+attribute2);
     		    		}
     		    	}
     		    }
@@ -132,5 +119,26 @@ public class ApproximateINDDiscovery {
         	// Close connection to DBMS
         	daoFactory.closeConnection();
         }
+        
+        System.out.println("Finished in: "+tw.time()+"ms");
+	}
+	
+	private Set<String> relationsToConsider() {
+		Set<String> relations = new HashSet<String>();
+		
+		relations.add("student");
+		relations.add("inphase");
+		relations.add("yearsinprogram");
+		relations.add("professor");
+		relations.add("hasposition");
+		relations.add("courselevel");
+		relations.add("taughtby");
+		relations.add("ta");
+		relations.add("publication");
+		
+//		relations.add("advisedby_fold1_train_neg");
+		relations.add("advisedby_fold1_train_pos");
+		
+		return relations;
 	}
 }
