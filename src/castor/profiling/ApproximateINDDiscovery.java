@@ -13,8 +13,10 @@ import org.kohsuke.args4j.Option;
 
 import castor.db.dataaccess.DAOFactory;
 import castor.db.dataaccess.GenericDAO;
+import castor.db.dataaccess.GenericTableObject;
 import castor.language.Relation;
 import castor.language.Schema;
+import castor.language.Tuple;
 import castor.settings.JsonSettingsReader;
 import castor.utils.FileUtils;
 import castor.utils.TimeWatch;
@@ -26,14 +28,21 @@ public class ApproximateINDDiscovery {
 	@Option(name="-schema",usage="Schema file",required=true)
     private String schemaFile;
 	
+	@Option(name="-maxerror",usage="Maximum error",required=true)
+    private double maxError;
+	
 	@Argument
     private List<String> arguments = new ArrayList<String>();
 	
 	public static void main(String[] args) {
 		ApproximateINDDiscovery discovery = new ApproximateINDDiscovery();
-		discovery.discoverApproximateINDs(args);
+		discovery.discoverApproximateINDsV2(args);
 	}
 	
+	/*
+	 * Discovers and prints approximate INDs
+	 * This version finds overlap between two relations by joining relations in DB
+	 */
 	public void discoverApproximateINDs(String[] args) {
 		TimeWatch tw = TimeWatch.start();
 		
@@ -71,20 +80,12 @@ public class ApproximateINDDiscovery {
         	}
     		GenericDAO genericDAO = daoFactory.getGenericDAO();
     		
-    		Set<String> relations = relationsToConsider();
-    		
     		String numeratorQueryTemplate = "select count(distinct(r.{1})) from (select {1} from {0}) r, (select {3} from {2}) s where r.{1} = s.{3};";
     		String denominatorQueryTemplate = "select count(distinct({1})) from {0};";
     		for (Relation relation1 : schema.getRelations().values()) {
-//    			if (!relations.contains(relation1.getName()))
-//    				continue;
-    				
     		    for (String attribute1 : relation1.getAttributeNames()) {
     		    	
     		    	for (Relation relation2 : schema.getRelations().values()) {
-//    		    		if (!relations.contains(relation2.getName()))
-//    	    				continue;
-    		    		
     		    		for (String attribute2 : relation2.getAttributeNames()) {
     		    			
     		    			// If same relation and attribute, continue
@@ -103,10 +104,8 @@ public class ApproximateINDDiscovery {
     		        		
     		        		double error = 1.0 - ((double)numerator/(double)denominator);
     		        		
-    		        		if (error <= 0.5)
+    		        		if (error <= maxError)
     		        			System.out.println(relation1.getName()+"["+attribute1+"] < "+ relation2.getName()+"["+attribute2+"] - error: "+error);
-    		    			
-//    		    			System.out.println(relation1.getName()+"."+attribute1+" - "+relation2.getName()+"."+attribute2);
     		    		}
     		    	}
     		    }
@@ -120,25 +119,101 @@ public class ApproximateINDDiscovery {
         	daoFactory.closeConnection();
         }
         
-        System.out.println("Finished in: "+tw.time()+"ms");
+        System.out.println("Finished in: "+tw.time()+" ms");
 	}
 	
-	private Set<String> relationsToConsider() {
-		Set<String> relations = new HashSet<String>();
+	/*
+	 * Discovers and prints approximate INDs
+	 * This version finds overlap between two relations by loading them to memory and computing overlap programatically
+	 */
+	public void discoverApproximateINDsV2(String[] args) {
+		TimeWatch tw = TimeWatch.start();
 		
-		relations.add("student");
-		relations.add("inphase");
-		relations.add("yearsinprogram");
-		relations.add("professor");
-		relations.add("hasposition");
-		relations.add("courselevel");
-		relations.add("taughtby");
-		relations.add("ta");
-		relations.add("publication");
+		// Parse the arguments
+        try {
+        	CmdLineParser parser = new CmdLineParser(this);
+			parser.parseArgument(args);
+        } catch (CmdLineException e) {
+			System.err.println(e.getMessage());
+			return;
+		}
 		
-//		relations.add("advisedby_fold1_train_neg");
-		relations.add("advisedby_fold1_train_pos");
+		// Read JSON object
+        JsonObject schemaJson = FileUtils.convertFileToJSON(schemaFile);
+        
+        // Read schema
+        Schema schema;
+        try {
+			schema = JsonSettingsReader.readSchema(schemaJson);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return;
+		}
 		
-		return relations;
+		DAOFactory daoFactory = DAOFactory.getDAOFactory(DAOFactory.VOLTDB);
+        try {
+        	// Create data access objects and set URL of data
+        	String dbUrl = "localhost";
+        	try {
+        		daoFactory.initConnection(dbUrl);
+        	}
+        	catch (RuntimeException e) {
+        		System.err.println("Unable to connect to server with URL: " + dbUrl);
+        		return;
+        	}
+    		GenericDAO genericDAO = daoFactory.getGenericDAO();
+
+    		String queryTemplate = "select distinct({1}) from {0};";
+    		for (Relation relation1 : schema.getRelations().values()) {
+    		    for (String attribute1 : relation1.getAttributeNames()) {
+    		    	
+    		    	for (Relation relation2 : schema.getRelations().values()) {
+    		    		for (String attribute2 : relation2.getAttributeNames()) {
+    		    			
+    		    			// If same relation and attribute, continue
+    		    			if (relation1.getName().equals(relation2.getName()) && attribute1.equals(attribute2))
+    		    				continue;
+    		    			
+    		    			String leftRelationQuery = MessageFormat.format(queryTemplate, relation1.getName(), attribute1);
+    		    			String rightRelationQuery = MessageFormat.format(queryTemplate, relation2.getName(), attribute2);
+    		    			
+    		    			GenericTableObject leftResult = genericDAO.executeQuery(leftRelationQuery);
+    		    			int leftAttributeCount = leftResult.getTable().size();
+    		    			
+    		    			// If denominator is 0, skip
+    		    			if (leftAttributeCount == 0) {
+    		        			continue;
+    		        		}
+    		    			
+    		    			GenericTableObject rightResult = genericDAO.executeQuery(rightRelationQuery);
+    		    			
+    		    			Set<Tuple> leftRelationValues = new HashSet<Tuple>(leftResult.getTable());
+    		    			Set<Tuple> rightRelationValues = new HashSet<Tuple>(rightResult.getTable());
+    		    			
+    		    			int intersectionCount = 0;
+    		    			
+    		    			for (Tuple tuple : leftRelationValues) {
+								if (rightRelationValues.contains(tuple))
+									intersectionCount++;
+							}
+    		    			
+    		        		double error = 1.0 - ((double)intersectionCount/(double)leftAttributeCount);
+    		        		
+    		        		if (error <= maxError)
+    		        			System.out.println(relation1.getName()+"["+attribute1+"] < "+ relation2.getName()+"["+attribute2+"] - error: "+error);
+    		    		}
+    		    	}
+    		    }
+    		}
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+        }
+        finally {
+        	// Close connection to DBMS
+        	daoFactory.closeConnection();
+        }
+        
+        System.out.println("Finished in: "+tw.time()+" ms");
 	}
 }
