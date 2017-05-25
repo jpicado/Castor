@@ -2,12 +2,16 @@ package castor.db.dataaccess;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.voltdb.VoltTable;
 import org.voltdb.client.ClientResponse;
 import org.voltdb.client.ProcCallException;
 
+import castor.language.Relation;
+import castor.language.Schema;
 import castor.language.Tuple;
 
 public class VoltDBGenericDAO implements GenericDAO {
@@ -54,6 +58,15 @@ public class VoltDBGenericDAO implements GenericDAO {
 		}
     	
 		return result;
+	}
+
+	@Override
+	public Schema getSchema() {
+		Map<String, Relation> relations = new HashMap<String, Relation>();
+		
+		
+		Schema schema = new Schema(relations);
+		return schema;
 	}
 	
 }
