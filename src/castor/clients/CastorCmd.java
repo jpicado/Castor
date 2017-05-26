@@ -11,6 +11,9 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
 import castor.algorithms.CastorLearner;
+import castor.algorithms.Golem;
+import castor.algorithms.Learner;
+import castor.algorithms.ProGolem;
 import castor.algorithms.bottomclause.BottomClauseUtil;
 import castor.algorithms.coverageengines.CoverageBySubsumptionParallel;
 import castor.algorithms.coverageengines.CoverageEngine;
@@ -35,6 +38,10 @@ import com.google.gson.JsonObject;
 
 public class CastorCmd {
 	
+	public static final String ALGORITHM_CASTOR = "Castor";
+	public static final String ALGORITHM_PROGOLEM = "ProGolem";
+	public static final String ALGORITHM_GOLEM = "Golem";
+	
 	// Options
 	@Option(name="-parameters",usage="Parameters file",required=true)
     private String parametersFile;
@@ -56,6 +63,9 @@ public class CastorCmd {
 	
 	@Option(name="-e",usage="Example to build bottom clause for (only when using sat or groundsat options)")
     private int exampleForSaturation = 0;
+	
+	@Option(name="-algorithm",usage="Algorithm to run (Castor, Golem)",required=false)
+    private String algorithm = ALGORITHM_CASTOR;
 	
 	@Argument
     private List<String> arguments = new ArrayList<String>();
@@ -159,9 +169,18 @@ public class CastorCmd {
             } else {
 	            // LEARN
             	logger.info("Learning...");
-            	CastorLearner learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
-//            	Golem learner = new Golem(genericDAO, bottomClauseConstructionDAO, coverageEngine, dataModel, parameters);
-	            List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName());
+            	Learner learner;
+            	if (this.algorithm.equals(ALGORITHM_CASTOR)) {
+            		learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
+            	} else if (this.algorithm.equals(ALGORITHM_GOLEM)) {
+            		learner = new Golem(genericDAO, bottomClauseConstructionDAO, coverageEngine, dataModel, parameters);
+            	} else if (this.algorithm.equals(ALGORITHM_PROGOLEM)) {
+            		learner = new ProGolem(genericDAO, coverageEngine, parameters);
+            	} else {
+            		throw new IllegalArgumentException("Learning algorithm " + this.algorithm + " not implemented.");
+            	}
+            	List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName());
+	            
 	            NumbersKeeper.totalTime += tw.time();
 	            
 	            logger.info("Total time: " + NumbersKeeper.totalTime);
@@ -177,7 +196,6 @@ public class CastorCmd {
 	            logger.info("LearnClause time: " + NumbersKeeper.learnClauseTime);
 	            
 	            logger.info("Avg clause length in coverage: " + (NumbersKeeper.clauseLengthSum / NumbersKeeper.coverageCalls));
-	            
 	            
 	            // EVALUATE DEFINITION
 	            logger.info("Evaluating on testing data...");

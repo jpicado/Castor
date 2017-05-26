@@ -50,7 +50,7 @@ import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
 import castor.wrappers.EvaluationResult;
 
-public class Golem {
+public class Golem implements Learner {
 	
 	private static Logger logger = Logger.getLogger(Golem.class);
 	
@@ -81,6 +81,9 @@ public class Golem {
 	 */
 	public List<ClauseInfo> learn(Schema schema, Mode modeH, List<Mode> modesB, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate) {
 		TimeWatch tw = TimeWatch.start();
+		
+		logger.info("Training positive examples: " + this.coverageEngine.getAllPosExamples().size());
+		logger.info("Training negative examples: " + this.coverageEngine.getAllNegExamples().size());
 		
 		List<ClauseInfo> definition = new LinkedList<ClauseInfo>();
 		
@@ -120,6 +123,9 @@ public class Golem {
 	 * Evaluate the given definition using examples given in testCoverageEngine
 	 */
 	public EvaluationResult evaluate(CoverageEngine testCoverageEngine, Schema schema, List<ClauseInfo> definition, Relation testExamplesPos, Relation testExamplesNeg) {
+		logger.info("Testing positive examples: " + testCoverageEngine.getAllPosExamples().size());
+		logger.info("Testing negative examples: " + testCoverageEngine.getAllNegExamples().size());
+		
 		// ClauseInfo contains information about covered examples from training set
 		// We must reset it to contain information about covered examples from testing set
 		for (ClauseInfo clauseInfo : definition) {
