@@ -62,7 +62,6 @@ public class CastorCmd {
 	
 	private Parameters parameters;
 	private Schema schema;
-	private Map<String, List<InclusionDependency>> inds;
 	private DataModel dataModel;
 
 	// Logger
@@ -115,8 +114,7 @@ public class CastorCmd {
          	// Get INDs from file, if given
          	if (indsFile != null) {
             	JsonObject indsJson = FileUtils.convertFileToJSON(indsFile);
-            	inds = this.readINDsFromJson(indsJson);
-             	schema.setInclusionDependencies(inds);
+            	this.readINDsFromJson(indsJson);
             }
          	
          	// Get data model from file
@@ -264,15 +262,14 @@ public class CastorCmd {
 	/*
 	 * Read INDs from JSON object
 	 */
-	private Map<String, List<InclusionDependency>> readINDsFromJson(JsonObject indsJson) {
-		Map<String, List<InclusionDependency>> inds;
+	private void readINDsFromJson(JsonObject indsJson) {
 		try {
 			logger.info("Reading inclusion dependencies...");
-			inds = JsonSettingsReader.readINDs(indsJson);
+			Map<String, List<InclusionDependency>> inds = JsonSettingsReader.readINDs(indsJson);
+			schema.setInclusionDependencies(inds);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
-		return inds;
 	}
 	
 	/*
