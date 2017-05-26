@@ -2,6 +2,7 @@ package castor.clients;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.kohsuke.args4j.Argument;
@@ -10,7 +11,6 @@ import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
 import castor.algorithms.CastorLearner;
-import castor.algorithms.Golem;
 import castor.algorithms.bottomclause.BottomClauseUtil;
 import castor.algorithms.coverageengines.CoverageBySubsumptionParallel;
 import castor.algorithms.coverageengines.CoverageEngine;
@@ -20,6 +20,8 @@ import castor.db.dataaccess.BottomClauseConstructionDAO;
 import castor.db.dataaccess.DAOFactory;
 import castor.db.dataaccess.GenericDAO;
 import castor.hypotheses.ClauseInfo;
+import castor.language.InclusionDependency;
+import castor.language.Mode;
 import castor.language.Relation;
 import castor.language.Schema;
 import castor.settings.DataModel;
@@ -37,8 +39,11 @@ public class CastorCmd {
 	@Option(name="-parameters",usage="Parameters file",required=true)
     private String parametersFile;
 	
-	@Option(name="-schema",usage="Schema file",required=true)
-    private String schemaFile;
+	@Option(name="-schema",usage="Schema file",required=false)
+    private String schemaFile = null;
+	
+	@Option(name="-inds",usage="INDs file",required=false)
+    private String indsFile = null;
 	
 	@Option(name="-dataModel",usage="Data model file",required=true)
     private String dataModelFile;
@@ -57,6 +62,7 @@ public class CastorCmd {
 	
 	private Parameters parameters;
 	private Schema schema;
+	private Map<String, List<InclusionDependency>> inds;
 	private DataModel dataModel;
 
 	// Logger
@@ -80,33 +86,9 @@ public class CastorCmd {
 			return;
 		}
         
-        // Read JSON objects
+        // Get parameters from file
         JsonObject parametersJson = FileUtils.convertFileToJSON(parametersFile);
-        JsonObject schemaJson = FileUtils.convertFileToJSON(schemaFile);
-        JsonObject dataModelJson = FileUtils.convertFileToJSON(dataModelFile);
-        
-        // Get parameters from JSON object
- 		success = this.readParametersFromJson(parametersJson);
-     	if (!success) {
-     		return;
-     	}
- 		
- 		// Get schema from JSON object
- 		success = this.readSchemaFromJson(schemaJson);
-     	if (!success) {
-     		return;
-     	}
-     	
- 		// Get data model from JSON object
-     	success = this.readDataModelFromJson(dataModelJson);
-     	if (!success) {
-     		return;
-     	}
-        
-     	String postrainTableName = this.dataModel.getTarget()+DBCommons.TRAIN_POS_SUFFIX;
-		String negtrainTableName = this.dataModel.getTarget()+DBCommons.TRAIN_NEG_SUFFIX;
-		String postestTableName = this.dataModel.getTarget()+DBCommons.TEST_POS_SUFFIX;
-		String negtestTableName = this.dataModel.getTarget()+DBCommons.TEST_NEG_SUFFIX;
+ 		parameters = this.readParametersFromJson(parametersJson);
 		
 		DAOFactory daoFactory = DAOFactory.getDAOFactory(DAOFactory.VOLTDB);
         try {
@@ -120,6 +102,29 @@ public class CastorCmd {
         	}
     		GenericDAO genericDAO = daoFactory.getGenericDAO();
             BottomClauseConstructionDAO bottomClauseConstructionDAO = daoFactory.getBottomClauseConstructionDAO();
+            
+     		// Get schema from file or from DB
+         	if (schemaFile != null) {
+            	JsonObject schemaJson = FileUtils.convertFileToJSON(schemaFile);
+            	schema = this.readSchemaFromJson(schemaJson);
+            } else {
+            	// Read from DB
+            	schema = genericDAO.getSchema();
+            }
+         	
+         	// Get INDs from file, if given
+         	if (indsFile != null) {
+            	JsonObject indsJson = FileUtils.convertFileToJSON(indsFile);
+            	inds = this.readINDsFromJson(indsJson);
+             	schema.setInclusionDependencies(inds);
+            }
+         	
+         	// Get data model from file
+         	JsonObject dataModelJson = FileUtils.convertFileToJSON(dataModelFile);
+         	dataModel = this.readDataModelFromJson(dataModelJson);
+         	
+         	// Validate data model
+         	this.validateDataModel();
         	
         	// Generate and compile stored procedures
         	if (this.parameters.isCreateStoredProcedure()) {
@@ -128,17 +133,21 @@ public class CastorCmd {
 	        		return;
 	        	}
         	}
-
-	        // General
-	        Relation posTrain = this.schema.getRelations().get(postrainTableName);
-	      	Relation negTrain = this.schema.getRelations().get(negtrainTableName);
-	      	Relation posTest = this.schema.getRelations().get(postestTableName);
-	        Relation negTest = this.schema.getRelations().get(negtestTableName);
+        	
+	        // Obtain train and test relations
+        	String postrainTableName = this.dataModel.getTarget()+DBCommons.TRAIN_POS_SUFFIX;
+    		String negtrainTableName = this.dataModel.getTarget()+DBCommons.TRAIN_NEG_SUFFIX;
+    		String postestTableName = this.dataModel.getTarget()+DBCommons.TEST_POS_SUFFIX;
+    		String negtestTableName = this.dataModel.getTarget()+DBCommons.TEST_NEG_SUFFIX;
+    		
+	        Relation posTrain = this.schema.getRelations().get(postrainTableName.toUpperCase());
+	      	Relation negTrain = this.schema.getRelations().get(negtrainTableName.toUpperCase());
+	      	Relation posTest = this.schema.getRelations().get(postestTableName.toUpperCase());
+	        Relation negTest = this.schema.getRelations().get(negtestTableName.toUpperCase());
 	        
-            // Create CoverageEngine and ProGolem object
+            // Create CoverageEngine
             tw.reset();
             logger.info("Creating coverage engine...");
-            
             boolean createFullCoverageEngine = !saturation && !groundSaturation;
             CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), createFullCoverageEngine);
             NumbersKeeper.creatingCoverageTime = tw.time();
@@ -188,51 +197,82 @@ public class CastorCmd {
 	}
 	
 	/*
+	 * Check that all relations in data model exist in schema
+	 */
+	private void validateDataModel() {
+		// Check head mode
+		//validateModeRelation(dataModel.getModeH().getPredicateName(), dataModel.getModeH().getArguments().size());
+		
+		// Check body modes
+		for (Mode mode : dataModel.getModesB()) {
+			validateModeRelation(mode.getPredicateName().toUpperCase(), mode.getArguments().size());
+		}
+	}
+	
+	/*
+	 * Check that relation exist in schema and with same number of attributes
+	 */
+	private void validateModeRelation(String relationName, int relationArity) {
+		if (!schema.getRelations().containsKey(relationName) || 
+				schema.getRelations().get(relationName).getAttributeNames().size() != relationArity) {
+			throw new IllegalArgumentException("Schema does not contain relation " + relationName + " or number of attributes in mode does not match with number of attributes in relation in schema.");
+		}
+	}
+
+	/*
 	 * Read data model from JSON object
 	 */
-	private boolean readParametersFromJson(JsonObject parametersJson) {
-		boolean success;
+	private Parameters readParametersFromJson(JsonObject parametersJson) {
+		Parameters parameters;
 		try {
 			logger.info("Reading parameters...");
 			parameters = JsonSettingsReader.readParameters(parametersJson);
-			success = true;
 		} catch (Exception e) {
-			e.printStackTrace();
-			success = false;
+			throw new RuntimeException(e);
 		}
-		return success;
+		return parameters;
 	}
 	
 	/*
 	 * Read data model from JSON object
 	 */
-	private boolean readDataModelFromJson(JsonObject dataModelJson) {
-		boolean success;
+	private DataModel readDataModelFromJson(JsonObject dataModelJson) {
+		DataModel dataModel;
 		try {
 			logger.info("Reading data model...");
 			dataModel = JsonSettingsReader.readDataModel(dataModelJson);
-			success = true;
 		} catch (Exception e) {
-			e.printStackTrace();
-			success = false;
+			throw new RuntimeException(e);
 		}
-		return success;
+		return dataModel;
 	}
 	
 	/*
 	 * Read schema from JSON object
 	 */
-	private boolean readSchemaFromJson(JsonObject schemaJson) {
-		boolean success;
+	private Schema readSchemaFromJson(JsonObject schemaJson) {
+		Schema schema;
 		try {
 			logger.info("Reading schema...");
 			schema = JsonSettingsReader.readSchema(schemaJson);
-			success = true;
 		} catch (Exception e) {
-			e.printStackTrace();
-			success = false;
+			throw new RuntimeException(e);
 		}
-		return success;
+		return schema;
+	}
+	
+	/*
+	 * Read INDs from JSON object
+	 */
+	private Map<String, List<InclusionDependency>> readINDsFromJson(JsonObject indsJson) {
+		Map<String, List<InclusionDependency>> inds;
+		try {
+			logger.info("Reading inclusion dependencies...");
+			inds = JsonSettingsReader.readINDs(indsJson);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		return inds;
 	}
 	
 	/*

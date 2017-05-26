@@ -149,7 +149,7 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 					seenPredicatesAttributes.add(modeAttributeId);
 					
 					// Get attribute name
-					String attribute =  schema.getRelations().get(mode.getPredicateName()).getAttributeNames().get(attributeNumber);
+					String attribute =  schema.getRelations().get(mode.getPredicateName().toUpperCase()).getAttributeNames().get(attributeNumber);
 					
 					// Create SQL statement from template
 					final ST sqlStatementTemplate = stGroup.getInstanceOf(SP_BOTTOMCLAUSE_SQLSTATEMENT_TEMPLATE);
@@ -287,7 +287,7 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 					seenPredicatesAttributes.add(modeAttributeId);
 					
 					// Get attribute name
-					String attribute =  schema.getRelations().get(mode.getPredicateName()).getAttributeNames().get(attributeNumber);
+					String attribute =  schema.getRelations().get(mode.getPredicateName().toUpperCase()).getAttributeNames().get(attributeNumber);
 					
 					// Create SQL statement from template
 					final ST sqlStatementTemplate = stGroup.getInstanceOf(SP_BOTTOMCLAUSE_SQLSTATEMENT_TEMPLATE);

@@ -154,8 +154,20 @@ public class JsonSettingsReader {
 		}
 		
 		// Read inclusion dependencies
+		inds = JsonSettingsReader.readINDs(schemaJson);
+		
+		return new Schema(name, relations, inds);
+	}
+	
+	/*
+	 * Read JSON object for schema and convert to object
+	 */
+	public static Map<String, List<InclusionDependency>> readINDs(JsonObject indsJson) throws Exception {
+		Map<String, List<InclusionDependency>> inds;
+		
+		// Read inclusion dependencies
 		inds = new HashMap<String, List<InclusionDependency>>();
-		JsonArray indsArray = schemaJson.get("inds").getAsJsonArray();
+		JsonArray indsArray = indsJson.get("inds").getAsJsonArray();
 		for (int i = 0; i < indsArray.size(); i++) {
 			JsonObject indObject = indsArray.get(i).getAsJsonObject();
 			String leftRelation = indObject.get("leftRelation").getAsString();
@@ -171,6 +183,6 @@ public class JsonSettingsReader {
 			inds.get(leftRelation).add(ind);
 		}
 		
-		return new Schema(name, relations, inds);
+		return inds;
 	}
 }

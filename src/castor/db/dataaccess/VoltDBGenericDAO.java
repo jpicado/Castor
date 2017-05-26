@@ -17,6 +17,7 @@ import castor.language.Tuple;
 public class VoltDBGenericDAO implements GenericDAO {
 	
 	public static final String ADHOC_QUERY = "@AdHoc";
+	public static final String CATALOG_QUERY = "@SystemCatalog";
 	
 	@Override
 	public GenericTableObject executeQuery(String query) {
@@ -64,9 +65,31 @@ public class VoltDBGenericDAO implements GenericDAO {
 	public Schema getSchema() {
 		Map<String, Relation> relations = new HashMap<String, Relation>();
 		
+		try {
+			// Run query
+			ClientResponse response = VoltDBConnectionContainer.getInstance().getClient().callProcedure(VoltDBGenericDAO.CATALOG_QUERY, "COLUMNS");
+			VoltTable table = response.getResults()[0];
+			
+			while(table.advanceRow()) {
+				String relationName = table.getString("TABLE_NAME").toUpperCase();
+				String attributeName = table.getString("COLUMN_NAME").toUpperCase();
+				int attributeOrdinalPosition = (int)table.getLong("ORDINAL_POSITION");
+				
+				if (!relations.containsKey(relationName)) {
+					relations.put(relationName, new Relation(relationName, new ArrayList<String>()));
+				}
+				
+				// If list of attributes is big enough, insert in correct place; otherwise, insert at the end
+				if (relations.get(relationName).getAttributeNames().size() >= attributeOrdinalPosition-1) 
+					relations.get(relationName).getAttributeNames().add(attributeOrdinalPosition-1, attributeName);
+				else
+					relations.get(relationName).getAttributeNames().add(attributeName);
+			}
+		} catch (IOException | ProcCallException e) {
+			throw new RuntimeException(e);
+		}
 		
-		Schema schema = new Schema(relations);
-		return schema;
+		return new Schema(relations);
 	}
 	
 }
