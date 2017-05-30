@@ -77,17 +77,9 @@ public class JsonSettingsReader {
 	 * Read JSON object for data model and convert to object
 	 */
 	public static DataModel readDataModel(JsonObject dataModelJson) throws Exception {
-		String target;
 		Mode modeH;
 		List<Mode> modesB;
 		String spName;
-		
-		// Read target
-		if (dataModelJson.get("target") == null) {
-			throw new Exception("Target not set in data model json.");
-		} else {
-			target = dataModelJson.get("target").getAsString();
-		}
 		
 		// Read head mode
 		if (dataModelJson.get("headMode") == null) {
@@ -116,7 +108,7 @@ public class JsonSettingsReader {
 			spName = dataModelJson.get("spName").getAsString();
 		}
 		
-		return new DataModel(target, modeH, modesB, spName);
+		return new DataModel(modeH, modesB, spName);
 	}
 	
 	/*
@@ -129,7 +121,7 @@ public class JsonSettingsReader {
 		
 		// Read schema name
 		if (schemaJson.get("name") != null) {
-			name = schemaJson.get("name").getAsString();
+			name = schemaJson.get("name").getAsString().toUpperCase();
 		}
 		
 		// Read relations
@@ -141,12 +133,12 @@ public class JsonSettingsReader {
 			for (int i = 0; i < relationsArray.size(); i++) {
 				JsonObject relationObject = relationsArray.get(i).getAsJsonObject();
 				// Get relation name
-				String relationName = relationObject.get("name").getAsString();
+				String relationName = relationObject.get("name").getAsString().toUpperCase();
 				// Get relation attributes
 				List<String> attributeNames = new LinkedList<String>();
 				JsonArray attributesArray = relationObject.get("attributes").getAsJsonArray();
 				for (int j = 0; j < attributesArray.size(); j++) {
-					String attribute = attributesArray.get(j).getAsString();
+					String attribute = attributesArray.get(j).getAsString().toUpperCase();
 					attributeNames.add(attribute);
 				}
 				relations.put(relationName, new Relation(relationName, attributeNames));

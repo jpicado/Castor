@@ -75,8 +75,8 @@ public class CastorLearner implements Learner {
 	public List<ClauseInfo> learn(Schema schema, Mode modeH, List<Mode> modesB, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate) {
 		TimeWatch tw = TimeWatch.start();
 		
-		logger.info("Training positive examples: " + this.coverageEngine.getAllPosExamples().size());
-		logger.info("Training negative examples: " + this.coverageEngine.getAllNegExamples().size());
+		logger.info("Training positive examples in table " + posExamplesRelation.getName() + ": " + this.coverageEngine.getAllPosExamples().size());
+		logger.info("Training negative examples in table " + negExamplesRelation.getName() + ": " + this.coverageEngine.getAllNegExamples().size());
 		
 		List<ClauseInfo> definition = new LinkedList<ClauseInfo>();
 		
@@ -116,8 +116,8 @@ public class CastorLearner implements Learner {
 	 * Evaluate the given definition using examples given in testCoverageEngine
 	 */
 	public EvaluationResult evaluate(CoverageEngine testCoverageEngine, Schema schema, List<ClauseInfo> definition, Relation testExamplesPos, Relation testExamplesNeg) {
-		logger.info("Testing positive examples: " + testCoverageEngine.getAllPosExamples().size());
-		logger.info("Testing negative examples: " + testCoverageEngine.getAllNegExamples().size());
+		logger.info("Testing positive examples in table " + testExamplesPos.getName() + ": " + testCoverageEngine.getAllPosExamples().size());
+		logger.info("Testing negative examples in table " + testExamplesNeg.getName() + ": " + testCoverageEngine.getAllNegExamples().size());
 		
 		// ClauseInfo contains information about covered examples from training set
 		// We must reset it to contain information about covered examples from testing set

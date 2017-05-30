@@ -55,10 +55,10 @@ public class CastorCmd {
 	@Option(name="-dataModel",usage="Data model file",required=true)
     private String dataModelFile;
 	
-	@Option(name="-sat",usage="Only build bottom clause for example given in option e.")
+	@Option(name="-sat",usage="Only build bottom clause for example given in option e")
     private boolean saturation = false;
 	
-	@Option(name="-groundsat",usage="Only ground build bottom clause for example given in option e.")
+	@Option(name="-groundsat",usage="Only ground build bottom clause for example given in option e")
     private boolean groundSaturation = false;
 	
 	@Option(name="-e",usage="Example to build bottom clause for (only when using sat or groundsat options)")
@@ -66,6 +66,18 @@ public class CastorCmd {
 	
 	@Option(name="-algorithm",usage="Algorithm to run (Castor, Golem)",required=false)
     private String algorithm = ALGORITHM_CASTOR;
+	
+	@Option(name="-trainPosSuffix",usage="Suffix for table containing training positive examples",required=false)
+    private String trainPosSuffix = DBCommons.TRAIN_POS_SUFFIX;
+	
+	@Option(name="-trainNegSuffix",usage="Suffix for table containing training negative examples",required=false)
+    private String trainNegSuffix = DBCommons.TRAIN_NEG_SUFFIX;
+	
+	@Option(name="-testPosSuffix",usage="Suffix for table containing testing positive examples",required=false)
+    private String testPosSuffix = DBCommons.TEST_POS_SUFFIX;
+	
+	@Option(name="-testNegSuffix",usage="Suffix for table containing testing negative examples",required=false)
+    private String testNegSuffix = DBCommons.TEST_NEG_SUFFIX;
 	
 	@Argument
     private List<String> arguments = new ArrayList<String>();
@@ -134,24 +146,29 @@ public class CastorCmd {
          	// Validate data model
          	this.validateDataModel();
         	
-        	// Generate and compile stored procedures
+	        // Obtain train and test relations
+        	String postrainTableName = (this.dataModel.getModeH().getPredicateName() + trainPosSuffix).toUpperCase();
+    		String negtrainTableName = (this.dataModel.getModeH().getPredicateName() + trainNegSuffix).toUpperCase();
+    		String postestTableName = (this.dataModel.getModeH().getPredicateName() + testPosSuffix).toUpperCase();
+    		String negtestTableName = (this.dataModel.getModeH().getPredicateName() + testNegSuffix).toUpperCase();
+    		
+	        Relation posTrain = this.schema.getRelations().get(postrainTableName);
+	      	Relation negTrain = this.schema.getRelations().get(negtrainTableName);
+	      	Relation posTest = this.schema.getRelations().get(postestTableName);
+	        Relation negTest = this.schema.getRelations().get(negtestTableName);
+	        
+	        // Check that tables containing examples exist
+	        if (posTrain == null || negTrain == null || posTest == null || negTest == null) {
+	        	throw new IllegalArgumentException("One or more tables containing training or testing examples do not exist in the schema:\n"+postrainTableName+"\n"+negtrainTableName+"\n"+postestTableName+"\n"+negtestTableName);
+	        }
+	        
+	        // Generate and compile stored procedures
         	if (this.parameters.isCreateStoredProcedure()) {
 	        	success = this.compileStoredProcedures();
 	        	if (!success) {
 	        		return;
 	        	}
         	}
-        	
-	        // Obtain train and test relations
-        	String postrainTableName = this.dataModel.getTarget()+DBCommons.TRAIN_POS_SUFFIX;
-    		String negtrainTableName = this.dataModel.getTarget()+DBCommons.TRAIN_NEG_SUFFIX;
-    		String postestTableName = this.dataModel.getTarget()+DBCommons.TEST_POS_SUFFIX;
-    		String negtestTableName = this.dataModel.getTarget()+DBCommons.TEST_NEG_SUFFIX;
-    		
-	        Relation posTrain = this.schema.getRelations().get(postrainTableName.toUpperCase());
-	      	Relation negTrain = this.schema.getRelations().get(negtrainTableName.toUpperCase());
-	      	Relation posTest = this.schema.getRelations().get(postestTableName.toUpperCase());
-	        Relation negTest = this.schema.getRelations().get(negtestTableName.toUpperCase());
 	        
             // Create CoverageEngine
             tw.reset();
@@ -195,7 +212,8 @@ public class CastorCmd {
 	            logger.info("LGG time: " + NumbersKeeper.lggTime);
 	            logger.info("LearnClause time: " + NumbersKeeper.learnClauseTime);
 	            
-	            logger.info("Avg clause length in coverage: " + (NumbersKeeper.clauseLengthSum / NumbersKeeper.coverageCalls));
+//	            if (NumbersKeeper.coverageCalls != 0)
+//	            	logger.info("Avg clause length in coverage: " + (NumbersKeeper.clauseLengthSum / NumbersKeeper.coverageCalls));
 	            
 	            // EVALUATE DEFINITION
 	            logger.info("Evaluating on testing data...");
