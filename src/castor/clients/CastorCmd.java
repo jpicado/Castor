@@ -43,10 +43,13 @@ public class CastorCmd {
 	public static final String ALGORITHM_GOLEM = "Golem";
 	
 	// Options
+	@Option(name="-h",aliases = { "--help" })
+    private boolean help = false;
+	
 	@Option(name="-parameters",usage="Parameters file",required=true)
     private String parametersFile;
 	
-	@Option(name="-schema",usage="Schema file",required=false)
+	@Option(name="-schema",usage="Schema file (if not provided, schema is extracted from DB)",required=false)
     private String schemaFile = null;
 	
 	@Option(name="-inds",usage="INDs file",required=false)
@@ -55,16 +58,16 @@ public class CastorCmd {
 	@Option(name="-dataModel",usage="Data model file",required=true)
     private String dataModelFile;
 	
-	@Option(name="-sat",usage="Only build bottom clause for example given in option e")
+	@Option(name="-sat",usage="Only build bottom clause for example given in parameter e")
     private boolean saturation = false;
 	
-	@Option(name="-groundsat",usage="Only ground build bottom clause for example given in option e")
+	@Option(name="-groundsat",usage="Only build ground bottom clause for example given in parameter e")
     private boolean groundSaturation = false;
 	
-	@Option(name="-e",usage="Example to build bottom clause for (only when using sat or groundsat options)")
+	@Option(name="-e",usage="Example to build bottom clause for (position of tuple in table; only when using sat or groundsat parameters)")
     private int exampleForSaturation = 0;
 	
-	@Option(name="-algorithm",usage="Algorithm to run (Castor, Golem)",required=false)
+	@Option(name="-algorithm",usage="Algorithm to run (Castor, Golem, ProGolem)",required=false)
     private String algorithm = ALGORITHM_CASTOR;
 	
 	@Option(name="-trainPosSuffix",usage="Suffix for table containing training positive examples",required=false)
@@ -99,13 +102,19 @@ public class CastorCmd {
 		boolean success;
 		
 		// Parse the arguments
+		CmdLineParser parser = new CmdLineParser(this);
         try {
-        	CmdLineParser parser = new CmdLineParser(this);
 			parser.parseArgument(args);
         } catch (CmdLineException e) {
 			logger.error(e.getMessage());
+			parser.printUsage(System.out);
 			return;
 		}
+        
+        if (help) {
+        	parser.printUsage(System.out);
+			return;
+        }
         
         // Get parameters from file
         JsonObject parametersJson = FileUtils.convertFileToJSON(parametersFile);
