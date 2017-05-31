@@ -79,11 +79,18 @@ public class VoltDBGenericDAO implements GenericDAO {
 					relations.put(relationName, new Relation(relationName, new ArrayList<String>()));
 				}
 				
-				// If list of attributes is big enough, insert in correct place; otherwise, insert at the end
-				if (relations.get(relationName).getAttributeNames().size() >= attributeOrdinalPosition-1) 
-					relations.get(relationName).getAttributeNames().add(attributeOrdinalPosition-1, attributeName);
-				else
-					relations.get(relationName).getAttributeNames().add(attributeName);
+				// If list of attributes is not big enough, insert dummy attributes
+				if (relations.get(relationName).getAttributeNames().size() < attributeOrdinalPosition) {
+					for(int i=relations.get(relationName).getAttributeNames().size(); i<attributeOrdinalPosition; i++) {
+						relations.get(relationName).getAttributeNames().add(null);
+					}
+				}
+				// Insert attribute in correct position
+				relations.get(relationName).getAttributeNames().set(attributeOrdinalPosition-1, attributeName);
+//				if (relations.get(relationName).getAttributeNames().size() >= attributeOrdinalPosition-1) 
+//					relations.get(relationName).getAttributeNames().add(attributeOrdinalPosition-1, attributeName);
+//				else
+//					relations.get(relationName).getAttributeNames().add(attributeName);
 			}
 		} catch (IOException | ProcCallException e) {
 			throw new RuntimeException(e);

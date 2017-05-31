@@ -17,6 +17,7 @@ public class Parameters {
 	private String reductionMethod = ReductionMethods.NEGATIVE_REDUCTION_CONSISTENCY;
 	private int iterations = 2;
 	private int recall = 10;
+	private int groundRecall = Integer.MAX_VALUE;
 	private int maxterms = 1000;
 	private boolean useInds = true;
 	private String dbURL = "localhost";
@@ -101,6 +102,12 @@ public class Parameters {
 	}
 	public void setRecall(int recall) {
 		this.recall = recall;
+	}
+	public int getGroundRecall() {
+		return groundRecall;
+	}
+	public void setGroundRecall(int groundRecall) {
+		this.groundRecall = groundRecall;
 	}
 	public int getMaxterms() {
 		return maxterms;

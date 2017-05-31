@@ -57,6 +57,9 @@ public class JsonSettingsReader {
 		if (parametersJson.get("recall") != null) {
 			parameters.setRecall(parametersJson.get("recall").getAsInt());
 		}
+		if (parametersJson.get("groundRecall") != null) {
+			parameters.setGroundRecall(parametersJson.get("groundRecall").getAsInt());
+		}
 		if (parametersJson.get("maxterms") != null) {
 			parameters.setMaxterms(parametersJson.get("maxterms").getAsInt());
 		}

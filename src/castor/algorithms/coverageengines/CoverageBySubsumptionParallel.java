@@ -45,10 +45,10 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 	int posExamplesPerMatching;
 	int negExamplesPerMatching;
 
-	public CoverageBySubsumptionParallel(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Relation posExamplesRelation, Relation negExamplesRelation, String spName, int iterations, int recall, int maxterms, int threads, boolean withMatchings) {
+	public CoverageBySubsumptionParallel(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Relation posExamplesRelation, Relation negExamplesRelation, String spName, int iterations, int recall, int groundRecall, int maxterms, int threads, boolean withMatchings) {
 		this.threads = threads;
 		if (withMatchings)
-			this.initWithMatchings(genericDAO, bottomClauseConstructionDAO, posExamplesRelation, negExamplesRelation, spName, iterations, recall, maxterms);
+			this.initWithMatchings(genericDAO, bottomClauseConstructionDAO, posExamplesRelation, negExamplesRelation, spName, iterations, recall, groundRecall, maxterms);
 		else 
 			initWithoutMatchings(genericDAO, bottomClauseConstructionDAO, posExamplesRelation, negExamplesRelation);
 	}
@@ -64,7 +64,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 		this.allPosExamples = negativeResult.getTable();
 	}
 	
-	private void initWithMatchings(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Relation posExamplesRelation, Relation negExamplesRelation, String spName, int iterations, int recall, int maxterms) {
+	private void initWithMatchings(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Relation posExamplesRelation, Relation negExamplesRelation, String spName, int iterations, int recall, int groundRecall, int maxterms) {
 		// Get all positive and negative examples
 		String posCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(posExamplesRelation);
 		GenericTableObject positiveResult = genericDAO.executeQuery(posCoverageQuery);
@@ -86,7 +86,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 		for (Tuple exampleTuple : posExamplesTuples) {
 			try {
 //				System.out.println("Generating ground bottom clause for positive example " + exampleTuple.getValues().toString()+"...");
-				String groundClause = saturator.generateGroundBottomClauseString(bottomClauseConstructionDAO, exampleTuple, spName, iterations, Integer.MAX_VALUE, maxterms);
+				String groundClause = saturator.generateGroundBottomClauseString(bottomClauseConstructionDAO, exampleTuple, spName, iterations, groundRecall, maxterms);
 				
 				// IDA Clause parses does not handle single quotes well. Remove them from example. Note they should also be removed when evaluating a hypothesis.
 				groundClause = groundClause.replaceAll("'", "");
@@ -108,7 +108,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 		for (Tuple exampleTuple : negExamplesTuples) {
 			try {
 //				System.out.println("Generating ground bottom clause for negative example " + exampleTuple.getValues().toString()+"...");
-				String groundClause = saturator.generateGroundBottomClauseString(bottomClauseConstructionDAO, exampleTuple, spName, iterations, Integer.MAX_VALUE, maxterms);
+				String groundClause = saturator.generateGroundBottomClauseString(bottomClauseConstructionDAO, exampleTuple, spName, iterations, groundRecall, maxterms);
 				
 				// IDA Clause parses does not handle single quotes well. Remove them from example. Note they should also be removed when evaluating a hypothesis.
 				groundClause = groundClause.replaceAll("'", "");

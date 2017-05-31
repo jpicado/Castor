@@ -166,7 +166,7 @@ public class CastorCmd {
 	      	Relation posTest = this.schema.getRelations().get(postestTableName);
 	        Relation negTest = this.schema.getRelations().get(negtestTableName);
 	        
-	        // Check that tables containing examples exist
+	        // Check that tables containing examples exist in schema
 	        if (posTrain == null || negTrain == null || posTest == null || negTest == null) {
 	        	throw new IllegalArgumentException("One or more tables containing training or testing examples do not exist in the schema:\n"+postrainTableName+"\n"+negtrainTableName+"\n"+postestTableName+"\n"+negtestTableName);
 	        }
@@ -183,7 +183,7 @@ public class CastorCmd {
             tw.reset();
             logger.info("Creating coverage engine...");
             boolean createFullCoverageEngine = !saturation && !groundSaturation;
-            CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), createFullCoverageEngine);
+            CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getGroundRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), createFullCoverageEngine);
             NumbersKeeper.creatingCoverageTime = tw.time();
             
             if (saturation) {
@@ -226,7 +226,7 @@ public class CastorCmd {
 	            
 	            // EVALUATE DEFINITION
 	            logger.info("Evaluating on testing data...");
-	            CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTest, negTest, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true);
+	            CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTest, negTest, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getGroundRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true);
 	            learner.evaluate(testCoverageEngine, this.schema, definition, posTest, negTest);
             }
         }
