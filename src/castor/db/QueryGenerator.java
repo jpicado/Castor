@@ -1,11 +1,15 @@
 package castor.db;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import aima.core.logic.fol.kb.data.Literal;
+import aima.core.logic.fol.parsing.ast.Term;
 import aima.core.util.datastructure.Pair;
 import castor.hypotheses.MyClause;
 import castor.language.Relation;
@@ -442,6 +446,8 @@ public class QueryGenerator {
 	public static String generateQueryFromClauseAndCoverageTable(Schema schema, MyClause clause, Relation tableToCover, boolean countTuples) {
 		StringBuilder query = new StringBuilder();
 		
+		clause = reorderClause(clause);
+		
 		int tableCounter = 0;
 		String headPredicate = tableToCover.getName();
 		String headPredicateAlias = Commons.newAlias(tableCounter);
@@ -478,7 +484,7 @@ public class QueryGenerator {
 		
 		// Add join predicates
 		for (Literal literal : clause.getNegativeLiterals()) {
-			String predicateName = literal.getAtomicSentence().getSymbolicName();
+			String predicateName = literal.getAtomicSentence().getSymbolicName().toUpperCase();
 			String predicateAlias = Commons.newAlias(tableCounter);
 			tableCounter++;
 			
@@ -514,5 +520,46 @@ public class QueryGenerator {
 		}
 		
 		return query.toString();
+	}
+
+	/*
+	 * Reorder clause so that all literals are head-connected from left to right
+	 */
+	private static MyClause reorderClause(MyClause clause) {
+		MyClause newClause = new MyClause();
+		Set<Term> seenTerms = new HashSet<Term>();
+		
+		// Add head literal
+		Literal head = clause.getPositiveLiterals().get(0);
+		newClause.addLiteral(head);
+		seenTerms.addAll(head.getAtomicSentence().getArgs());
+		
+		// Add body literals
+		List<Literal> notHeadConnectedLiterals = new ArrayList<Literal>(clause.getNegativeLiterals());
+		List<Literal> remainingLiterals = new ArrayList<Literal>(clause.getNegativeLiterals());
+		while (!notHeadConnectedLiterals.isEmpty()) {
+			remainingLiterals.clear();
+			remainingLiterals.addAll(notHeadConnectedLiterals);
+			notHeadConnectedLiterals.clear();
+			
+			for (Literal literal : remainingLiterals) {
+				boolean connected = false;
+				for (Term term : literal.getAtomicSentence().getArgs()) {
+					if (seenTerms.contains(term)) {
+						connected = true;
+						break;
+					}
+				}
+				
+				if (connected) {
+					newClause.addLiteral(literal);
+					seenTerms.addAll(literal.getAtomicSentence().getArgs());
+				} else {
+					notHeadConnectedLiterals.add(literal);
+				}
+			}
+		}
+		
+		return newClause;
 	}
 }

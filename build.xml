@@ -32,7 +32,7 @@
 
 	<!-- To work with external libraries, need classpath to compile -->
 	<target name="compile" depends="init" description="compile the source ">
-		<javac includeantruntime="false" srcdir="${src.dir}" destdir="${build.dir}" classpathref="classpath" />
+		<javac includeantruntime="false" srcdir="${src.dir}" destdir="${build.dir}" classpathref="classpath" debug="true" />
 	</target>
 
 	<!-- constructs the external libraries classpath name -->

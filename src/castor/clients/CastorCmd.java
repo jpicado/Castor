@@ -18,6 +18,7 @@ import castor.algorithms.bottomclause.BottomClauseUtil;
 import castor.algorithms.coverageengines.CoverageBySubsumptionParallel;
 import castor.algorithms.coverageengines.CoverageEngine;
 import castor.db.DBCommons;
+import castor.db.QueryGenerator;
 import castor.db.StoredProcedureGeneratorSaturationInsideSP;
 import castor.db.dataaccess.BottomClauseConstructionDAO;
 import castor.db.dataaccess.DAOFactory;
@@ -228,6 +229,10 @@ public class CastorCmd {
 	            logger.info("Evaluating on testing data...");
 	            CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTest, negTest, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getGroundRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true);
 	            learner.evaluate(testCoverageEngine, this.schema, definition, posTest, negTest);
+	            
+//	            for (ClauseInfo clauseInfo : definition) {
+//					System.out.println(QueryGenerator.generateQueryFromClauseAndCoverageTable(schema, clauseInfo.getClause(), posTrain, false));
+//				}
             }
         }
         catch (Exception e) {
