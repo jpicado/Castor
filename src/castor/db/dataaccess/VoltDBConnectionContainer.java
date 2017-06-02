@@ -1,6 +1,7 @@
 package castor.db.dataaccess;
 
 import org.voltdb.client.Client;
+import org.voltdb.client.ClientConfig;
 import org.voltdb.client.ClientFactory;
 
 public class VoltDBConnectionContainer {
@@ -16,7 +17,11 @@ public class VoltDBConnectionContainer {
 	}
 	
 	public void init(String URL) throws Exception {
-		client = ClientFactory.createClient();
+		ClientConfig config = new ClientConfig();
+		// Disable timeouts
+		config.setProcedureCallTimeout(0);
+		config.setConnectionResponseTimeout(0);
+		client = ClientFactory.createClient(config);
 		client.createConnection(URL);
 	}
 	
