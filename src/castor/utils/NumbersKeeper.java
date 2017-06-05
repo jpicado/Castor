@@ -23,4 +23,27 @@ public class NumbersKeeper {
 	// Temporal variables to be used for debugging 
 	public static long tempVar1 = 0;
 	public static long tempVar2 = 0;
+	
+	public static void reset() {
+		totalTime = 0;
+		learningTime = 0;
+		
+		creatingCoverageTime = 0;
+		
+		coverageTime = 0;
+		coverageCalls = 0;
+		clauseLengthSum = 0;
+		
+		entailmentTime = 0;
+		scoringTime = 0;
+		
+		minimizationTime = 0;
+		reducerTime = 0;
+		lggTime = 0;
+		
+		learnClauseTime = 0;
+		 
+		tempVar1 = 0;
+		tempVar2 = 0;		
+	}
 }

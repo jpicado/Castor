@@ -60,6 +60,10 @@ public class ProGolem implements Learner {
 		this.evaluator = new GenericEvaluator();
 	}
 	
+	public Parameters getParameters() {
+		return parameters;
+	}
+	
 	/*
 	 * Run learning algorithm
 	 */

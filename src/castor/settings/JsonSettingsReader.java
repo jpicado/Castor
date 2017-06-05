@@ -11,6 +11,7 @@ import castor.language.Relation;
 import castor.language.Schema;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 public class JsonSettingsReader {
@@ -72,6 +73,25 @@ public class JsonSettingsReader {
 		if (parametersJson.get("randomSeed") != null) {
 			parameters.setRandomSeed(parametersJson.get("randomSeed").getAsInt());
 		}
+		
+		return parameters;
+	}
+	
+	/*
+	 * Read JSON object for grid search parameters
+	 */
+	public static Map<String,List<Double>> readGridSearchParameters(JsonObject parametersJson) {
+		Map<String,List<Double>> parameters = new HashMap<String,List<Double>>();
+		
+		for(Map.Entry<String,JsonElement> entry : parametersJson.entrySet()) {
+    		String parameterName = entry.getKey();
+    		JsonArray valuesArray = entry.getValue().getAsJsonArray();
+    		List<Double> valuesList = new LinkedList<Double>();
+    		for (int i = 0; i < valuesArray.size(); i++) {
+    			valuesList.add(valuesArray.get(i).getAsDouble());
+    		}
+    		parameters.put(parameterName, valuesList);
+    	}
 		
 		return parameters;
 	}
