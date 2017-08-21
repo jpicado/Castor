@@ -71,7 +71,7 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 	
 	private List<String> procedures = new ArrayList<String>();
 
-	public boolean generateAndCompileStoredProcedures(String dataset, String spName, int iterations, Schema schema, Mode modeH,
+	public boolean generateAndCompileStoredProcedures(String dbURL, String port, String dataset, String spName, int iterations, Schema schema, Mode modeH,
 			List<Mode> modesB, boolean applyInds) throws Exception {
 		
 		// Generate stored procedures
@@ -86,7 +86,7 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 		
 		// Load stored procedures to database
 		if(success) {
-			loadProceduresToDB();
+			loadProceduresToDB(dbURL, port);
 		}
 		
 		return success;
@@ -401,7 +401,7 @@ public class StoredProcedureGeneratorSaturationInsideSP {
         return success;
 	}
 	
-	private void loadProceduresToDB() throws Exception {
+	private void loadProceduresToDB(String dbURL, String port) throws Exception {
 		String line;
 
 		// Get VoltDB home location
@@ -412,7 +412,7 @@ public class StoredProcedureGeneratorSaturationInsideSP {
         }
 		
 		// Launch sqlcmd
-		Process process = Runtime.getRuntime ().exec(voltDBHome + "/bin/sqlcmd --stop-on-error=false");
+		Process process = Runtime.getRuntime ().exec(voltDBHome + "/bin/sqlcmd --stop-on-error=false --servers="+ dbURL + " --port=" + port);
 		OutputStream stdin = process.getOutputStream();
 		InputStream stderr = process.getErrorStream();
 		InputStream stdout = process.getInputStream();

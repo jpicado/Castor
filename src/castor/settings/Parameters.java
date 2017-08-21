@@ -21,6 +21,7 @@ public class Parameters {
 	private int maxterms = 1000;
 	private boolean useInds = true;
 	private String dbURL = "localhost";
+	private String port = "21212";
 	private int randomSeed = 1;
 	
 	public boolean isCreateStoredProcedure() {
@@ -126,6 +127,12 @@ public class Parameters {
 	}
 	public void setDbURL(String dbURL) {
 		this.dbURL = dbURL;
+	}
+	public String getPort() {
+		return port;
+	}
+	public void setPort(String port) {
+		this.port = port;
 	}
 	public int getRandomSeed() {
 		return randomSeed;

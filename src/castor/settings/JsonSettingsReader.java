@@ -70,6 +70,9 @@ public class JsonSettingsReader {
 		if (parametersJson.get("dbURL") != null) {
 			parameters.setDbURL(parametersJson.get("dbURL").getAsString());
 		}
+		if (parametersJson.get("port") != null) {
+			parameters.setPort(parametersJson.get("port").getAsString());
+		}
 		if (parametersJson.get("randomSeed") != null) {
 			parameters.setRandomSeed(parametersJson.get("randomSeed").getAsInt());
 		}

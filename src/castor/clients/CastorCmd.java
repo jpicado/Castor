@@ -125,7 +125,8 @@ public class CastorCmd {
         try {
         	// Create data access objects and set URL of data
         	try {
-        		daoFactory.initConnection(this.parameters.getDbURL());
+        		String url = this.parameters.getDbURL() + ":" + this.parameters.getPort();        		
+        		daoFactory.initConnection(url);
         	}
         	catch (RuntimeException e) {
         		logger.error("Unable to connect to server with URL: " + this.parameters.getDbURL());
@@ -329,7 +330,7 @@ public class CastorCmd {
 	{
 		// Generate stored procedures
 		StoredProcedureGeneratorSaturationInsideSP spGenerator = new StoredProcedureGeneratorSaturationInsideSP();
-		boolean success = spGenerator.generateAndCompileStoredProcedures("sp", this.dataModel.getSpName(), this.parameters.getIterations(), this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), this.parameters.isUseInds());
+		boolean success = spGenerator.generateAndCompileStoredProcedures(this.parameters.getDbURL(), this.parameters.getPort(), "sp", this.dataModel.getSpName(), this.parameters.getIterations(), this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), this.parameters.isUseInds());
 		return success;
 	}
 }
