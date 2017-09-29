@@ -19,13 +19,23 @@ import castor.utils.Commons;
 
 public class QueryGenerator {
 
-	public static String generateQuerySelectAllTuples(Relation relation) {
-		String query = "SELECT * FROM " + relation.getName() + ";";
+	public static String generateQuerySelectAllTuples(Relation relation, boolean distinct) {
+		String query;
+		if (distinct) {
+			query = "SELECT DISTINCT * FROM " + relation.getName() + ";";
+		} else {
+			query = "SELECT * FROM " + relation.getName() + ";";
+		}
 		return query;
 	}
 	
-	public static String generateQueryCountTuples(Relation relation) {
-		String query = "SELECT COUNT(*) FROM " + relation.getName() + ";";
+	public static String generateQueryCountTuples(Relation relation, boolean distinct) {
+		String query;
+		if (distinct) {
+			query = "SELECT COUNT(DISTINCT *) FROM " + relation.getName() + ";";
+		} else {
+			query = "SELECT COUNT(*) FROM " + relation.getName() + ";";
+		}
 		return query;
 	}
 	
@@ -521,6 +531,118 @@ public class QueryGenerator {
 		
 		return query.toString();
 	}
+	
+	public static String generateQueryFromClause(Schema schema, MyClause clause) {
+		clause = reorderClauseBody(clause);
+		
+		int tableCounter = 0;
+		
+		// Keep track of the relation and attribute corresponding to the first appearance of each variable
+		Map<String,Pair<String,String>> termAppearance = new HashMap<String,Pair<String,String>>();
+		
+		// Add select and join predicates
+		StringBuilder queryJoin = new StringBuilder();
+		queryJoin.append("FROM ");
+		StringBuilder querySelect = new StringBuilder();
+		
+		boolean firstLiteral = true;
+		boolean firstWhereCondition = true;
+		for (Literal literal : clause.getNegativeLiterals()) {
+			String predicateName = literal.getAtomicSentence().getSymbolicName().toUpperCase();
+			String predicateAlias = Commons.newAlias(tableCounter);
+			tableCounter++;
+			
+			if (firstLiteral) {
+				for (int i = 0; i < literal.getAtomicSentence().getArgs().size(); i++) {
+					String termName = literal.getAtomicSentence().getArgs().get(i).getSymbolicName();
+					
+					if (Commons.isVariable(termName)) {
+						if (!termAppearance.containsKey(termName)) {
+							termAppearance.put(termName, new Pair<String,String>(predicateAlias, schema.getRelations().get(predicateName).getAttributeNames().get(i)));
+						}
+					} else {
+						if (!firstWhereCondition) {
+							querySelect.append(" AND ");
+						} else {
+							firstWhereCondition = false;
+						}
+						termName = termName.replace("\"", "'");
+						querySelect.append(predicateAlias + "." + schema.getRelations().get(predicateName).getAttributeNames().get(i) 
+								+ " = "
+								+ termName);
+					}
+					
+				}
+				queryJoin.append(predicateName + " AS " + predicateAlias + " ");
+				
+				firstLiteral = false;
+			} else {
+				// Create join condition
+				boolean firstCondition = true;
+				String joinCondition = "";
+				for (int i = 0; i < literal.getAtomicSentence().getArgs().size(); i++) {
+					String termName = literal.getAtomicSentence().getArgs().get(i).getSymbolicName();
+					
+					if (Commons.isVariable(termName)) {
+						if (termAppearance.containsKey(termName)) {
+							if (!firstCondition) {
+								joinCondition += "AND ";
+							} else {
+								firstCondition = false;
+							}
+							
+							joinCondition += termAppearance.get(termName).getFirst() + "." + termAppearance.get(termName).getSecond()
+									+ " = "
+									+ predicateAlias + "." + schema.getRelations().get(predicateName).getAttributeNames().get(i) + " ";
+							
+						}
+						else {
+							termAppearance.put(termName, new Pair<String,String>(predicateAlias, schema.getRelations().get(predicateName).getAttributeNames().get(i)));
+						}
+					} else {
+						if (!firstWhereCondition) {
+							querySelect.append(" AND ");
+						} else {
+							firstWhereCondition = false;
+						}
+						termName = termName.replace("\"", "'");
+						querySelect.append(predicateAlias + "." + schema.getRelations().get(predicateName).getAttributeNames().get(i) 
+								+ " = "
+								+ termName);
+					}
+				}
+				queryJoin.append("JOIN " + predicateName + " AS " + predicateAlias + " ");
+				if (!joinCondition.isEmpty()) {
+					queryJoin.append("ON " + joinCondition);
+				}
+			}
+		}
+		
+		// Add projections
+		StringBuilder queryProject = new StringBuilder();
+		queryProject.append("SELECT ");
+		
+		Literal headLiteral = clause.getPositiveLiterals().get(0);
+		for (int i = 0; i < headLiteral.getAtomicSentence().getArgs().size(); i++) {
+			String termName = headLiteral.getAtomicSentence().getArgs().get(i).getSymbolicName();
+			if (termAppearance.containsKey(termName)) {
+				String projection = termAppearance.get(termName).getFirst() + "." + termAppearance.get(termName).getSecond();
+				queryProject.append(projection + " AS att" + (i+1) + " ");
+			} else {
+				queryProject.append("''" + " AS att" + (i+1) + " ");
+			}
+			if (i < headLiteral.getAtomicSentence().getArgs().size() - 1) {
+				queryProject.append(", ");
+			}
+		}
+		
+		String fullQuery = queryProject.toString() + queryJoin.toString();
+		if (querySelect.length() > 0) {
+			fullQuery += "WHERE " + querySelect.toString();
+		}
+		fullQuery += ";";
+		return fullQuery;
+	}
 
 	/*
 	 * Reorder clause so that all literals are head-connected from left to right
@@ -556,6 +678,47 @@ public class QueryGenerator {
 					seenTerms.addAll(literal.getAtomicSentence().getArgs());
 				} else {
 					notHeadConnectedLiterals.add(literal);
+				}
+			}
+		}
+		
+		return newClause;
+	}
+	
+	private static MyClause reorderClauseBody(MyClause clause) {
+		MyClause newClause = new MyClause();
+		Set<Term> seenTerms = new HashSet<Term>();
+		
+		// Add head literal
+		Literal head = clause.getPositiveLiterals().get(0);
+		newClause.addLiteral(head);
+		
+		if (clause.getNumberNegativeLiterals() > 0) {
+			seenTerms.addAll(clause.getNegativeLiterals().get(0).getAtomicSentence().getArgs());
+			
+			// Add body literals
+			List<Literal> notConnectedLiterals = new ArrayList<Literal>(clause.getNegativeLiterals());
+			List<Literal> remainingLiterals = new ArrayList<Literal>(clause.getNegativeLiterals());
+			while (!notConnectedLiterals.isEmpty()) {
+				remainingLiterals.clear();
+				remainingLiterals.addAll(notConnectedLiterals);
+				notConnectedLiterals.clear();
+				
+				for (Literal literal : remainingLiterals) {
+					boolean connected = false;
+					for (Term term : literal.getAtomicSentence().getArgs()) {
+						if (seenTerms.contains(term)) {
+							connected = true;
+							break;
+						}
+					}
+					
+					if (connected) {
+						newClause.addLiteral(literal);
+						seenTerms.addAll(literal.getAtomicSentence().getArgs());
+					} else {
+						notConnectedLiterals.add(literal);
+					}
 				}
 			}
 		}

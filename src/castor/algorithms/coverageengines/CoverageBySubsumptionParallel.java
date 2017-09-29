@@ -55,24 +55,24 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 	
 	private void initWithoutMatchings(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Relation posExamplesRelation, Relation negExamplesRelation) {
 		// Get all positive and negative examples
-		String posCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(posExamplesRelation);
+		String posCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(posExamplesRelation, true);
 		GenericTableObject positiveResult = genericDAO.executeQuery(posCoverageQuery);
 		this.allPosExamples = positiveResult.getTable();
 		
-		String negCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(negExamplesRelation);
+		String negCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(negExamplesRelation, true);
 		GenericTableObject negativeResult = genericDAO.executeQuery(negCoverageQuery);
 		this.allPosExamples = negativeResult.getTable();
 	}
 	
 	private void initWithMatchings(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Relation posExamplesRelation, Relation negExamplesRelation, String spName, int iterations, int recall, int groundRecall, int maxterms) {
 		// Get all positive and negative examples
-		String posCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(posExamplesRelation);
+		String posCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(posExamplesRelation, true);
 		GenericTableObject positiveResult = genericDAO.executeQuery(posCoverageQuery);
 		List<Tuple> posExamplesTuples = positiveResult.getTable();
 		this.allPosExamples = new LinkedList<Tuple>();
 		this.posExamplesIndexes = new HashMap<Integer,Integer>();
 		
-		String negCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(negExamplesRelation);
+		String negCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(negExamplesRelation, true);
 		GenericTableObject negativeResult = genericDAO.executeQuery(negCoverageQuery);
 		List<Tuple> negExamplesTuples = negativeResult.getTable();
 		this.allNegExamples = new LinkedList<Tuple>();
@@ -101,7 +101,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 				}
 			} catch(Exception e) {
 //					System.err.println("IDA library failed to parse clause:\n" + groundClause);
-				System.err.println("Positive example " + exampleTuple.getValues().toString() + " ignored in subsumption.");
+				System.err.println("Positive example " + exampleTuple.getValues().toString() + " ignored in subsumption. Error: " + e.getMessage());
 			}
 		}
 		counter = 0;
@@ -123,7 +123,8 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 				}
 			} catch(Exception e) {
 //					System.err.println("IDA library failed to parse clause:\n" + groundClause);
-				System.err.println("Negative example " + exampleTuple.getValues().toString() + " ignored in subsumption.");
+				System.err.println("Negative example " + exampleTuple.getValues().toString() + " ignored in subsumption. Error: " + e.getMessage());
+				e.printStackTrace();
 			}
 		}
 		

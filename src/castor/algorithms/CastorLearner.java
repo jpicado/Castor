@@ -365,7 +365,7 @@ public class CastorLearner implements Learner {
 						// Perform ARMG
 						ClauseInfo newClauseInfo = armg(schema, clauseInfo, tuple, posExamplesRelation);
 						
-						// Keep clause only if its score is better tahn current best score
+						// Keep clause only if its score is better than current best score
 						double score = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, newClauseInfo);
 						if (score > bestScore) {
 							newARMGs.add(newClauseInfo);

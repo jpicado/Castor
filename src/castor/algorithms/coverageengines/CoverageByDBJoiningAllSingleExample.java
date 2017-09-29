@@ -24,11 +24,11 @@ public class CoverageByDBJoiningAllSingleExample implements CoverageEngine {
 	
 	private void initialize(GenericDAO genericDAO, Relation posExamplesRelation, Relation negExamplesRelation) {
 		// Get all positive and negative examples
-		String posCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(posExamplesRelation);
+		String posCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(posExamplesRelation, true);
 		GenericTableObject posResult = genericDAO.executeQuery(posCoverageQuery);
 		this.allPosExamples = posResult.getTable();
 		
-		String negCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(negExamplesRelation);
+		String negCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(negExamplesRelation, true);
 		GenericTableObject negResult = genericDAO.executeQuery(negCoverageQuery);
 		this.allNegExamples = negResult.getTable();
 	}
@@ -67,7 +67,7 @@ public class CoverageByDBJoiningAllSingleExample implements CoverageEngine {
 		int covered = 0;
 		
 		// Get all examples from relation
-		String query = QueryGenerator.generateQuerySelectAllTuples(examplesRelation);
+		String query = QueryGenerator.generateQuerySelectAllTuples(examplesRelation, false);
 		GenericTableObject result = genericDAO.executeQuery(query);
 		List<Tuple> examples = result.getTable();
 		// Compute coverage
@@ -94,7 +94,7 @@ public class CoverageByDBJoiningAllSingleExample implements CoverageEngine {
 		boolean[] coveredExamples = null;
 		
 		// Get all examples from relation
-		String query = QueryGenerator.generateQuerySelectAllTuples(examplesRelation);
+		String query = QueryGenerator.generateQuerySelectAllTuples(examplesRelation, false);
 		GenericTableObject result = genericDAO.executeQuery(query);
 		List<Tuple> examples = result.getTable();
 		coveredExamples = new boolean[examples.size()];
@@ -114,7 +114,7 @@ public class CoverageByDBJoiningAllSingleExample implements CoverageEngine {
 		boolean[] coveredExamples = null;
 		
 		// Get all examples from relation
-		String query = QueryGenerator.generateQuerySelectAllTuples(examplesRelation);
+		String query = QueryGenerator.generateQuerySelectAllTuples(examplesRelation, false);
 		GenericTableObject result = genericDAO.executeQuery(query);
 		List<Tuple> examples = result.getTable();
 		coveredExamples = new boolean[examples.size()];

@@ -49,13 +49,13 @@ public class CoverageBySubsumptionParallelUsingMyMatching implements CoverageEng
 	
 	private void initialize(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Relation posExamplesRelation, Relation negExamplesRelation, String spName, int iterations, int recall, int maxterms) {
 		// Get all positive and negative examples
-		String posCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(posExamplesRelation);
+		String posCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(posExamplesRelation, true);
 		GenericTableObject positiveResult = genericDAO.executeQuery(posCoverageQuery);
 		List<Tuple> posExamplesTuples = positiveResult.getTable();
 		this.allPosExamples = new LinkedList<Tuple>();
 		this.posExamplesIndexes = new HashMap<Integer,Integer>();
 		
-		String negCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(negExamplesRelation);
+		String negCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(negExamplesRelation, true);
 		GenericTableObject negativeResult = genericDAO.executeQuery(negCoverageQuery);
 		List<Tuple> negExamplesTuples = negativeResult.getTable();
 		this.allNegExamples = new LinkedList<Tuple>();

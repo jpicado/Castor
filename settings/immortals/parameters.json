@@ -1,0 +1,16 @@
+{
+	"createStoredProcedure": true,
+	"iterations": 1,
+	"minprec": 1.0,
+	"minrec": 1.0,
+	"maxterms": 100,
+	"sample": 20,
+	"beam": 3,
+	"minimizeBottomClause": false,
+	"threads": 1,
+	"reductionMethod": "consistency",
+	"recall": 10,
+	"groundRecall": 100,
+	"useInds": true,
+	"dbURL": "localhost"
+}

@@ -83,6 +83,12 @@ public class CastorCmd {
 	@Option(name="-testNegSuffix",usage="Suffix for table containing testing negative examples",required=false)
     private String testNegSuffix = DBCommons.TEST_NEG_SUFFIX;
 	
+	@Option(name="-test",usage="Evaluate learned definition on testing data")
+    private boolean testLearnedDefinition = false;
+	
+	@Option(name="-outputSQL",usage="Output the learned definition in SQL format")
+    private boolean outputSQL = false;
+	
 	@Argument
     private List<String> arguments = new ArrayList<String>();
 	
@@ -157,20 +163,15 @@ public class CastorCmd {
          	// Validate data model
          	this.validateDataModel();
         	
-	        // Obtain train and test relations
+	        // Obtain train relations
         	String postrainTableName = (this.dataModel.getModeH().getPredicateName() + trainPosSuffix).toUpperCase();
     		String negtrainTableName = (this.dataModel.getModeH().getPredicateName() + trainNegSuffix).toUpperCase();
-    		String postestTableName = (this.dataModel.getModeH().getPredicateName() + testPosSuffix).toUpperCase();
-    		String negtestTableName = (this.dataModel.getModeH().getPredicateName() + testNegSuffix).toUpperCase();
-    		
 	        Relation posTrain = this.schema.getRelations().get(postrainTableName);
 	      	Relation negTrain = this.schema.getRelations().get(negtrainTableName);
-	      	Relation posTest = this.schema.getRelations().get(postestTableName);
-	        Relation negTest = this.schema.getRelations().get(negtestTableName);
 	        
 	        // Check that tables containing examples exist in schema
-	        if (posTrain == null || negTrain == null || posTest == null || negTest == null) {
-	        	throw new IllegalArgumentException("One or more tables containing training or testing examples do not exist in the schema:\n"+postrainTableName+"\n"+negtrainTableName+"\n"+postestTableName+"\n"+negtestTableName);
+	        if (posTrain == null || negTrain == null) {
+	        	throw new IllegalArgumentException("One or more tables containing training examples do not exist in the schema:\n"+postrainTableName+"\n"+negtrainTableName);
 	        }
 	        
 	        // Generate and compile stored procedures
@@ -208,6 +209,16 @@ public class CastorCmd {
             		throw new IllegalArgumentException("Learning algorithm " + this.algorithm + " not implemented.");
             	}
             	List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName());
+            	
+            	if (outputSQL) {
+            		StringBuilder sb = new StringBuilder();
+            		sb.append("SQL format:\n");
+		            for (ClauseInfo clauseInfo : definition) {
+						sb.append(QueryGenerator.generateQueryFromClause(schema, clauseInfo.getClause()));
+						sb.append("\n"+QueryGenerator.generateQueryFromClauseAndCoverageTable(schema, clauseInfo.getClause(), posTrain, false));
+					}
+		            logger.info(sb.toString());
+	            }
 	            
 	            NumbersKeeper.totalTime += tw.time();
 	            
@@ -227,13 +238,21 @@ public class CastorCmd {
 //	            	logger.info("Avg clause length in coverage: " + (NumbersKeeper.clauseLengthSum / NumbersKeeper.coverageCalls));
 	            
 	            // EVALUATE DEFINITION
-	            logger.info("Evaluating on testing data...");
-	            CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTest, negTest, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getGroundRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true);
-	            learner.evaluate(testCoverageEngine, this.schema, definition, posTest, negTest);
-	            
-//	            for (ClauseInfo clauseInfo : definition) {
-//					System.out.println(QueryGenerator.generateQueryFromClauseAndCoverageTable(schema, clauseInfo.getClause(), posTrain, false));
-//				}
+	            if (testLearnedDefinition) {
+	            	// Obtain test relations
+	            	String postestTableName = (this.dataModel.getModeH().getPredicateName() + testPosSuffix).toUpperCase();
+	        		String negtestTableName = (this.dataModel.getModeH().getPredicateName() + testNegSuffix).toUpperCase();
+	        		Relation posTest = this.schema.getRelations().get(postestTableName);
+	    	        Relation negTest = this.schema.getRelations().get(negtestTableName);
+	    	        
+	    	        if (posTest == null || negTest == null) {
+	    	        	throw new IllegalArgumentException("One or more tables containing testing examples do not exist in the schema:\n"+postestTableName+"\n"+negtestTableName);
+	    	        }
+	        		
+		            logger.info("Evaluating on testing data...");
+		            CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTest, negTest, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getGroundRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true);
+		            learner.evaluate(testCoverageEngine, this.schema, definition, posTest, negTest);
+	            }
             }
         }
         catch (Exception e) {
