@@ -528,6 +528,7 @@ public class QueryGenerator {
 		if (countTuples) {
 			query.append(") " + Commons.newAlias(0));
 		}
+		query.append(";");
 		
 		return query.toString();
 	}

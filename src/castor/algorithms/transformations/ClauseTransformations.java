@@ -24,7 +24,7 @@ public class ClauseTransformations {
 	private static SubstVisitor substVisitor = new SubstVisitor();
 	
 	/*
-	 * Minimize clause using theta-subsumption (same as homomorphism)
+	 * Minimize clause using theta-subsumption (uses an approximation of clause-subsumption (homomorphism) test) 
 	 */
 	public static MyClause minimize(MyClause clause) {
 		TimeWatch tw = TimeWatch.start();

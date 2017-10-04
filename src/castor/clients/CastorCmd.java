@@ -15,11 +15,11 @@ import castor.algorithms.Golem;
 import castor.algorithms.Learner;
 import castor.algorithms.ProGolem;
 import castor.algorithms.bottomclause.BottomClauseUtil;
+import castor.algorithms.bottomclause.StoredProcedureGeneratorSaturationInsideSP;
 import castor.algorithms.coverageengines.CoverageBySubsumptionParallel;
 import castor.algorithms.coverageengines.CoverageEngine;
 import castor.db.DBCommons;
 import castor.db.QueryGenerator;
-import castor.db.StoredProcedureGeneratorSaturationInsideSP;
 import castor.db.dataaccess.BottomClauseConstructionDAO;
 import castor.db.dataaccess.DAOFactory;
 import castor.db.dataaccess.GenericDAO;
@@ -227,9 +227,9 @@ public class CastorCmd {
 					StringBuilder sb = new StringBuilder();
 					sb.append("SQL format:\n");
 					for (ClauseInfo clauseInfo : definition) {
-						sb.append(QueryGenerator.generateQueryFromClause(schema, clauseInfo.getClause()));
-						sb.append("\n" + QueryGenerator.generateQueryFromClauseAndCoverageTable(schema,
-								clauseInfo.getClause(), posTrain, false));
+						sb.append(QueryGenerator.generateQueryFromClause(schema, clauseInfo.getClause())+"\n");
+						sb.append(QueryGenerator.generateQueryFromClauseAndCoverageTable(schema,
+								clauseInfo.getClause(), posTrain, false)+"\n");
 					}
 					logger.info(sb.toString());
 				}

@@ -40,6 +40,7 @@ import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
 import castor.settings.Parameters;
+import castor.utils.Commons;
 import castor.utils.Formatter;
 import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
@@ -208,6 +209,7 @@ public class CastorLearner implements Learner {
 			
 			// Reduce clause only if it satisfies conditions
 			if (satisfiesConditions(truePositive, falsePositive, trueNegative, falseNegative, newPosCoveredCount, precision, recall)) {
+				
 				if (!reductionMethod.equals(ReductionMethods.NEGATIVE_REDUCTION_NONE)) {
 					// Compute negative based reduction
 					// Add 1 to scores to count seed example, which is not in remainingPosExamples
@@ -365,10 +367,12 @@ public class CastorLearner implements Learner {
 						// Perform ARMG
 						ClauseInfo newClauseInfo = armg(schema, clauseInfo, tuple, posExamplesRelation);
 						
-						// Keep clause only if its score is better than current best score
-						double score = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, newClauseInfo);
-						if (score > bestScore) {
-							newARMGs.add(newClauseInfo);
+						if(isSafeClause(newClauseInfo.getClause())) {
+							// Keep clause only if its score is better than current best score
+							double score = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, newClauseInfo);
+							if (score > bestScore) {
+								newARMGs.add(newClauseInfo);
+							}
 						}
 					}
 				}
@@ -524,6 +528,7 @@ public class CastorLearner implements Learner {
 			// Set more general clause (reuse information about already covered examples)
 			newClauseInfo.setMoreGeneralClause(newClause);
 		}
+		
 		return newClauseInfo;
 	}
 	
@@ -671,6 +676,7 @@ public class CastorLearner implements Learner {
 				literals.add((clauseInfo.getClause().getNegativeLiterals().get(i)));
 			}
 			MyClause newClause = new MyClause(literals);
+			
 			ClauseInfo newClauseInfo = new ClauseInfo(
 					newClause, 
 					originalPosExamplesCovered.clone(), 
@@ -682,10 +688,36 @@ public class CastorLearner implements Learner {
 				lowerbound = n + 1;
 			} else {
 				upperbound = n;
-			}			
+			}
 		}
 		
 		return lowerbound;
+	}
+	
+	/*
+	 * Returns true if clause is safe: all head variables appear in body
+	 */
+	private boolean isSafeClause(MyClause clause) {
+		// Get head variables
+		List<Term> headVariables = new LinkedList<Term>();
+		for (Term term : clause.getPositiveLiterals().get(0).getAtomicSentence().getArgs()) {
+			if (Commons.isVariable(term))
+				headVariables.add(term);
+		}
+		
+		// Look for head variables in body
+		for (Literal literal : clause.getNegativeLiterals()) {
+			Iterator<Term> iterator = headVariables.iterator();
+			while (iterator.hasNext()) {
+				Term term = iterator.next();
+				if (literal.getAtomicSentence().getArgs().contains(term))
+					iterator.remove();
+			}
+			if (headVariables.isEmpty())
+				break;
+		}
+		
+		return headVariables.isEmpty();
 	}
 	
 	/*

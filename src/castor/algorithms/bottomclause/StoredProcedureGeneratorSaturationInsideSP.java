@@ -1,4 +1,4 @@
-package castor.db;
+package castor.algorithms.bottomclause;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -31,6 +31,7 @@ import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
 
+import castor.db.DBCommons;
 import castor.language.IdentifierType;
 import castor.language.InclusionDependency;
 import castor.language.Mode;

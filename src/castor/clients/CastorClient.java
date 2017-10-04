@@ -5,10 +5,10 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import castor.algorithms.CastorLearner;
+import castor.algorithms.bottomclause.StoredProcedureGeneratorSaturationInsideSP;
 import castor.algorithms.coverageengines.CoverageBySubsumptionParallel;
 import castor.algorithms.coverageengines.CoverageEngine;
 import castor.db.DBCommons;
-import castor.db.StoredProcedureGeneratorSaturationInsideSP;
 import castor.db.dataaccess.BottomClauseConstructionDAO;
 import castor.db.dataaccess.DAOFactory;
 import castor.db.dataaccess.GenericDAO;
