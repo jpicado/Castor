@@ -314,7 +314,7 @@ public class ProGolem implements Learner {
 		// Generate bottom clause
 		TimeWatch tw = TimeWatch.start();
 		logger.info("Generating bottom clause for "+exampleTuple.getValues().toString()+"...");
-		MyClause bottomClause = saturator.generateBottomClause(genericDAO, exampleTuple, schema, modeH, modesB, iterations, recall);
+		MyClause bottomClause = saturator.generateBottomClause(genericDAO, exampleTuple, schema, modeH, modesB, iterations, recall, false);
 		logger.debug("Bottom clause: \n"+ Formatter.prettyPrint(bottomClause));
 		logger.info("Literals: " + bottomClause.getNumberLiterals());
 		logger.info("Saturation time: " + tw.time(TimeUnit.MILLISECONDS) + " milliseconds.");

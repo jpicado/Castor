@@ -195,11 +195,11 @@ public class CastorCmd {
 
 			if (saturation) {
 				// BOTTOM CLAUSE
-				BottomClauseUtil.generateBottomClauseForExample(BottomClauseUtil.ALGORITHMS.INSIDE_STORED_PROCEDURE,
+				BottomClauseUtil.generateBottomClauseForExample(BottomClauseUtil.ALGORITHMS.ORIGINAL,
 						genericDAO, bottomClauseConstructionDAO,
 						coverageEngine.getAllPosExamples().get(this.exampleForSaturation), this.schema,
 						this.dataModel.getModeH(), this.dataModel.getModesB(), this.parameters.getIterations(),
-						this.dataModel.getSpName(), this.parameters.getRecall(), this.parameters.getMaxterms());
+						this.dataModel.getSpName(), this.parameters.getRecall(), this.parameters.getMaxterms(), this.parameters.isUseInds());
 			} else if (groundSaturation) {
 				// GROUND BOTTOM CLAUSE
 				BottomClauseUtil.generateGroundBottomClauseForExample(

@@ -27,7 +27,7 @@ public class BottomClauseUtil {
 	/*
 	 * Generate bottom clause for a specific example
 	 */
-	public static MyClause generateBottomClauseForExample(BottomClauseUtil.ALGORITHMS bottomClauseAlgorithm, GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Tuple exampleTuple, Schema schema, Mode modeH, List<Mode> modesB, int iterations, String spName, int recall, int maxterms) {
+	public static MyClause generateBottomClauseForExample(BottomClauseUtil.ALGORITHMS bottomClauseAlgorithm, GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Tuple exampleTuple, Schema schema, Mode modeH, List<Mode> modesB, int iterations, String spName, int recall, int maxterms, boolean applyInds) {
 		MyClause clause = null;
 		TimeWatch watch;
 		
@@ -36,7 +36,7 @@ public class BottomClauseUtil {
 		
 		if (bottomClauseAlgorithm == BottomClauseUtil.ALGORITHMS.ORIGINAL) {
 			BottomClauseGeneratorOriginalAlgorithm saturator = new BottomClauseGeneratorOriginalAlgorithm();
-			clause = saturator.generateBottomClause(genericDAO, exampleTuple, schema, modeH, modesB, iterations, recall);
+			clause = saturator.generateBottomClause(genericDAO, exampleTuple, schema, modeH, modesB, iterations, recall, applyInds);
 		} else if (bottomClauseAlgorithm == BottomClauseUtil.ALGORITHMS.INSIDE_STORED_PROCEDURE) {
 			BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
 			clause = saturator.generateBottomClause(bottomClauseConstructionDAO, exampleTuple, spName, iterations, recall, maxterms);

@@ -4,16 +4,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import aima.core.logic.fol.kb.data.Literal;
 import aima.core.logic.fol.parsing.ast.Constant;
 import aima.core.logic.fol.parsing.ast.Predicate;
 import aima.core.logic.fol.parsing.ast.Term;
 import aima.core.logic.fol.parsing.ast.Variable;
+import aima.core.util.datastructure.Pair;
 import castor.db.dataaccess.GenericDAO;
 import castor.db.dataaccess.GenericTableObject;
 import castor.hypotheses.MyClause;
@@ -31,10 +34,10 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 	 * Generate bottom clause for one example
 	 */
 	public MyClause generateBottomClause(GenericDAO genericDAO, Tuple exampleTuple, Schema schema, Mode modeH,
-			List<Mode> modesB, int iterations, int recall) {
+			List<Mode> modesB, int iterations, int recall, boolean applyInds) {
 		Map<String, String> hash = new HashMap<String, String>();
-		return this.generateBottomClause(genericDAO, hash, exampleTuple, schema, modeH, modesB, iterations, recall);
-//		return this.generateBottomClauseSingleQueries(genericDAO, exampleTuple, schema, modeH, modesB, iterations);
+//		return this.generateBottomClause(genericDAO, hash, exampleTuple, schema, modeH, modesB, iterations, recall);
+		return this.generateBottomClauseOneQueryPerRelationAttribute(genericDAO, hash, exampleTuple, schema, modeH, modesB, iterations, recall, applyInds);
 	}
 
 	/*
@@ -53,8 +56,189 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 	}
 
 	/*
-	 * Bottom clause generation as described in original algorithm Assumes that
-	 * exampleTuple is for relation with same name as modeH
+	 * Bottom clause generation as described in original algorithm
+	 * Queries database only once per relation-input_attribute
+	 */
+	public MyClause generateBottomClauseOneQueryPerRelationAttribute(GenericDAO genericDAO, Map<String, String> hash, Tuple exampleTuple,
+			Schema schema, Mode modeH, List<Mode> modesB, int iterations, int recall, boolean applyInds) {
+		MyClause clause = new MyClause();
+		Map<String, Set<String>> inTerms = new HashMap<String, Set<String>>();
+
+		// Check that arities of example and modeH match
+		if (modeH.getArguments().size() != exampleTuple.getValues().size()) {
+			throw new IllegalArgumentException("Example arity does not match modeH arity.");
+		}
+
+		// Create head literal
+		List<Term> headTerms = new ArrayList<Term>();
+		int varCounter = 0;
+		for (int i = 0; i < modeH.getArguments().size(); i++) {
+			String value = exampleTuple.getValues().get(i);
+			if (modeH.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
+				headTerms.add(new Constant("\""+value+"\""));
+			} else {
+				// INPUT or OUTPUT type
+				if (!hash.containsKey(value)) {
+					hash.put(value, Commons.newVariable(varCounter));
+					varCounter++;
+				}
+				headTerms.add(new Variable(hash.get(value)));
+			}
+			// Add constants to inTerms
+			if (modeH.getArguments().get(i).getIdentifierType().equals(IdentifierType.INPUT)) {
+				String variableType = modeH.getArguments().get(i).getType();
+				if (!inTerms.containsKey(variableType)) {
+					inTerms.put(variableType, new HashSet<String>());
+				}
+				inTerms.get(variableType).add(value);
+			}
+		}
+		Predicate headLiteral = new Predicate(modeH.getPredicateName(), headTerms);
+		clause.addPositiveLiteral(headLiteral);
+		
+		// Group modes by relation name - input attribute position
+		Map<Pair<String,Integer>, List<Mode>> groupedModes = new LinkedHashMap<Pair<String,Integer>, List<Mode>>();
+		for (Mode mode : modesB) {
+			// Get name of input attribute
+			int inputVarPosition = 0;
+			for (int i = 0; i < mode.getArguments().size(); i++) {
+				if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.INPUT)) {
+					inputVarPosition = i;
+					break;
+				}
+			}
+			
+			Pair<String,Integer> key = new Pair<String, Integer>(mode.getPredicateName(), inputVarPosition);
+			if (!groupedModes.containsKey(key)) {
+				groupedModes.put(key, new LinkedList<Mode>());
+			}
+			groupedModes.get(key).add(mode);
+		}
+
+		// Create body literals
+		for (int j = 0; j < iterations; j++) {
+
+			// Create new inTerms to hold terms for this iteration
+			Map<String, Set<String>> newInTerms = new HashMap<String, Set<String>>();
+			
+			Iterator<Entry<Pair<String,Integer>, List<Mode>>> groupedModesIterator = groupedModes.entrySet().iterator();
+			while(groupedModesIterator.hasNext()) {
+				Entry<Pair<String,Integer>, List<Mode>> entry = groupedModesIterator.next();
+				String relationName = entry.getKey().getFirst();
+				int inputVarPosition = entry.getKey().getSecond();
+				List<Mode> modes = entry.getValue();
+				
+				// Get input attribute name
+				String attributeName = schema.getRelations().get(relationName.toUpperCase())
+						.getAttributeNames().get(inputVarPosition);
+				
+				// Get all attribute types for input attribute
+				Set<String> attributeTypes = new HashSet<String>();
+				for (Mode mode : modes) {
+					attributeTypes.add(mode.getArguments().get(inputVarPosition).getType());
+				}
+				
+				// Get known terms for all attribute types
+				boolean seenType = false;
+				Set<String> knownTermsSet = new HashSet<String>();
+				for (String type : attributeTypes) {
+					if (inTerms.containsKey(type)) {
+						seenType = true;
+						knownTermsSet.addAll(inTerms.get(type));
+						break;
+					}
+				}
+				// If there is no list of known terms for attributeType, skip mode
+				if (!seenType) {
+					continue;
+				}
+						
+				String knownTerms = toListString(knownTermsSet);
+
+				// Create query and run
+				String query = String.format(SELECTIN_SQL_STATEMENT, relationName, attributeName, knownTerms);
+				GenericTableObject result = genericDAO.executeQuery(query);
+
+				if (result != null) {
+					for (Mode mode : modes) {
+						int solutionsCounter = 0;
+						for (Tuple row : result.getTable()) {
+
+							if (solutionsCounter >= recall)
+								break;
+
+							List<Term> terms = new ArrayList<Term>();
+							for (int i = 0; i < mode.getArguments().size(); i++) {
+								String value = row.getValues().get(i);
+
+								if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
+									terms.add(new Constant("\""+value+"\""));
+								} else {
+									// INPUT or OUTPUT type
+									if (!hash.containsKey(value)) {
+										hash.put(value, Commons.newVariable(varCounter));
+										varCounter++;
+									}
+									terms.add(new Variable(hash.get(value)));
+								}
+
+								// If OUTPUT variable, add constants to inTerms
+								if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.OUTPUT)) {
+									String variableType = mode.getArguments().get(i).getType();
+									if (!newInTerms.containsKey(variableType)) {
+										newInTerms.put(variableType, new HashSet<String>());
+									}
+									newInTerms.get(variableType).add(value);
+								}
+							}
+							Predicate literal = new Predicate(mode.getPredicateName(), terms);
+							clause.addNegativeLiteral(literal);
+							solutionsCounter++;
+						}
+					}
+					
+					//TODO
+					// Apply INDs
+					if (applyInds) {
+					}
+				}
+			}
+
+			// Add new terms to inTerms
+			Iterator<Map.Entry<String, Set<String>>> newInTermsIterator = newInTerms.entrySet().iterator();
+			while (newInTermsIterator.hasNext()) {
+				Map.Entry<String, Set<String>> pair = (Map.Entry<String, Set<String>>) newInTermsIterator.next();
+				String variableType = pair.getKey();
+				if (!inTerms.containsKey(variableType)) {
+					inTerms.put(variableType, new HashSet<String>());
+				}
+				inTerms.get(variableType).addAll(newInTerms.get(variableType));
+			}
+		}
+
+		return clause;
+	}
+	
+	/*
+	 * Add non-repeated newLiterals to literals
+	 */
+	private void addNotRepeated(List<Predicate> literals, List<Predicate> newLiterals) {
+		for (Predicate newLiteral : newLiterals) {
+			if (!literals.contains(newLiteral)) {
+				literals.add(newLiteral);
+			}
+		}
+	}
+	
+	private void addNotRepeated(List<Predicate> literals, Predicate newLiteral) {
+		if (!literals.contains(newLiteral)) {
+			literals.add(newLiteral);
+		}
+	}
+	
+	/*
+	 * Bottom clause generation as described in original algorithm
+	 * Assumes that exampleTuple is for relation with same name as modeH
 	 */
 	public MyClause generateBottomClause(GenericDAO genericDAO, Map<String, String> hash, Tuple exampleTuple,
 			Schema schema, Mode modeH, List<Mode> modesB, int iterations, int recall) {
@@ -72,7 +256,7 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 		for (int i = 0; i < modeH.getArguments().size(); i++) {
 			String value = exampleTuple.getValues().get(i);
 			if (modeH.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
-				headTerms.add(new Constant(value));
+				headTerms.add(new Constant("\""+value+"\""));
 			} else {
 				// INPUT or OUTPUT type
 				if (!hash.containsKey(value)) {
@@ -101,7 +285,6 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 
 			for (Mode mode : modesB) {
 				// Find position of input variable
-				// TODO extend to handle multiple input variables
 				int inputVarPosition = 0;
 				for (int i = 0; i < mode.getArguments().size(); i++) {
 					if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.INPUT)) {
@@ -179,10 +362,10 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 	}
 
 	/*
-	 * Bottom clause generation, querying the database only once for each relation,
-	 * instead of multiple times (as done in the original algorithm)
+	 * Bottom clause generation
+	 * Queries the database only once per relation, instead of multiple times (as done in the original algorithm)
 	 */
-	public MyClause generateBottomClauseQueryPerRelation(GenericDAO genericDAO, Tuple exampleTuple, Schema schema,
+	public MyClause generateBottomClauseOneQueryPerRelation(GenericDAO genericDAO, Tuple exampleTuple, Schema schema,
 			Mode modeH, List<Mode> modesB, int iterations)  {
 		MyClause clause = new MyClause();
 
@@ -200,7 +383,7 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 		for (int i = 0; i < modeH.getArguments().size(); i++) {
 			String value = exampleTuple.getValues().get(i);
 			if (modeH.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
-				headTerms.add(new Constant(value));
+				headTerms.add(new Constant("\""+value+"\""));
 			} else {
 				// INPUT or OUTPUT type
 				if (!hash.containsKey(value)) {
