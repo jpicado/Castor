@@ -195,7 +195,7 @@ public class CastorCmd {
 
 			if (saturation) {
 				// BOTTOM CLAUSE
-				BottomClauseUtil.generateBottomClauseForExample(BottomClauseUtil.ALGORITHMS.ORIGINAL,
+				BottomClauseUtil.generateBottomClauseForExample(BottomClauseUtil.ALGORITHMS.INSIDE_STORED_PROCEDURE,
 						genericDAO, bottomClauseConstructionDAO,
 						coverageEngine.getAllPosExamples().get(this.exampleForSaturation), this.schema,
 						this.dataModel.getModeH(), this.dataModel.getModesB(), this.parameters.getIterations(),
