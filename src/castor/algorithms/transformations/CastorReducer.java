@@ -103,16 +103,16 @@ public class CastorReducer {
 				
 				////
 				// Check clause safety
-				
-				// Find head variables that do not appear in body
-				List<Term> variablesNotInBody = new LinkedList<Term>();
-				for (Term term : headVariables) {
-					if (!termAppearsInChains(term, chainsToKeep) && !termAppearsInChains(term, remainingChains)) {
-						variablesNotInBody.add(term);
-					}
-				}
-				
-				// Find all chains containing terms in variablesNotInBody
+//				
+//				// Find head variables that do not appear in body
+//				List<Term> variablesNotInBody = new LinkedList<Term>();
+//				for (Term term : headVariables) {
+//					if (!termAppearsInChains(term, chainsToKeep) && !termAppearsInChains(term, remainingChains)) {
+//						variablesNotInBody.add(term);
+//					}
+//				}
+//				
+//				// Find all chains containing terms in variablesNotInBody
 //				List<List<Literal>> chainsWithHeadVariables = new LinkedList<List<Literal>>();
 //				for (int i = bestChainPosition; i < allChains.size(); i++) {
 //					
