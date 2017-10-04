@@ -196,26 +196,30 @@ public class Golem implements Learner {
 			int newPosCoveredCount = coverageEngine.countCoveredExamplesFromList(genericDAO, schema, clauseInfo, remainingPosExamples, posExamplesRelation, true) + 1;
 			
 			// Get total positive examples covered
-			int totalPos = coverageEngine.getAllPosExamples().size();
-			int posCoveredCount = coverageEngine.countCoveredExamplesFromRelation(genericDAO, schema, clauseInfo, posExamplesRelation, true);
+			int allPosTotal = coverageEngine.getAllPosExamples().size();
+			int allPosCoveredCount = coverageEngine.countCoveredExamplesFromRelation(genericDAO, schema, clauseInfo, posExamplesRelation, true);
 			
 			// Get total negative examples covered
-			int totalNeg = coverageEngine.getAllNegExamples().size();
-			int negCoveredCount = coverageEngine.countCoveredExamplesFromRelation(genericDAO, schema, clauseInfo, negExamplesRelation, false);
+			int allNegTotal = coverageEngine.getAllNegExamples().size();
+			int allNegCoveredCount = coverageEngine.countCoveredExamplesFromRelation(genericDAO, schema, clauseInfo, negExamplesRelation, false);
 			
 			// Compute statistics
+			// For remaining positive examples
 			int truePositive = newPosCoveredCount;
-			int falsePositive = negCoveredCount;
-			int trueNegative = totalNeg - negCoveredCount;
+			int falsePositive = allNegCoveredCount;
+			int trueNegative = allNegTotal - allNegCoveredCount;
 			int falseNegative = newPosTotal - newPosCoveredCount;
-			int truePositiveAll = posCoveredCount;
-			int falsePositiveAll = totalPos - posCoveredCount;
+			// For all examples
+			int truePositiveAll = allPosCoveredCount;
+			int falsePositiveAll = allNegCoveredCount;//totalPos - posCoveredCount;
+			int trueNegativeAll = allNegTotal - allNegCoveredCount;
+			int falseNegativeAll = allPosTotal - allPosCoveredCount;
 			
 			// Precision and F1 over new (uncovered) examples
 			double precision = EvaluationFunctions.score(EvaluationFunctions.FUNCTION.PRECISION, truePositive, falsePositive, trueNegative, falseNegative);
 			double f1 = EvaluationFunctions.score(EvaluationFunctions.FUNCTION.F1, truePositive, falsePositive, trueNegative, falseNegative);
 			// Recall over all examples
-			double recall = EvaluationFunctions.score(EvaluationFunctions.FUNCTION.RECALL, truePositiveAll, falsePositiveAll, trueNegative, falseNegative);
+			double recall = EvaluationFunctions.score(EvaluationFunctions.FUNCTION.RECALL, truePositiveAll, falsePositiveAll, trueNegativeAll, falseNegativeAll);
 		
 			// Adding 1 to count seed example
 			double score = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, clauseInfo) + 1;
@@ -226,7 +230,7 @@ public class Golem implements Learner {
 				// Add clause to definition
 				definition.add(clauseInfo);
 				logger.info("New clause added to theory:\n" + Formatter.prettyPrint(clauseInfo.getClause()));
-				logger.info("New pos cover = " + newPosCoveredCount + ", Total pos cover = " + posCoveredCount + ", Total neg cover = " + negCoveredCount);
+				logger.info("New pos cover = " + newPosCoveredCount + ", Total pos cover = " + allPosCoveredCount + ", Total neg cover = " + allNegCoveredCount);
 				
 				// Remove covered positive examples
 				List<Tuple> coveredExamples = this.coverageEngine.coveredExamplesTuplesFromList(genericDAO, schema, clauseInfo, remainingPosExamples, posExamplesRelation, true);

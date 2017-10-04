@@ -243,12 +243,16 @@ public class CastorLearner implements Learner {
 				allPosCoveredCount = coverageEngine.countCoveredExamplesFromRelation(genericDAO, schema, clauseInfo, posExamplesRelation, true);
 
 				// Compute statistics
+				// For remaining positive examples
 				truePositive = newPosCoveredCount;
 				falsePositive = allNegCoveredCount;
 				trueNegative = allNegTotal - allNegCoveredCount;
 				falseNegative = newPosTotal - newPosCoveredCount;
+				// For all examples
 				truePositiveAll = allPosCoveredCount;
-				falsePositiveAll = allPosTotal = allPosCoveredCount;
+				falsePositiveAll = allNegCoveredCount;//totalPos - posCoveredCount;
+				trueNegativeAll = allNegTotal - allNegCoveredCount;
+				falseNegativeAll = allPosTotal - allPosCoveredCount;
 				
 				// Adding 1 to count seed example
 				double score = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, clauseInfo) + 1;
@@ -257,7 +261,7 @@ public class CastorLearner implements Learner {
 				precision = EvaluationFunctions.score(EvaluationFunctions.FUNCTION.PRECISION, truePositive, falsePositive, trueNegative, falseNegative);
 				f1 = EvaluationFunctions.score(EvaluationFunctions.FUNCTION.F1, truePositive, falsePositive, trueNegative, falseNegative);
 				// Recall over all examples
-				recall = EvaluationFunctions.score(EvaluationFunctions.FUNCTION.RECALL, truePositiveAll, falsePositiveAll, trueNegative, falseNegative);
+				recall = EvaluationFunctions.score(EvaluationFunctions.FUNCTION.RECALL, truePositiveAll, falsePositiveAll, trueNegativeAll, falseNegativeAll);
 				
 				logger.info("Stats: Score=" + score + ", Precision(new)="+precision+", F1(new)="+f1+", Recall(all)="+recall);
 				
@@ -371,13 +375,13 @@ public class CastorLearner implements Learner {
 						// Perform ARMG
 						ClauseInfo newClauseInfo = armg(schema, clauseInfo, tuple, posExamplesRelation);
 						
-						if(isSafeClause(newClauseInfo.getClause())) {
+//						if(isSafeClause(newClauseInfo.getClause())) {
 							// Keep clause only if its score is better than current best score
 							double score = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, newClauseInfo);
 							if (score > bestScore) {
 								newARMGs.add(newClauseInfo);
 							}
-						}
+//						}
 					}
 				}
 				
