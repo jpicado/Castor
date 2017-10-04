@@ -47,9 +47,9 @@ public class CastorReducer {
 	 */
 	public static MyClause negativeReduce(GenericDAO genericDAO, CoverageEngine coverageEngine, MyClause clause, Schema schema, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, CastorReducer.MEASURE measure, ClauseEvaluator evaluator) {
 		TimeWatch tw = TimeWatch.start();
-//		System.out.println("Finding all inclusion chains");
-//		System.out.println(Formatter.prettyPrint(clause));
+		
 		List<List<Literal>> allChains = DataDependenciesUtils.findAllInclusionChains(schema, clause);
+		List<Term> headVariables = clause.getPositiveLiterals().get(0).getAtomicSentence().getArgs();
 		
 		// Get negative examples covered by clause (only used if measure is consistency)
 		boolean[] originallyCovered = null;
@@ -62,7 +62,6 @@ public class CastorReducer {
 		if (clause.getNumberNegativeLiterals() > 0) {
 			int previousLength = 0;
 			while(true) {
-//				System.out.println("iteration, length: "+previousLength);
 				int bestChainPosition;
 				if (measure.equals(CastorReducer.MEASURE.CONSISTENCY)) {
 					// Find first literal such that the negative coverage of the clause is equal to negative coverage of original clause
@@ -102,9 +101,48 @@ public class CastorReducer {
 					}
 				}
 				
+				////
+				// Check clause safety
+				
+				// Find head variables that do not appear in body
+				List<Term> variablesNotInBody = new LinkedList<Term>();
+				for (Term term : headVariables) {
+					if (!termAppearsInChains(term, chainsToKeep) && !termAppearsInChains(term, remainingChains)) {
+						variablesNotInBody.add(term);
+					}
+				}
+				
+				// Find all chains containing terms in variablesNotInBody
+//				List<List<Literal>> chainsWithHeadVariables = new LinkedList<List<Literal>>();
+//				for (int i = bestChainPosition; i < allChains.size(); i++) {
+//					
+//					boolean addChain = false;
+//					for (Term term : variablesNotInBody) {
+//						if (termAppearsInChain(term, allChains.get(i))) {
+//							addChain = true;
+//							break;
+//						}
+//					}
+//					
+//					if (addChain) {
+//						boolean inChainsToKeep = false;
+//						for (List<Literal> chain : chainsToKeep) {
+//							if (DataDependenciesUtils.sameChain(allChains.get(i), chain)) {
+//								inChainsToKeep = true;
+//								break;
+//							}
+//						}
+//						if (!inChainsToKeep) {
+//							chainsWithHeadVariables.add(allChains.get(i));
+//						}
+//					}
+//				}
+				////
+				
 				// Update allChains
 				allChains.clear();
 				allChains.addAll(chainsToKeep);
+//				allChains.addAll(chainsWithHeadVariables);
 				allChains.addAll(remainingChains);
 				
 				// Terminate if allChains length remained the same within a cycle
@@ -125,6 +163,24 @@ public class CastorReducer {
 		
 		NumbersKeeper.reducerTime += tw.time();
 		return newClause;
+	}
+
+	private static boolean termAppearsInChains(Term term, List<List<Literal>> chains) {
+		for (List<Literal> chain : chains) {
+			if (termAppearsInChain(term, chain)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static boolean termAppearsInChain(Term term, List<Literal> chain) {
+		for (Literal literal : chain) {
+			if (literal.getAtomicSentence().getArgs().contains(term)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	// NEEDED FOR SOME DATASETS
