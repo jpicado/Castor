@@ -6,11 +6,14 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import aima.core.logic.fol.kb.data.Literal;
 import aima.core.logic.fol.parsing.ast.Term;
+import aima.core.logic.fol.parsing.ast.Variable;
 import aima.core.util.datastructure.Pair;
+import castor.hypotheses.ClauseInfo;
 import castor.hypotheses.MyClause;
 import castor.language.Relation;
 import castor.language.Schema;
@@ -533,8 +536,8 @@ public class QueryGenerator {
 		return query.toString();
 	}
 	
-	public static String generateQueryFromClause(Schema schema, MyClause clause) {
-		clause = reorderClauseBody(clause);
+	public static String generateQueryFromClause(Schema schema, ClauseInfo clauseInfo) {
+		MyClause clause = reorderClauseBody(clauseInfo.getClause());
 		
 		int tableCounter = 0;
 		
@@ -571,6 +574,14 @@ public class QueryGenerator {
 						querySelect.append(predicateAlias + "." + schema.getRelations().get(predicateName).getAttributeNames().get(i) 
 								+ " = "
 								+ termName);
+						
+						// Check head substitutions stored in clauseInfo
+						for (Entry<Variable, Term> entry : clauseInfo.getHeadSubstitutions().entrySet()) {
+							String valueString = entry.getValue().getSymbolicName().replace("\"", "'");
+							if (termName.equals(valueString)) {
+								termAppearance.put(entry.getKey().getSymbolicName(), new Pair<String,String>(predicateAlias, schema.getRelations().get(predicateName).getAttributeNames().get(i)));
+							}
+						}
 					}
 					
 				}
@@ -610,6 +621,14 @@ public class QueryGenerator {
 						querySelect.append(predicateAlias + "." + schema.getRelations().get(predicateName).getAttributeNames().get(i) 
 								+ " = "
 								+ termName);
+						
+						// Check head substitutions stored in clauseInfo
+						for (Entry<Variable, Term> entry : clauseInfo.getHeadSubstitutions().entrySet()) {
+							String valueString = entry.getValue().getSymbolicName().replace("\"", "'");
+							if (termName.equals(valueString)) {
+								termAppearance.put(entry.getKey().getSymbolicName(), new Pair<String,String>(predicateAlias, schema.getRelations().get(predicateName).getAttributeNames().get(i)));
+							}
+						}
 					}
 				}
 				queryJoin.append("JOIN " + predicateName + " AS " + predicateAlias + " ");

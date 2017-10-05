@@ -1,6 +1,11 @@
 package castor.hypotheses;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+import aima.core.logic.fol.parsing.ast.Term;
+import aima.core.logic.fol.parsing.ast.Variable;
 
 public class ClauseInfo {
 
@@ -14,6 +19,9 @@ public class ClauseInfo {
 	// Store which examples have been evaluated for this clause
 	private boolean[] posExamplesEvaluated;
 	private boolean[] negExamplesEvaluated;
+	
+	// Store head substitutions
+	Map<Variable, Term> headSubstitutions;
 
 	public ClauseInfo(MyClause clause, int nPosExamples, int nNegExamples) {
 		super();
@@ -25,6 +33,8 @@ public class ClauseInfo {
 		
 		this.posExamplesEvaluated = new boolean[nPosExamples];
 		this.negExamplesEvaluated = new boolean[nNegExamples];
+		
+		this.headSubstitutions = new HashMap<Variable, Term>();
 	}
 	
 	public ClauseInfo(MyClause clause, boolean[] posExamplesCovered, boolean[] negExamplesCovered, boolean[] posExamplesEvaluated, boolean[] negExamplesEvaluated) {
@@ -37,6 +47,8 @@ public class ClauseInfo {
 		
 		this.posExamplesEvaluated = posExamplesEvaluated;
 		this.negExamplesEvaluated = negExamplesEvaluated;
+		
+		this.headSubstitutions = new HashMap<Variable, Term>();
 	}
 	
 	public MyClause getClause() {
@@ -114,5 +126,9 @@ public class ClauseInfo {
 		this.negExamplesEvaluated = new boolean[nNegExamples];
 		Arrays.fill(this.posExamplesEvaluated, false);
 		Arrays.fill(this.negExamplesEvaluated, false);
+	}
+
+	public Map<Variable, Term> getHeadSubstitutions() {
+		return headSubstitutions;
 	}
 }

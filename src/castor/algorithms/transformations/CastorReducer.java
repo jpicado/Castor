@@ -123,11 +123,9 @@ public class CastorReducer {
 					Iterator<Term> iterator = variablesNotInBody.iterator();
 					while(iterator.hasNext()) {
 						Term term = iterator.next();
-//					for (Term term : variablesNotInBody) {
 						if (termAppearsInChain(term, allChains.get(i))) {
 							addChain = true;
 							iterator.remove();
-//							break;
 						}
 					}
 					

@@ -100,13 +100,9 @@ public class CastorLearner implements Learner {
 					negCoveredCount++;
 			}
         	
-			sb.append(Formatter.prettyPrint(clauseInfo.getClause())+"\t(Pos cover="+posCoveredCount+", Neg cover="+negCoveredCount+")\n");
+			sb.append(Formatter.prettyPrint(clauseInfo)+"\t(Pos cover="+posCoveredCount+", Neg cover="+negCoveredCount+")\n");
 		}
         logger.info(sb.toString());
-        
-        // Evaluate on training data
-        logger.info("Evaluating on training data...");
-        this.evaluate(this.coverageEngine, schema, definition, posExamplesRelation, negExamplesRelation);
         
         NumbersKeeper.learningTime += tw.time(TimeUnit.MILLISECONDS);
 		
@@ -233,9 +229,11 @@ public class CastorLearner implements Learner {
 				}
 				
 				// Final minimization to remove redundant literals
-				clauseInfo.setMoreGeneralClause(this.transform(schema, clauseInfo.getClause()));
+//				clauseInfo.setMoreGeneralClause(this.transform(schema, clauseInfo.getClause()));
+				clauseInfo = this.transform(schema, clauseInfo);
+				
 				logger.info("After minimization - NumLits:"+clauseInfo.getClause().getNumberLiterals());
-				logger.debug("After minimization:\n"+ Formatter.prettyPrint(clauseInfo.getClause()));
+				logger.debug("After minimization:\n"+ Formatter.prettyPrint(clauseInfo));
 				
 				// Get new positive examples covered
 				// Adding 1 to count seed example
@@ -268,7 +266,7 @@ public class CastorLearner implements Learner {
 				if (satisfiesConditions(truePositive, falsePositive, trueNegative, falseNegative, newPosCoveredCount, precision, recall)) {
 					// Add clause to definition
 					definition.add(clauseInfo);
-					logger.info("New clause added to theory:\n" + Formatter.prettyPrint(clauseInfo.getClause()));
+					logger.info("New clause added to theory:\n" + Formatter.prettyPrint(clauseInfo));
 					logger.info("New pos cover = " + newPosCoveredCount + ", Total pos cover = " + allPosCoveredCount + ", Total neg cover = " + allNegCoveredCount);
 					
 					// Remove covered positive examples
@@ -442,6 +440,12 @@ public class CastorLearner implements Learner {
 		// IF REORDERED, NEGATIVE REDUCTION IS AFFECTED
 		//clause = ClauseTransformations.reorder(clause);
 		return clause;
+	}
+	
+	private ClauseInfo transform(Schema schema, ClauseInfo clauseInfo) {
+		// Minimize using theta-transformation 
+		// Uses version that allows head variables to be substituted by some value (and saves the substitutions in clauseInfo)
+		return ClauseTransformations.minimize(clauseInfo);
 	}
 	
 	/*

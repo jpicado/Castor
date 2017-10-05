@@ -227,32 +227,19 @@ public class CastorCmd {
 					StringBuilder sb = new StringBuilder();
 					sb.append("SQL format:\n");
 					for (ClauseInfo clauseInfo : definition) {
-						sb.append(QueryGenerator.generateQueryFromClause(schema, clauseInfo.getClause())+"\n");
-						sb.append(QueryGenerator.generateQueryFromClauseAndCoverageTable(schema,
-								clauseInfo.getClause(), posTrain, false)+"\n");
+						sb.append(QueryGenerator.generateQueryFromClause(schema, clauseInfo)+"\n");
 					}
 					logger.info(sb.toString());
 				}
-
+				
+				// Save total time
 				NumbersKeeper.totalTime += tw.time();
+				
+				// EVALUATE DEFINITION ON TRAINING DATA
+				logger.info("Evaluating on training data...");
+				learner.evaluate(coverageEngine, this.schema, definition, posTrain, negTrain);
 
-				logger.info("Total time: " + NumbersKeeper.totalTime);
-				logger.info("Creating coverage engine time: " + NumbersKeeper.creatingCoverageTime);
-				logger.info("Learning time: " + NumbersKeeper.learningTime);
-				logger.info("Coverage time: " + NumbersKeeper.coverageTime);
-				logger.info("Coverage calls: " + NumbersKeeper.coverageCalls);
-				logger.info("Scoring time: " + NumbersKeeper.scoringTime);
-				logger.info("Entailment time: " + NumbersKeeper.entailmentTime);
-				logger.info("Minimization time: " + NumbersKeeper.minimizationTime);
-				logger.info("Reduction time: " + NumbersKeeper.reducerTime);
-				logger.info("LGG time: " + NumbersKeeper.lggTime);
-				logger.info("LearnClause time: " + NumbersKeeper.learnClauseTime);
-
-				// if (NumbersKeeper.coverageCalls != 0)
-				// logger.info("Avg clause length in coverage: " +
-				// (NumbersKeeper.clauseLengthSum / NumbersKeeper.coverageCalls));
-
-				// EVALUATE DEFINITION
+				// EVALUATE DEFINITION ON TESTING DATA
 				if (testLearnedDefinition) {
 					// Obtain test relations
 					String postestTableName = (this.dataModel.getModeH().getPredicateName() + testPosSuffix)
@@ -276,6 +263,18 @@ public class CastorCmd {
 							this.parameters.getThreads(), true);
 					learner.evaluate(testCoverageEngine, this.schema, definition, posTest, negTest);
 				}
+				
+				logger.info("Total time: " + NumbersKeeper.totalTime);
+				logger.info("Creating coverage engine time: " + NumbersKeeper.creatingCoverageTime);
+				logger.info("Learning time: " + NumbersKeeper.learningTime);
+				logger.info("Coverage time: " + NumbersKeeper.coverageTime);
+				logger.info("Coverage calls: " + NumbersKeeper.coverageCalls);
+				logger.info("Scoring time: " + NumbersKeeper.scoringTime);
+				logger.info("Entailment time: " + NumbersKeeper.entailmentTime);
+				logger.info("Minimization time: " + NumbersKeeper.minimizationTime);
+				logger.info("Reduction time: " + NumbersKeeper.reducerTime);
+				logger.info("LGG time: " + NumbersKeeper.lggTime);
+				logger.info("LearnClause time: " + NumbersKeeper.learnClauseTime);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

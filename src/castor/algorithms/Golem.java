@@ -110,10 +110,6 @@ public class Golem implements Learner {
 		}
         logger.info(sb.toString());
         
-        // Evaluate on training data
-        logger.info("Evaluating on training data...");
-        this.evaluate(this.coverageEngine, schema, definition, posExamplesRelation, negExamplesRelation);
-        
         NumbersKeeper.learningTime += tw.time(TimeUnit.MILLISECONDS);
 		
 		return definition;

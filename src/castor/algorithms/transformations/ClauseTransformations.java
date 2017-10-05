@@ -1,6 +1,7 @@
 package castor.algorithms.transformations;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -14,7 +15,9 @@ import aima.core.logic.fol.kb.data.Literal;
 import aima.core.logic.fol.parsing.ast.AtomicSentence;
 import aima.core.logic.fol.parsing.ast.Term;
 import aima.core.logic.fol.parsing.ast.Variable;
+import castor.hypotheses.ClauseInfo;
 import castor.hypotheses.MyClause;
+import castor.utils.Formatter;
 import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
 
@@ -45,6 +48,42 @@ public class ClauseTransformations {
 		}
 		NumbersKeeper.minimizationTime += tw.time();
 		return clause;
+	}
+	
+	/*
+	 * Minimize clause using theta-subsumption (uses an approximation of clause-subsumption (homomorphism) test)
+	 * Allow head variables to be substituted for some value. Save substitution in  headSubstitutions
+	 */
+	public static ClauseInfo minimize(ClauseInfo clauseInfo) {
+		Map<Variable, Term> headSubstitutions = new HashMap<Variable, Term>();
+		return minimize(clauseInfo, headSubstitutions);
+	}
+	public static ClauseInfo minimize(ClauseInfo clauseInfo, Map<Variable, Term> headSubstitutions) {
+		TimeWatch tw = TimeWatch.start();
+		for (Literal literalToRemove : clauseInfo.getClause().getNegativeLiterals()) {
+			// Create new clause with head
+			MyClause tempClause = new MyClause(clauseInfo.getClause().getPositiveLiterals());
+			// Add all literals except literalToRemove
+			for (Literal otherLiteral : clauseInfo.getClause().getNegativeLiterals()) {
+				if (!literalToRemove.equals(otherLiteral)) {
+					tempClause.addLiteral(otherLiteral);
+				}
+			}
+			// If new clause subsumes original clause, start again with new clause
+			Map<Variable, Term> newHeadSubstitutions = new HashMap<Variable, Term>();
+			if (subsumes(clauseInfo.getClause(), tempClause, literalToRemove, newHeadSubstitutions)) {
+				NumbersKeeper.minimizationTime += tw.time();
+				
+				clauseInfo.setMoreGeneralClause(tempClause);
+				return minimize(clauseInfo, newHeadSubstitutions);
+			}
+		}
+		NumbersKeeper.minimizationTime += tw.time();
+		
+		// Save substitutions in clauseInfo
+		clauseInfo.getHeadSubstitutions().putAll(headSubstitutions);
+		
+		return clauseInfo;
 	}
 	
 	/*
@@ -95,6 +134,60 @@ public class ClauseTransformations {
 							subsumes = true;
 							break;
 						}
+					}
+				}
+			}
+		}
+		return subsumes;
+	}
+	
+	/*
+	 * Check if subsumerClause subsumes subsumedClause, where subsumerClause = subsumedClause U {literalRemoved}
+	 * Allow head variables to be substituted for some value. Save substitution in  headSubstitutions
+	 * 
+	 */
+	private static boolean subsumes(MyClause subsumerClause, MyClause subsumedClause, Literal literalRemoved, Map<Variable, Term> headSubstitutions) {
+		boolean subsumes  = false;
+		
+		// Only accept definite clauses
+		if (!subsumerClause.isDefiniteClause() || !subsumedClause.isDefiniteClause()) {
+			throw new IllegalArgumentException(
+					"Only definite clauses (exactly one positive literal) are supported.");
+		}
+		
+		Literal headLiteral = subsumerClause.getPositiveLiterals().get(0);
+		
+		// If heads are not equal, return false
+		if (!headLiteral.equals(subsumedClause.getPositiveLiterals().get(0))) {
+			//subsumes = false;
+		} else {
+			for (Literal literalOfSubsumed : subsumedClause.getNegativeLiterals()) {
+				// Compute most general unifier of literal1 w.r.t. literal2
+				Map<Variable, Term> theta = mostGeneralUnifierOfLiteralWrtLiteral(literalRemoved.getAtomicSentence(), literalOfSubsumed.getAtomicSentence());
+				
+				if (theta != null) {
+				
+					// If head variable is substituted, save substitution 
+					headSubstitutions.clear();
+					for (Variable var : theta.keySet()) {
+						if (headLiteral.getAtomicSentence().getArgs().contains(var)) {
+							headSubstitutions.put(var, theta.get(var));
+						}
+					}
+				
+					// Apply substitution to all literals in c1 and check if they are in c2
+					boolean subset = true;
+					for (Literal literalOfSubsumer : subsumerClause.getNegativeLiterals()) {
+						Literal literalOfSubsumerTheta = substVisitor.subst(theta, literalOfSubsumer);
+						if (!subsumedClause.getNegativeLiterals().contains(literalOfSubsumerTheta)) {
+							subset = false;
+							break;
+						}
+					}
+					// If c1\theta subset c2, then c1 subsumes c2
+					if (subset) {
+						subsumes = true;
+						break;
 					}
 				}
 			}
