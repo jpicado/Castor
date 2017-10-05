@@ -3,12 +3,15 @@ package castor.algorithms.transformations;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
+
+import com.google_voltpatches.common.collect.Sets;
 
 import aima.core.logic.fol.kb.data.Literal;
 import aima.core.logic.fol.parsing.ast.Predicate;
@@ -26,8 +29,6 @@ import castor.language.Tuple;
 import castor.utils.Commons;
 import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
-
-import com.google_voltpatches.common.collect.Sets;
 
 public class CastorReducer {
 	
@@ -48,8 +49,10 @@ public class CastorReducer {
 	public static MyClause negativeReduce(GenericDAO genericDAO, CoverageEngine coverageEngine, MyClause clause, Schema schema, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, CastorReducer.MEASURE measure, ClauseEvaluator evaluator) {
 		TimeWatch tw = TimeWatch.start();
 		
-		List<List<Literal>> allChains = DataDependenciesUtils.findAllInclusionChains(schema, clause);
 		List<Term> headVariables = clause.getPositiveLiterals().get(0).getAtomicSentence().getArgs();
+		
+		List<List<Literal>> allChains = DataDependenciesUtils.findAllInclusionChains(schema, clause);
+		allChains = reorderChains(allChains, headVariables);
 		
 		// Get negative examples covered by clause (only used if measure is consistency)
 		boolean[] originallyCovered = null;
@@ -103,46 +106,52 @@ public class CastorReducer {
 				
 				////
 				// Check clause safety
-//				
-//				// Find head variables that do not appear in body
-//				List<Term> variablesNotInBody = new LinkedList<Term>();
-//				for (Term term : headVariables) {
-//					if (!termAppearsInChains(term, chainsToKeep) && !termAppearsInChains(term, remainingChains)) {
-//						variablesNotInBody.add(term);
-//					}
-//				}
-//				
-//				// Find all chains containing terms in variablesNotInBody
-//				List<List<Literal>> chainsWithHeadVariables = new LinkedList<List<Literal>>();
-//				for (int i = bestChainPosition; i < allChains.size(); i++) {
-//					
-//					boolean addChain = false;
+				
+				// Find head variables that do not appear in body
+				List<Term> variablesNotInBody = new LinkedList<Term>();
+				for (Term term : headVariables) {
+					if (!termAppearsInChains(term, chainsToKeep) && !termAppearsInChains(term, remainingChains)) {
+						variablesNotInBody.add(term);
+					}
+				}
+				
+				// Find all chains containing terms in variablesNotInBody
+				List<List<Literal>> chainsWithHeadVariables = new LinkedList<List<Literal>>();
+				for (int i = bestChainPosition; i < allChains.size(); i++) {
+					
+					boolean addChain = false;
+					Iterator<Term> iterator = variablesNotInBody.iterator();
+					while(iterator.hasNext()) {
+						Term term = iterator.next();
 //					for (Term term : variablesNotInBody) {
-//						if (termAppearsInChain(term, allChains.get(i))) {
-//							addChain = true;
+						if (termAppearsInChain(term, allChains.get(i))) {
+							addChain = true;
+							iterator.remove();
 //							break;
-//						}
-//					}
-//					
-//					if (addChain) {
-//						boolean inChainsToKeep = false;
-//						for (List<Literal> chain : chainsToKeep) {
-//							if (DataDependenciesUtils.sameChain(allChains.get(i), chain)) {
-//								inChainsToKeep = true;
-//								break;
-//							}
-//						}
-//						if (!inChainsToKeep) {
-//							chainsWithHeadVariables.add(allChains.get(i));
-//						}
-//					}
-//				}
+						}
+					}
+					
+					if (addChain) {
+						boolean inChainsToKeep = false;
+						for (List<Literal> chain : chainsToKeep) {
+							if (DataDependenciesUtils.sameChain(allChains.get(i), chain)) {
+								inChainsToKeep = true;
+								break;
+							}
+						}
+						if (!inChainsToKeep) {
+							chainsWithHeadVariables.add(allChains.get(i));
+						}
+					}
+					
+					if (variablesNotInBody.isEmpty()) break;
+				}
 				////
 				
 				// Update allChains
 				allChains.clear();
 				allChains.addAll(chainsToKeep);
-//				allChains.addAll(chainsWithHeadVariables);
+				allChains.addAll(chainsWithHeadVariables);
 				allChains.addAll(remainingChains);
 				
 				// Terminate if allChains length remained the same within a cycle
@@ -165,6 +174,41 @@ public class CastorReducer {
 		return newClause;
 	}
 
+	/*
+	 * Reorder chains according to how many terms in input variables they contain (descending)
+	 * Bucket sort
+	 */
+	private static List<List<Literal>> reorderChains(List<List<Literal>> chains, List<Term> variables) {
+		Map<Integer, List<List<Literal>>> chainsByCount = new HashMap<Integer, List<List<Literal>>>(variables.size());
+		
+		// Count how many terms it contains and add to corresponding bucket
+		for (List<Literal> chain : chains) {
+			int count = 0;
+			for (Term term : variables) {
+				if(termAppearsInChain(term, chain))
+					count++;
+			}
+			
+			if (!chainsByCount.containsKey(count)) {
+				chainsByCount.put(count, new LinkedList<List<Literal>>());
+			}
+			chainsByCount.get(count).add(chain);
+		}
+		
+		// Put all chains in same list, in order
+		List<List<Literal>> orderedChains = new LinkedList<List<Literal>>();
+		for (int i = variables.size(); i >= 0; i--) {
+			if (chainsByCount.containsKey(i)) {
+				orderedChains.addAll(chainsByCount.get(i));
+			}
+		}
+		
+		return orderedChains;
+	}
+
+	/*
+	 * Check whether term appears in a group of chains
+	 */
 	private static boolean termAppearsInChains(Term term, List<List<Literal>> chains) {
 		for (List<Literal> chain : chains) {
 			if (termAppearsInChain(term, chain)) {
@@ -174,6 +218,9 @@ public class CastorReducer {
 		return false;
 	}
 
+	/*
+	 * Check whether term appears in chain
+	 */
 	private static boolean termAppearsInChain(Term term, List<Literal> chain) {
 		for (Literal literal : chain) {
 			if (literal.getAtomicSentence().getArgs().contains(term)) {
