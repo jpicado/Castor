@@ -45,6 +45,15 @@ public class Mode {
 		return sb.toString();
 	}
 	
+	public Mode toGroundMode() {
+		String predicateName =  this.predicateName;
+		List<Argument> arguments = new LinkedList<Argument>();
+		for (Argument argument : this.arguments) {
+			arguments.add(new Argument(argument.getType(), IdentifierType.CONSTANT));
+		}
+		return new Mode(predicateName, arguments);
+	}
+	
 	public String toGroundModeString() {
 		StringBuilder sb = new StringBuilder();
 		

@@ -46,6 +46,27 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 		return this.generateBottomClauseOneQueryPerRelationAttribute(genericDAO, hashConstantToVariable,
 				hashVariableToConstant, exampleTuple, schema, modeH, modesB, iterations, recall, applyInds);
 	}
+	
+	/*
+	 * Generate ground bottom clause for one example
+	 */
+	public MyClause generateGroundBottomClause(GenericDAO genericDAO, Tuple exampleTuple, Schema schema, Mode modeH,
+			List<Mode> modesB, int iterations, int recall, boolean applyInds) {
+		
+		// Keep only ground modes
+		Mode groundModeH = modeH.toGroundMode();
+		Set<Mode> groundModesB = new HashSet<Mode>();
+		for (Mode mode : modesB) {
+			Mode groundMode = mode.toGroundMode();
+			groundModesB.add(groundMode);
+		}
+		List<Mode> groundModesBList = new LinkedList<Mode>(groundModesB);
+		
+		Map<String, String> hashConstantToVariable = new HashMap<String, String>();
+		Map<String, String> hashVariableToConstant = new HashMap<String, String>();
+		return this.generateBottomClauseOneQueryPerRelationAttribute(genericDAO, hashConstantToVariable,
+				hashVariableToConstant, exampleTuple, schema, groundModeH, groundModesBList, iterations, recall, applyInds);
+	}
 
 	/*
 	 * Generate bottom clause for each input example in examples list Reuses hash
