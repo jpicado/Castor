@@ -76,9 +76,6 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 			int iterations, Schema schema, Mode modeH, List<Mode> modesB, boolean applyInds) throws Exception {
 
 		// Generate stored procedures
-//		generateStoredProcedureVariabilized(dataset, spName, iterations, schema, modeH, modesB, applyInds);
-//		generateStoredProcedureGround(dataset, spName, iterations, schema, modeH, modesB, applyInds);
-		
 		// Bottom clause
 		generateStoredProcedure(dataset, spName, iterations, schema, modeH, modesB, applyInds, false);
 		// Ground bottom clause
@@ -93,259 +90,6 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 		}
 
 		return success;
-	}
-
-	private void generateStoredProcedureVariabilized(String dataset, String spNameTemplate, int iterations,
-			Schema schema, Mode modeH, List<Mode> modesB, boolean applyInds) throws Exception {
-
-		// Create folder where stored procedures will be written
-		new File(SP_GENERATION_LOCATION + File.separator + dataset).mkdirs();
-
-		// Load file that contains template for stored procedures
-		final STGroup stGroup = new STGroupFile(TEMPLATE_LOCATION, '$', '$');
-
-		// Group modes by predicate name
-		Map<String, String> groupedModesStrings = new HashMap<String, String>();
-		Map<String, List<Mode>> groupedModes = new LinkedHashMap<String, List<Mode>>();
-		for (Mode mode : modesB) {
-			// Add to grouped modes
-			if (!groupedModesStrings.containsKey(mode.getPredicateName())) {
-				groupedModesStrings.put(mode.getPredicateName(), mode.toString());
-			} else {
-				groupedModesStrings.put(mode.getPredicateName(),
-						groupedModesStrings.get(mode.getPredicateName()) + ";" + mode.toString());
-			}
-			if (!groupedModes.containsKey(mode.getPredicateName())) {
-				groupedModes.put(mode.getPredicateName(), new LinkedList<Mode>());
-			}
-			groupedModes.get(mode.getPredicateName()).add(mode);
-		}
-
-		// Create SQL statements and mode operations
-		StringBuilder sqlStatementsBuilder = new StringBuilder();
-		StringBuilder modesOperationsBuilder = new StringBuilder();
-		Set<String> seenPredicatesAttributes = new HashSet<String>();
-
-		Iterator<Map.Entry<String, List<Mode>>> it = groupedModes.entrySet().iterator();
-		while (it.hasNext()) {
-			Map.Entry<String, List<Mode>> pair = it.next();
-			String modePredicate = pair.getKey();
-
-			final ST groupedModesLiteralListTemplate = stGroup.getInstanceOf(SP_BOTTOMCLAUSE_GROUPEDMODES_TEMPLATE);
-			modesOperationsBuilder.append(groupedModesLiteralListTemplate.render() + "\n");
-
-			for (Mode mode : pair.getValue()) {
-				// Create SQL statements
-
-				// Find input attribute
-				// TODO currently handling one single input
-				int attributeNumber;
-				for (attributeNumber = 0; attributeNumber < mode.getArguments().size(); attributeNumber++) {
-					if (mode.getArguments().get(attributeNumber).getIdentifierType().equals(IdentifierType.INPUT)) {
-						break;
-					}
-				}
-
-				// Check if already saw another mode with the same predicate name and attribute
-				// number
-				// This is done to avoid creating sqlStmt with same names
-				String modeAttributeId = mode.getPredicateName() + "_" + attributeNumber;
-				if (!seenPredicatesAttributes.contains(modeAttributeId)) {
-					seenPredicatesAttributes.add(modeAttributeId);
-
-					// Get attribute name
-					String attribute = schema.getRelations().get(mode.getPredicateName().toUpperCase())
-							.getAttributeNames().get(attributeNumber);
-
-					// Create SQL statement from template
-					final ST sqlStatementTemplate = stGroup.getInstanceOf(SP_BOTTOMCLAUSE_SQLSTATEMENT_TEMPLATE);
-					sqlStatementTemplate.add(RELATION_ARG_NAME, mode.getPredicateName());
-					sqlStatementTemplate.add(ATTRIBUTE_ARG_NAME, attribute);
-					sqlStatementTemplate.add(ATTRIBUTENUMBER_ARG_NAME, attributeNumber);
-
-					sqlStatementsBuilder.append(sqlStatementTemplate.render() + "\n");
-				}
-
-				// Create operations for mode from template
-				final ST modeTemplate = stGroup.getInstanceOf(SP_BOTTOMCLAUSE_MODE_TEMPLATE);
-				modeTemplate.add(RELATION_ARG_NAME, mode.getPredicateName());
-				modeTemplate.add(MODEBSTRING_ARG_NAME, mode.toString());
-				modeTemplate.add(ATTRIBUTENUMBER_ARG_NAME, attributeNumber);
-
-				modesOperationsBuilder.append(modeTemplate.render() + "\n");
-			}
-
-			// Apply INDs
-			if (applyInds) {
-				modesOperationsBuilder.append(
-						followIndChain(schema, modePredicate, new HashSet<String>(), groupedModesStrings, stGroup));
-			}
-		}
-
-		// Create stored procedure from template
-		String packageName = AUTO_PACKAGE + "." + dataset;
-		String spName = spNameTemplate;
-
-		final ST storedProcedureTemplate = stGroup.getInstanceOf(SP_BOTTOMCLAUSE_PROCEDURE_TEMPLATE);
-		storedProcedureTemplate.add(PACKAGE_ARG_NAME, packageName);
-		storedProcedureTemplate.add(NAME_ARG_NAME, spName);
-		storedProcedureTemplate.add(VARIABLE_PREFIX_ARG_NAME, Commons.VARIABLE_PREFIX);
-		storedProcedureTemplate.add(SQLSTATEMENTS_ARG_NAME, sqlStatementsBuilder.toString());
-		storedProcedureTemplate.add(MODEHSTRING_ARG_NAME, modeH.toString());
-		storedProcedureTemplate.add(MODEBOPERATIONS_ARG_NAME, modesOperationsBuilder.toString());
-
-		// Render to files
-		String spFile = SP_GENERATION_LOCATION + File.separator + dataset + File.separator + spName + ".java";
-		PrintWriter spWriter = new PrintWriter(spFile, "UTF-8");
-		spWriter.println(storedProcedureTemplate.render());
-		spWriter.close();
-
-		this.procedures.add(packageName + "." + spName);
-	}
-
-	private String followIndChain(Schema schema, String currentPredicate, Set<String> seenPredicates,
-			Map<String, String> groupedModesStrings, STGroup stGroup) {
-		StringBuilder sb = new StringBuilder();
-
-		if (!seenPredicates.contains(currentPredicate)
-				&& schema.getInclusionDependencies().containsKey(currentPredicate)) {
-			for (InclusionDependency ind : schema.getInclusionDependencies().get(currentPredicate)) {
-
-				if (!seenPredicates.contains(ind.getRightPredicateName())) {
-					// Add application of IND
-					final ST indTemplate = stGroup.getInstanceOf(SP_BOTTOMCLAUSE_INCLUSIONDEPENDENCY_TEMPLATE);
-					indTemplate.add(LEFTINDPREDICATE_ARG_NAME, ind.getLeftPredicateName());
-					indTemplate.add(LEFTINDATTNUMBER_ARG_NAME, ind.getLeftAttributeNumber());
-					indTemplate.add(RIGHTINDPREDICATE_ARG_NAME, ind.getRightPredicateName());
-					indTemplate.add(RIGHTINDATTNUMBER_ARG_NAME, ind.getRightAttributeNumber());
-					indTemplate.add(MODESFORRIGHTINDPREDICATE_ARG_NAME,
-							groupedModesStrings.get(ind.getRightPredicateName()));
-
-					sb.append(indTemplate.render() + "\n");
-
-					// Add current predicate to seen list
-					seenPredicates.add(currentPredicate);
-
-					// Follow chain
-					sb.append(followIndChain(schema, ind.getRightPredicateName(), seenPredicates, groupedModesStrings,
-							stGroup));
-				}
-			}
-		}
-
-		return sb.toString();
-	}
-
-	private void generateStoredProcedureGround(String dataset, String spNameTemplate, int iterations, Schema schema,
-			Mode modeH, List<Mode> modesB, boolean applyInds) throws Exception {
-
-		// Create folder where stored procedures will be written
-		new File(SP_GENERATION_LOCATION + File.separator + dataset).mkdirs();
-
-		// Load file that contains template for stored procedures
-		final STGroup stGroup = new STGroupFile(TEMPLATE_LOCATION, '$', '$');
-
-		// Group modes by predicate name
-		Map<String, String> groupedModesStrings = new HashMap<String, String>();
-		Map<String, List<Mode>> groupedModes = new LinkedHashMap<String, List<Mode>>();
-		for (Mode mode : modesB) {
-			String groundMode = mode.toGroundModeString();
-
-			// Add to grouped modes
-			if (!groupedModesStrings.containsKey(mode.getPredicateName())) {
-				groupedModesStrings.put(mode.getPredicateName(), groundMode);
-			} else if (!groupedModesStrings.get(mode.getPredicateName()).contains(groundMode)) {
-				groupedModesStrings.put(mode.getPredicateName(),
-						groupedModesStrings.get(mode.getPredicateName()) + ";" + groundMode);
-			}
-
-			if (!groupedModes.containsKey(mode.getPredicateName())) {
-				groupedModes.put(mode.getPredicateName(), new LinkedList<Mode>());
-			}
-			groupedModes.get(mode.getPredicateName()).add(mode);
-		}
-
-		StringBuilder sqlStatementsBuilder = new StringBuilder();
-		StringBuilder modesOperationsBuilder = new StringBuilder();
-		Set<String> seenPredicatesAttributes = new HashSet<String>();
-
-		Iterator<Map.Entry<String, List<Mode>>> it = groupedModes.entrySet().iterator();
-		while (it.hasNext()) {
-			Map.Entry<String, List<Mode>> pair = it.next();
-			String modePredicate = pair.getKey();
-
-			final ST groupedModesLiteralListTemplate = stGroup.getInstanceOf(SP_BOTTOMCLAUSE_GROUPEDMODES_TEMPLATE);
-			modesOperationsBuilder.append(groupedModesLiteralListTemplate.render() + "\n");
-
-			for (Mode mode : pair.getValue()) {
-				// String groundMode = mode.toGroundModeString();
-
-				// Create SQL statements
-
-				// Find input attribute
-				// TODO currently handling one single input
-				int attributeNumber;
-				for (attributeNumber = 0; attributeNumber < mode.getArguments().size(); attributeNumber++) {
-					if (mode.getArguments().get(attributeNumber).getIdentifierType().equals(IdentifierType.INPUT)) {
-						break;
-					}
-				}
-
-				// Check if already saw another mode with the same predicate name and attribute
-				// number
-				// This is done to avoid creating sqlStmt with same names
-				String modeAttributeId = mode.getPredicateName() + "_" + attributeNumber;
-				if (!seenPredicatesAttributes.contains(modeAttributeId)) {
-					seenPredicatesAttributes.add(modeAttributeId);
-
-					// Get attribute name
-					String attribute = schema.getRelations().get(mode.getPredicateName().toUpperCase())
-							.getAttributeNames().get(attributeNumber);
-
-					// Create SQL statement from template
-					final ST sqlStatementTemplate = stGroup.getInstanceOf(SP_BOTTOMCLAUSE_SQLSTATEMENT_TEMPLATE);
-					sqlStatementTemplate.add(RELATION_ARG_NAME, mode.getPredicateName());
-					sqlStatementTemplate.add(ATTRIBUTE_ARG_NAME, attribute);
-					sqlStatementTemplate.add(ATTRIBUTENUMBER_ARG_NAME, attributeNumber);
-
-					sqlStatementsBuilder.append(sqlStatementTemplate.render() + "\n");
-				}
-
-				// Create operations for mode from template
-				final ST modeTemplate = stGroup.getInstanceOf(SP_BOTTOMCLAUSE_MODE_TEMPLATE);
-				modeTemplate.add(RELATION_ARG_NAME, mode.getPredicateName());
-				modeTemplate.add(MODEBSTRING_ARG_NAME, mode.toGroundModeString());
-				modeTemplate.add(ATTRIBUTENUMBER_ARG_NAME, attributeNumber);
-
-				modesOperationsBuilder.append(modeTemplate.render() + "\n");
-			}
-
-			// Apply INDs
-			if (applyInds) {
-				modesOperationsBuilder.append(
-						followIndChain(schema, modePredicate, new HashSet<String>(), groupedModesStrings, stGroup));
-			}
-		}
-
-		// Create stored procedure from template
-		String packageName = AUTO_PACKAGE + "." + dataset;
-		String spName = spNameTemplate + DBCommons.GROUND_BOTTONCLAUSE_PROCEDURE_SUFFIX;
-
-		final ST storedProcedureTemplate = stGroup.getInstanceOf(SP_BOTTOMCLAUSE_PROCEDURE_TEMPLATE);
-		storedProcedureTemplate.add(PACKAGE_ARG_NAME, packageName);
-		storedProcedureTemplate.add(NAME_ARG_NAME, spName);
-		storedProcedureTemplate.add(VARIABLE_PREFIX_ARG_NAME, Commons.VARIABLE_PREFIX);
-		storedProcedureTemplate.add(SQLSTATEMENTS_ARG_NAME, sqlStatementsBuilder.toString());
-		storedProcedureTemplate.add(MODEHSTRING_ARG_NAME, modeH.toGroundModeString());
-		storedProcedureTemplate.add(MODEBOPERATIONS_ARG_NAME, modesOperationsBuilder.toString());
-
-		// Render to files
-		String spFile = SP_GENERATION_LOCATION + File.separator + dataset + File.separator + spName + ".java";
-		PrintWriter spWriter = new PrintWriter(spFile, "UTF-8");
-		spWriter.println(storedProcedureTemplate.render());
-		spWriter.close();
-
-		this.procedures.add(packageName + "." + spName);
 	}
 
 	private void generateStoredProcedure(String dataset, String spNameTemplate, int iterations, Schema schema,
@@ -479,6 +223,39 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 		spWriter.close();
 
 		this.procedures.add(packageName + "." + spName);
+	}
+	
+	private String followIndChain(Schema schema, String currentPredicate, Set<String> seenPredicates,
+			Map<String, String> groupedModesStrings, STGroup stGroup) {
+		StringBuilder sb = new StringBuilder();
+
+		if (!seenPredicates.contains(currentPredicate)
+				&& schema.getInclusionDependencies().containsKey(currentPredicate)) {
+			for (InclusionDependency ind : schema.getInclusionDependencies().get(currentPredicate)) {
+
+				if (!seenPredicates.contains(ind.getRightPredicateName())) {
+					// Add application of IND
+					final ST indTemplate = stGroup.getInstanceOf(SP_BOTTOMCLAUSE_INCLUSIONDEPENDENCY_TEMPLATE);
+					indTemplate.add(LEFTINDPREDICATE_ARG_NAME, ind.getLeftPredicateName());
+					indTemplate.add(LEFTINDATTNUMBER_ARG_NAME, ind.getLeftAttributeNumber());
+					indTemplate.add(RIGHTINDPREDICATE_ARG_NAME, ind.getRightPredicateName());
+					indTemplate.add(RIGHTINDATTNUMBER_ARG_NAME, ind.getRightAttributeNumber());
+					indTemplate.add(MODESFORRIGHTINDPREDICATE_ARG_NAME,
+							groupedModesStrings.get(ind.getRightPredicateName()));
+
+					sb.append(indTemplate.render() + "\n");
+
+					// Add current predicate to seen list
+					seenPredicates.add(currentPredicate);
+
+					// Follow chain
+					sb.append(followIndChain(schema, ind.getRightPredicateName(), seenPredicates, groupedModesStrings,
+							stGroup));
+				}
+			}
+		}
+
+		return sb.toString();
 	}
 
 	private boolean compileStoredProcedures(String dataset) {

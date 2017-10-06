@@ -7,7 +7,7 @@
 	"sample": 20,
 	"beam": 3,
 	"minimizeBottomClause": false,
-	"threads": 32,
+	"threads": 1,
 	"reductionMethod": "consistency",
 	"recall": 10,
 	"groundRecall": 100,
