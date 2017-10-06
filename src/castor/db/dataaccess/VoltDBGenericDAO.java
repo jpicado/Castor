@@ -85,12 +85,9 @@ public class VoltDBGenericDAO implements GenericDAO {
 						relations.get(relationName).getAttributeNames().add(null);
 					}
 				}
+				
 				// Insert attribute in correct position
 				relations.get(relationName).getAttributeNames().set(attributeOrdinalPosition-1, attributeName);
-//				if (relations.get(relationName).getAttributeNames().size() >= attributeOrdinalPosition-1) 
-//					relations.get(relationName).getAttributeNames().add(attributeOrdinalPosition-1, attributeName);
-//				else
-//					relations.get(relationName).getAttributeNames().add(attributeName);
 			}
 		} catch (IOException | ProcCallException e) {
 			throw new RuntimeException(e);

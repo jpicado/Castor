@@ -364,7 +364,7 @@ public class CastorLearner implements Learner {
 				}
 				
 				// Select K random examples
-				List<Tuple> sample = selectRandomExamples(posExamplesRelation, sampleSize);
+				List<Tuple> sample = selectRandomExamples(sampleSize);
 				
 				// Generalize each clause in ARMG using examples in sample
 				List<ClauseInfo> newARMGs = new LinkedList<ClauseInfo>();
@@ -494,7 +494,7 @@ public class CastorLearner implements Learner {
 	/*
 	 * Select K random examples from the given relation
 	 */
-	private List<Tuple> selectRandomExamples(Relation posExamplesRelation, int sampleSize) {
+	private List<Tuple> selectRandomExamples(int sampleSize) {
 		List<Tuple> examples = new LinkedList<Tuple>();
 		Set<Integer> randomPositions = generateListOfRandomNumbers(this.coverageEngine.getAllPosExamples().size(), sampleSize);
 		for (Integer pos : randomPositions) {
