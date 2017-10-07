@@ -1,0 +1,2 @@
+cot_event.cot_type
+cot_event.how

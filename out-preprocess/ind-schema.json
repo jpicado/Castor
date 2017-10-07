@@ -1,0 +1,34 @@
+{
+  "inds": [
+    {
+      "leftRelation": "cot_event_position",
+      "leftAttributeNumber": 0,
+      "rightRelation": "cot_event",
+      "rightAttributeNumber": 0
+    },
+    {
+      "leftRelation": "cot_event_position",
+      "leftAttributeNumber": 1,
+      "rightRelation": "cot_event",
+      "rightAttributeNumber": 1
+    },
+    {
+      "leftRelation": "cot_event",
+      "leftAttributeNumber": 1,
+      "rightRelation": "source",
+      "rightAttributeNumber": 0
+    },
+    {
+      "leftRelation": "cot_event",
+      "leftAttributeNumber": 4,
+      "rightRelation": "source",
+      "rightAttributeNumber": 0
+    },
+    {
+      "leftRelation": "cot_event",
+      "leftAttributeNumber": 5,
+      "rightRelation": "source",
+      "rightAttributeNumber": 1
+    }
+  ]
+}
