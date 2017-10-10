@@ -1,7 +1,7 @@
 package castor.clients;
 
-import castor.db.dataaccess.DAOFactory;
-import castor.db.dataaccess.GenericDAO;
+import castor.dataaccess.db.DAOFactory;
+import castor.dataaccess.db.GenericDAO;
 import castor.language.Relation;
 import castor.language.Schema;
 

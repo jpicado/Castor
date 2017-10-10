@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import castor.dataaccess.db.GenericDAO;
+import castor.dataaccess.db.GenericTableObject;
 import castor.db.QueryGenerator;
-import castor.db.dataaccess.GenericDAO;
-import castor.db.dataaccess.GenericTableObject;
 import castor.hypotheses.ClauseInfo;
 import castor.hypotheses.MyClause;
 import castor.language.Relation;

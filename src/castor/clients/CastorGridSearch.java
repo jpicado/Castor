@@ -18,9 +18,9 @@ import castor.algorithms.ProGolem;
 import castor.algorithms.bottomclause.StoredProcedureGeneratorSaturationInsideSP;
 import castor.algorithms.coverageengines.CoverageBySubsumptionParallel;
 import castor.algorithms.coverageengines.CoverageEngine;
-import castor.db.dataaccess.BottomClauseConstructionDAO;
-import castor.db.dataaccess.DAOFactory;
-import castor.db.dataaccess.GenericDAO;
+import castor.dataaccess.db.BottomClauseConstructionDAO;
+import castor.dataaccess.db.DAOFactory;
+import castor.dataaccess.db.GenericDAO;
 import castor.hypotheses.ClauseInfo;
 import castor.language.InclusionDependency;
 import castor.language.Mode;
@@ -201,14 +201,14 @@ public class CastorGridSearch {
         	// Create CoverageEngines
             tw.reset();
             logger.info("Creating train coverage engine...");
-            CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getGroundRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true);
+            CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getGroundRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true, CoverageBySubsumptionParallel.EXAMPLES_SOURCE.DB, "", "");
             long creatingCoverageTime = tw.time();
             
             logger.info("Creating validation coverage engine...");
-            CoverageEngine valCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posVal, negVal, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getGroundRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true);
+            CoverageEngine valCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posVal, negVal, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getGroundRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true, CoverageBySubsumptionParallel.EXAMPLES_SOURCE.DB, "", "");
             
             logger.info("Creating test coverage engine...");
-            CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTest, negTest, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getGroundRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true);
+            CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTest, negTest, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getGroundRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true, CoverageBySubsumptionParallel.EXAMPLES_SOURCE.DB, "", "");
             
             // Create learner
         	logger.info("Learning...");

@@ -16,7 +16,7 @@ import aima.core.logic.fol.parsing.ast.Variable;
 import castor.algorithms.clauseevaluation.ClauseEvaluator;
 import castor.algorithms.clauseevaluation.EvaluationFunctions;
 import castor.algorithms.coverageengines.CoverageEngine;
-import castor.db.dataaccess.GenericDAO;
+import castor.dataaccess.db.GenericDAO;
 import castor.hypotheses.ClauseInfo;
 import castor.hypotheses.MyClause;
 import castor.language.Relation;

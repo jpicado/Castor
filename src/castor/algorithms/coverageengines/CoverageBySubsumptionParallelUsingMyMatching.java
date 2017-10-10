@@ -14,10 +14,10 @@ import java.util.List;
 import java.util.Map;
 
 import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
+import castor.dataaccess.db.BottomClauseConstructionDAO;
+import castor.dataaccess.db.GenericDAO;
+import castor.dataaccess.db.GenericTableObject;
 import castor.db.QueryGenerator;
-import castor.db.dataaccess.BottomClauseConstructionDAO;
-import castor.db.dataaccess.GenericDAO;
-import castor.db.dataaccess.GenericTableObject;
 import castor.hypotheses.ClauseInfo;
 import castor.hypotheses.MyClause;
 import castor.language.Relation;

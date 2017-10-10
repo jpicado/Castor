@@ -5,8 +5,8 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
-import castor.db.dataaccess.BottomClauseConstructionDAO;
-import castor.db.dataaccess.GenericDAO;
+import castor.dataaccess.db.BottomClauseConstructionDAO;
+import castor.dataaccess.db.GenericDAO;
 import castor.hypotheses.MyClause;
 import castor.language.Mode;
 import castor.language.Schema;

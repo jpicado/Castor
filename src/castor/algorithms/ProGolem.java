@@ -29,7 +29,7 @@ import castor.algorithms.coverageengines.CoverageEngine;
 import castor.algorithms.transformations.ClauseTransformations;
 import castor.algorithms.transformations.Reducer;
 import castor.algorithms.transformations.ReductionMethods;
-import castor.db.dataaccess.GenericDAO;
+import castor.dataaccess.db.GenericDAO;
 import castor.hypotheses.ClauseInfo;
 import castor.hypotheses.MyClause;
 import castor.language.Mode;

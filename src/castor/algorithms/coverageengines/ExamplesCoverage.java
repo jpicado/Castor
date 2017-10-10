@@ -2,9 +2,9 @@ package castor.algorithms.coverageengines;
 
 import java.util.List;
 
+import castor.dataaccess.db.GenericDAO;
+import castor.dataaccess.db.GenericTableObject;
 import castor.db.QueryGenerator;
-import castor.db.dataaccess.GenericDAO;
-import castor.db.dataaccess.GenericTableObject;
 import castor.hypotheses.MyClause;
 import castor.language.Relation;
 import castor.language.Schema;

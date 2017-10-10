@@ -1,4 +1,4 @@
-package castor.db.dataaccess;
+package castor.dataaccess.db;
 
 import java.util.List;
 

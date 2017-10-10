@@ -11,9 +11,9 @@ import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
 
-import castor.db.dataaccess.DAOFactory;
-import castor.db.dataaccess.GenericDAO;
-import castor.db.dataaccess.GenericTableObject;
+import castor.dataaccess.db.DAOFactory;
+import castor.dataaccess.db.GenericDAO;
+import castor.dataaccess.db.GenericTableObject;
 import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;

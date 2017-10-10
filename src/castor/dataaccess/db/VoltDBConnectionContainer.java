@@ -1,4 +1,4 @@
-package castor.db.dataaccess;
+package castor.dataaccess.db;
 
 import org.voltdb.client.Client;
 import org.voltdb.client.ClientConfig;

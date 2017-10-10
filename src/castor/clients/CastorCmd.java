@@ -4,11 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
 import org.kohsuke.args4j.Argument;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 import org.kohsuke.args4j.Option;
+import org.kohsuke.args4j.spi.StringArrayOptionHandler;
+
+import com.google.gson.JsonObject;
 
 import castor.algorithms.CastorLearner;
 import castor.algorithms.Golem;
@@ -18,11 +22,12 @@ import castor.algorithms.bottomclause.BottomClauseUtil;
 import castor.algorithms.bottomclause.StoredProcedureGeneratorSaturationInsideSP;
 import castor.algorithms.coverageengines.CoverageBySubsumptionParallel;
 import castor.algorithms.coverageengines.CoverageEngine;
+import castor.dataaccess.db.BottomClauseConstructionDAO;
+import castor.dataaccess.db.DAOFactory;
+import castor.dataaccess.db.GenericDAO;
+import castor.dataaccess.file.CSVFileReader;
 import castor.db.DBCommons;
 import castor.db.QueryGenerator;
-import castor.db.dataaccess.BottomClauseConstructionDAO;
-import castor.db.dataaccess.DAOFactory;
-import castor.db.dataaccess.GenericDAO;
 import castor.hypotheses.ClauseInfo;
 import castor.language.InclusionDependency;
 import castor.language.Mode;
@@ -34,8 +39,6 @@ import castor.settings.Parameters;
 import castor.utils.FileUtils;
 import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
-
-import com.google.gson.JsonObject;
 
 public class CastorCmd {
 
@@ -88,6 +91,18 @@ public class CastorCmd {
 
 	@Option(name = "-outputSQL", usage = "Output the learned definition in SQL format")
 	private boolean outputSQL = false;
+	
+	@Option(name = "-posTrainExamplesFile", usage = "File containing positive training examples.", required = false, handler=StringArrayOptionHandler.class)
+	private String posTrainExamplesFilePath[] = null;
+	
+	@Option(name = "-negTrainExamplesFile", usage = "File containing negative training examples.", required = false, handler=StringArrayOptionHandler.class)
+	private String negTrainExamplesFilePath[] = null;
+	
+	@Option(name = "-posTestExamplesFile", usage = "File containing positive testing examples.", required = false, handler=StringArrayOptionHandler.class)
+	private String[] posTestExamplesFilePath = null;
+	
+	@Option(name = "-negTestExamplesFile", usage = "File containing negative testing examples.", required = false, handler=StringArrayOptionHandler.class)
+	private String[] negTestExamplesFilePath = null;
 
 	@Argument
 	private List<String> arguments = new ArrayList<String>();
@@ -162,18 +177,49 @@ public class CastorCmd {
 			// Validate data model
 			this.validateDataModel();
 
-			// Obtain train relations
-			String postrainTableName = (this.dataModel.getModeH().getPredicateName() + trainPosSuffix).toUpperCase();
-			String negtrainTableName = (this.dataModel.getModeH().getPredicateName() + trainNegSuffix).toUpperCase();
-			Relation posTrain = this.schema.getRelations().get(postrainTableName);
-			Relation negTrain = this.schema.getRelations().get(negtrainTableName);
+			// Get examples from file or from DB
+			Relation posTrain;
+			Relation negTrain;
+			CoverageBySubsumptionParallel.EXAMPLES_SOURCE examplesSource;
+			
+			// If file names for examples are given, assume examples are in files
+			String posTrainExamplesFile = null;
+			String negTrainExamplesFile = null;
+			if (posTrainExamplesFilePath != null && negTrainExamplesFilePath != null) {
+				// Get examples from file
+				examplesSource = CoverageBySubsumptionParallel.EXAMPLES_SOURCE.FILE;
+				
+				posTrainExamplesFile = getOption(posTrainExamplesFilePath);
+				negTrainExamplesFile = getOption(negTrainExamplesFilePath);
+				
+				String posTrainFileName = FilenameUtils.getBaseName(posTrainExamplesFile);
+				String negTrainFileName = FilenameUtils.getBaseName(negTrainExamplesFile);
 
-			// Check that tables containing examples exist in schema
-			if (posTrain == null || negTrain == null) {
-				throw new IllegalArgumentException(
-						"One or more tables containing training examples do not exist in the schema:\n"
-								+ postrainTableName + "\n" + negtrainTableName);
+				List<String> posTrainExamplesFileHeader = CSVFileReader.readCSVHeader(posTrainExamplesFile);
+				List<String> negTrainExamplesFileHeader = CSVFileReader.readCSVHeader(negTrainExamplesFile);
+				
+				posTrain = new Relation(posTrainFileName, posTrainExamplesFileHeader);
+				negTrain = new Relation(negTrainFileName, negTrainExamplesFileHeader);
+			} else {
+				// Get examples from DB
+				examplesSource = CoverageBySubsumptionParallel.EXAMPLES_SOURCE.DB;
+				
+				String posTrainTableName = (this.dataModel.getModeH().getPredicateName() + trainPosSuffix).toUpperCase();
+				String negTrainTableName = (this.dataModel.getModeH().getPredicateName() + trainNegSuffix).toUpperCase();
+				
+				posTrain = this.schema.getRelations().get(posTrainTableName);
+				negTrain = this.schema.getRelations().get(negTrainTableName);
+
+				// Check that tables containing examples exist in schema
+				if (posTrain == null || negTrain == null) {
+					throw new IllegalArgumentException(
+							"One or more tables containing training examples do not exist in the schema: "
+									+ posTrainTableName + ", " + negTrainTableName +
+									"\nMake sure that tables exist in the database or specify path of files contaning examples.");
+				}
 			}
+			
+			this.validateExamplesRelations(posTrain, negTrain);
 
 			// Generate and compile stored procedures
 			if (this.parameters.isCreateStoredProcedure()) {
@@ -190,7 +236,8 @@ public class CastorCmd {
 			CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO,
 					posTrain, negTrain, this.dataModel.getSpName(), this.parameters.getIterations(),
 					this.parameters.getRecall(), this.parameters.getGroundRecall(), this.parameters.getMaxterms(),
-					this.parameters.getThreads(), createFullCoverageEngine);
+					this.parameters.getThreads(), createFullCoverageEngine,
+					examplesSource, posTrainExamplesFile, negTrainExamplesFile);
 			NumbersKeeper.creatingCoverageTime = tw.time();
 
 			if (saturation) {
@@ -241,18 +288,46 @@ public class CastorCmd {
 
 				// EVALUATE DEFINITION ON TESTING DATA
 				if (testLearnedDefinition) {
-					// Obtain test relations
-					String postestTableName = (this.dataModel.getModeH().getPredicateName() + testPosSuffix)
-							.toUpperCase();
-					String negtestTableName = (this.dataModel.getModeH().getPredicateName() + testNegSuffix)
-							.toUpperCase();
-					Relation posTest = this.schema.getRelations().get(postestTableName);
-					Relation negTest = this.schema.getRelations().get(negtestTableName);
+					// Get examples from file or from DB
+					Relation posTest;
+					Relation negTest;
+					CoverageBySubsumptionParallel.EXAMPLES_SOURCE examplesSourceTest;
+					
+					// If file names for examples are given, assume examples are in files
+					String posTestExamplesFile = null;
+					String negTestExamplesFile = null;
+					if (posTrainExamplesFilePath != null && negTestExamplesFilePath != null) {
+						// Get examples from file
+						examplesSourceTest = CoverageBySubsumptionParallel.EXAMPLES_SOURCE.FILE;
+						
+						posTestExamplesFile = getOption(posTestExamplesFilePath);
+						negTestExamplesFile = getOption(negTestExamplesFilePath);
+						
+						String posTestFileName = FilenameUtils.getBaseName(posTestExamplesFile);
+						String negTestFileName = FilenameUtils.getBaseName(negTestExamplesFile);
 
-					if (posTest == null || negTest == null) {
-						throw new IllegalArgumentException(
-								"One or more tables containing testing examples do not exist in the schema:\n"
-										+ postestTableName + "\n" + negtestTableName);
+						List<String> posTestExamplesFileHeader = CSVFileReader.readCSVHeader(posTestExamplesFile);
+						List<String> negTestExamplesFileHeader = CSVFileReader.readCSVHeader(negTestExamplesFile);
+						
+						posTest = new Relation(posTestFileName, posTestExamplesFileHeader);
+						negTest = new Relation(negTestFileName, negTestExamplesFileHeader);
+					} else {
+						// Get examples from DB
+						examplesSourceTest = CoverageBySubsumptionParallel.EXAMPLES_SOURCE.DB;
+						
+						String posTestTableName = (this.dataModel.getModeH().getPredicateName() + testPosSuffix).toUpperCase();
+						String negTestTableName = (this.dataModel.getModeH().getPredicateName() + testNegSuffix).toUpperCase();
+						
+						posTest = this.schema.getRelations().get(posTestTableName);
+						negTest = this.schema.getRelations().get(negTestTableName);
+
+						// Check that tables containing examples exist in schema
+						if (posTest == null || negTest == null) {
+							throw new IllegalArgumentException(
+									"One or more tables containing testing examples do not exist in the schema: "
+											+ posTestTableName + ", " + negTestTableName +
+											"\nMake sure that tables exist in the database or specify path of files contaning examples.");
+						}
 					}
 
 					logger.info("Evaluating on testing data...");
@@ -260,7 +335,8 @@ public class CastorCmd {
 							bottomClauseConstructionDAO, posTest, negTest, this.dataModel.getSpName(),
 							this.parameters.getIterations(), this.parameters.getRecall(),
 							this.parameters.getGroundRecall(), this.parameters.getMaxterms(),
-							this.parameters.getThreads(), true);
+							this.parameters.getThreads(), true,
+							examplesSourceTest, posTestExamplesFile, negTestExamplesFile);
 					learner.evaluate(testCoverageEngine, this.schema, definition, posTest, negTest);
 				}
 				
@@ -285,6 +361,18 @@ public class CastorCmd {
 	}
 
 	/*
+	 * Get an option string from multiple strings
+	 */
+	private String getOption(String[] option) {
+	    StringBuilder cmd = new StringBuilder();
+	    for (int i = 0; i < option.length; i++) {
+	        cmd.append(option[i]);
+	        cmd.append(" ");
+	    }
+	    return cmd.toString().trim().replaceAll("^\"|\"$", "");
+	}
+
+	/*
 	 * Check that all relations in data model exist in schema
 	 */
 	private void validateDataModel() {
@@ -306,6 +394,13 @@ public class CastorCmd {
 				|| schema.getRelations().get(relationName).getAttributeNames().size() != relationArity) {
 			throw new IllegalArgumentException("Schema does not contain relation " + relationName
 					+ " or number of attributes in mode does not match with number of attributes in relation in schema.");
+		}
+	}
+	
+	private void validateExamplesRelations(Relation posTrain, Relation negTrain) {
+		if (dataModel.getModeH().getArguments().size() != posTrain.getAttributeNames().size() ||
+				dataModel.getModeH().getArguments().size() != negTrain.getAttributeNames().size()) {
+			throw new IllegalArgumentException("Number of attributes in head mode does not match with number of attributes in examples.");
 		}
 	}
 

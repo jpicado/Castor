@@ -2,7 +2,7 @@ package castor.algorithms.coverageengines;
 
 import java.util.List;
 
-import castor.db.dataaccess.GenericDAO;
+import castor.dataaccess.db.GenericDAO;
 import castor.hypotheses.ClauseInfo;
 import castor.language.Relation;
 import castor.language.Schema;
