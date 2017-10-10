@@ -78,8 +78,9 @@ public class Golem implements Learner {
 	
 	/*
 	 * Run learning algorithm
+	 * Does not support globalDefinition parameter, but it is included as parameter to satisfy Learner interface.
 	 */
-	public List<ClauseInfo> learn(Schema schema, Mode modeH, List<Mode> modesB, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate) {
+	public List<ClauseInfo> learn(Schema schema, Mode modeH, List<Mode> modesB, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, boolean globalDefinition) {
 		TimeWatch tw = TimeWatch.start();
 		
 		logger.info("Training positive examples: " + this.coverageEngine.getAllPosExamples().size());

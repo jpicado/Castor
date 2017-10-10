@@ -27,6 +27,7 @@ import javax.tools.JavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.ToolProvider;
 
+import org.apache.commons.io.FileUtils;
 import org.stringtemplate.v4.ST;
 import org.stringtemplate.v4.STGroup;
 import org.stringtemplate.v4.STGroupFile;
@@ -42,10 +43,11 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 
 	private static final String VOLTDB_HOME_VARIABLE = "VOLTDB_HOME";
 
-	private static final String CATALOG = "sps/autocatalog.jar";
+	private static final String TEMP_FOLDER = "spsTemp";
+	private static final String CATALOG = TEMP_FOLDER + "/autocatalog.jar";
 	private static final String AUTO_PACKAGE = "auto";
-	private static final String SP_GENERATION_LOCATION = "sps/src/" + AUTO_PACKAGE;
-	private static final String SP_COMPILED_LOCATION = "sps/bin";
+	private static final String SP_GENERATION_LOCATION = TEMP_FOLDER + "/src/" + AUTO_PACKAGE;
+	private static final String SP_COMPILED_LOCATION = TEMP_FOLDER + "/bin";
 
 	// Template names and argument names
 	private static final String TEMPLATE_LOCATION = "res/spTemplate.stg";
@@ -87,6 +89,9 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 		// Load stored procedures to database
 		if (success) {
 			loadProceduresToDB(dbURL, port);
+			
+			// Delete temp folder only if there was success
+			removeTempFolder();
 		}
 
 		return success;
@@ -373,5 +378,13 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 			System.out.println("[sqlcmd stderr] " + line);
 		}
 		brCleanUp.close();
+	}
+	
+	private void removeTempFolder() {
+		try {
+			FileUtils.deleteDirectory(new File(TEMP_FOLDER));
+		} catch (IOException e) {
+			throw new RuntimeException(e.getMessage());
+		}
 	}
 }

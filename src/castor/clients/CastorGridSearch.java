@@ -239,7 +239,7 @@ public class CastorGridSearch {
 					// Learn definition
 					NumbersKeeper.reset();
 					tw.reset();
-					List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName());
+					List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName(), false);
 					NumbersKeeper.totalTime += tw.time();
 		            
 		            logger.info("Total time: " + (NumbersKeeper.totalTime + creatingCoverageTime));

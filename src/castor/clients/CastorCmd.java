@@ -1,6 +1,7 @@
 package castor.clients;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -37,6 +38,7 @@ import castor.settings.DataModel;
 import castor.settings.JsonSettingsReader;
 import castor.settings.Parameters;
 import castor.utils.FileUtils;
+import castor.utils.Formatter;
 import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
 
@@ -50,46 +52,46 @@ public class CastorCmd {
 	@Option(name = "-h", aliases = { "--help" })
 	private boolean help = false;
 
-	@Option(name = "-parameters", usage = "Parameters file", required = true)
-	private String parametersFile;
+	@Option(name = "-parameters", usage = "Parameters file.", required = true, handler=StringArrayOptionHandler.class)
+	private String[] parametersFilePath;
 
-	@Option(name = "-schema", usage = "Schema file (if not provided, schema is extracted from DB)", required = false)
-	private String schemaFile = null;
+	@Option(name = "-schema", usage = "Schema file (if not provided, schema is extracted from DB).", required = false, handler=StringArrayOptionHandler.class)
+	private String[] schemaFilePath = null;
 
-	@Option(name = "-inds", usage = "INDs file", required = false)
-	private String indsFile = null;
+	@Option(name = "-inds", usage = "INDs file.", required = false, handler=StringArrayOptionHandler.class)
+	private String[] indsFilePath = null;
 
-	@Option(name = "-dataModel", usage = "Data model file", required = true)
-	private String dataModelFile;
+	@Option(name = "-dataModel", usage = "Data model file.", required = true, handler=StringArrayOptionHandler.class)
+	private String[] dataModelFilePath;
 
-	@Option(name = "-sat", usage = "Only build bottom clause for example given in parameter e")
+	@Option(name = "-sat", usage = "Only build bottom clause for example given in parameter e.")
 	private boolean saturation = false;
 
-	@Option(name = "-groundsat", usage = "Only build ground bottom clause for example given in parameter e")
+	@Option(name = "-groundsat", usage = "Only build ground bottom clause for example given in parameter e.")
 	private boolean groundSaturation = false;
 
-	@Option(name = "-e", usage = "Example to build bottom clause for (position of tuple in table; only when using sat or groundsat parameters)")
+	@Option(name = "-e", usage = "Example to build bottom clause for (position of tuple in table; only when using sat or groundsat parameters).")
 	private int exampleForSaturation = 0;
 
-	@Option(name = "-algorithm", usage = "Algorithm to run (Castor, Golem, ProGolem)", required = false)
+	@Option(name = "-algorithm", usage = "Algorithm to run (Castor, Golem, ProGolem).", required = false)
 	private String algorithm = ALGORITHM_CASTOR;
 
-	@Option(name = "-trainPosSuffix", usage = "Suffix for table containing training positive examples", required = false)
+	@Option(name = "-trainPosSuffix", usage = "Suffix for table containing training positive examples.", required = false)
 	private String trainPosSuffix = DBCommons.TRAIN_POS_SUFFIX;
 
-	@Option(name = "-trainNegSuffix", usage = "Suffix for table containing training negative examples", required = false)
+	@Option(name = "-trainNegSuffix", usage = "Suffix for table containing training negative examples.", required = false)
 	private String trainNegSuffix = DBCommons.TRAIN_NEG_SUFFIX;
 
-	@Option(name = "-testPosSuffix", usage = "Suffix for table containing testing positive examples", required = false)
+	@Option(name = "-testPosSuffix", usage = "Suffix for table containing testing positive examples.", required = false)
 	private String testPosSuffix = DBCommons.TEST_POS_SUFFIX;
 
-	@Option(name = "-testNegSuffix", usage = "Suffix for table containing testing negative examples", required = false)
+	@Option(name = "-testNegSuffix", usage = "Suffix for table containing testing negative examples.", required = false)
 	private String testNegSuffix = DBCommons.TEST_NEG_SUFFIX;
 
-	@Option(name = "-test", usage = "Evaluate learned definition on testing data")
+	@Option(name = "-test", usage = "Evaluate learned definition on testing data.")
 	private boolean testLearnedDefinition = false;
 
-	@Option(name = "-outputSQL", usage = "Output the learned definition in SQL format")
+	@Option(name = "-outputSQL", usage = "Output the learned definition in SQL format.")
 	private boolean outputSQL = false;
 	
 	@Option(name = "-posTrainExamplesFile", usage = "File containing positive training examples.", required = false, handler=StringArrayOptionHandler.class)
@@ -103,6 +105,12 @@ public class CastorCmd {
 	
 	@Option(name = "-negTestExamplesFile", usage = "File containing negative testing examples.", required = false, handler=StringArrayOptionHandler.class)
 	private String[] negTestExamplesFilePath = null;
+	
+	@Option(name = "-globalDefinition", usage = "Learn one clause for each positive example, output all clauses. If true, learning is much slower.", required = false)
+	private boolean globalDefinition = false;
+	
+	@Option(name = "-outputDefinitionFile", usage = "File where learned definition is output.", required = false, handler=StringArrayOptionHandler.class)
+	private String[] outputDefinitionFilePath = null;
 
 	@Argument
 	private List<String> arguments = new ArrayList<String>();
@@ -139,6 +147,7 @@ public class CastorCmd {
 		}
 
 		// Get parameters from file
+		String parametersFile = getOption(parametersFilePath);
 		JsonObject parametersJson = FileUtils.convertFileToJSON(parametersFile);
 		parameters = this.readParametersFromJson(parametersJson);
 
@@ -156,7 +165,8 @@ public class CastorCmd {
 			BottomClauseConstructionDAO bottomClauseConstructionDAO = daoFactory.getBottomClauseConstructionDAO();
 
 			// Get schema from file or from DB
-			if (schemaFile != null) {
+			if (schemaFilePath != null) {
+				String schemaFile = getOption(schemaFilePath);
 				JsonObject schemaJson = FileUtils.convertFileToJSON(schemaFile);
 				schema = this.readSchemaFromJson(schemaJson);
 			} else {
@@ -165,12 +175,14 @@ public class CastorCmd {
 			}
 
 			// Get INDs from file, if given
-			if (indsFile != null) {
+			if (indsFilePath != null) {
+				String indsFile = getOption(indsFilePath);
 				JsonObject indsJson = FileUtils.convertFileToJSON(indsFile);
 				this.readINDsFromJson(indsJson);
 			}
 
 			// Get data model from file
+			String dataModelFile = getOption(dataModelFilePath);
 			JsonObject dataModelJson = FileUtils.convertFileToJSON(dataModelFile);
 			dataModel = this.readDataModelFromJson(dataModelJson);
 
@@ -268,15 +280,31 @@ public class CastorCmd {
 					throw new IllegalArgumentException("Learning algorithm " + this.algorithm + " not implemented.");
 				}
 				List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel.getModeH(),
-						this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName());
+						this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName(), globalDefinition);
 
+				List<String> sqlLines = new LinkedList<String>();
 				if (outputSQL) {
 					StringBuilder sb = new StringBuilder();
 					sb.append("SQL format:\n");
 					for (ClauseInfo clauseInfo : definition) {
-						sb.append(QueryGenerator.generateQueryFromClause(schema, clauseInfo)+"\n");
+						String clause = QueryGenerator.generateQueryFromClause(schema, clauseInfo);
+						sb.append(clause+"\n");
+						sqlLines.add(clause);
 					}
 					logger.info(sb.toString());
+				}
+				
+				if (outputDefinitionFilePath != null) {
+					List<String> lines = new LinkedList<String>();
+					lines.add("DATALOG FORMAT:\n");
+					for (ClauseInfo clauseInfo : definition) {
+						lines.add(Formatter.prettyPrint(clauseInfo));
+					}
+					lines.add("\n\nSQL FORMAT:\n");
+					lines.addAll(sqlLines);
+					
+					String outputDefinitionFile = getOption(outputDefinitionFilePath);
+					FileUtils.writeToFile(outputDefinitionFile, lines);
 				}
 				
 				// Save total time

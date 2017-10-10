@@ -1,8 +1,12 @@
 package castor.utils;
 
-import com.google.gson.*;
-
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,8 +15,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
+
 public class FileUtils {
 
+	public static void writeToFile(String filename, List<String> lines) {
+		try {
+			Path file = Paths.get(filename);
+			Files.write(file, lines, Charset.defaultCharset());
+		} catch (IOException e) {
+			throw new RuntimeException(e.getMessage());
+		}
+	}
 
 	public static JsonObject convertFileToJSON(String fileName){
         // Read from File to String

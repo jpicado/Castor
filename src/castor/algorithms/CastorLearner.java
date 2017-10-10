@@ -73,7 +73,7 @@ public class CastorLearner implements Learner {
 	/*
 	 * Run learning algorithm
 	 */
-	public List<ClauseInfo> learn(Schema schema, Mode modeH, List<Mode> modesB, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate) {
+	public List<ClauseInfo> learn(Schema schema, Mode modeH, List<Mode> modesB, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, boolean globalDefinition) {
 		TimeWatch tw = TimeWatch.start();
 		
 		logger.info("Training positive examples in table " + posExamplesRelation.getName() + ": " + this.coverageEngine.getAllPosExamples().size());
@@ -82,7 +82,7 @@ public class CastorLearner implements Learner {
 		List<ClauseInfo> definition = new LinkedList<ClauseInfo>();
 		
 		// Call covering approach
-		definition.addAll(this.learnUsingCovering(schema, modeH, modesB, posExamplesRelation, negExamplesRelation, spNameTemplate, parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms(), parameters.getSample(), parameters.getBeam(), parameters.getReductionMethod()));
+		definition.addAll(this.learnUsingCovering(schema, modeH, modesB, posExamplesRelation, negExamplesRelation, spNameTemplate, parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms(), parameters.getSample(), parameters.getBeam(), parameters.getReductionMethod(), globalDefinition));
 	
 		// Get string representation of definition
 		StringBuilder sb = new StringBuilder();
@@ -162,7 +162,7 @@ public class CastorLearner implements Learner {
 	/*
 	 * Learn a clause using covering approach
 	 */
-	private List<ClauseInfo> learnUsingCovering(Schema schema, Mode modeH, List<Mode> modesB, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int maxRecall, int maxterms, int sampleSize, int beamWidth, String reductionMethod) {
+	private List<ClauseInfo> learnUsingCovering(Schema schema, Mode modeH, List<Mode> modesB, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int maxRecall, int maxterms, int sampleSize, int beamWidth, String reductionMethod, boolean globalDefinition) {
 		List<ClauseInfo> definition = new LinkedList<ClauseInfo>();
 		
 		// Get all positive examples from database and keep them in memory
@@ -270,8 +270,10 @@ public class CastorLearner implements Learner {
 					logger.info("New pos cover = " + newPosCoveredCount + ", Total pos cover = " + allPosCoveredCount + ", Total neg cover = " + allNegCoveredCount);
 					
 					// Remove covered positive examples
-					List<Tuple> coveredExamples = this.coverageEngine.coveredExamplesTuplesFromList(genericDAO, schema, clauseInfo, remainingPosExamples, posExamplesRelation, true);
-					remainingPosExamples.removeAll(coveredExamples);
+					if (!globalDefinition) {
+						List<Tuple> coveredExamples = this.coverageEngine.coveredExamplesTuplesFromList(genericDAO, schema, clauseInfo, remainingPosExamples, posExamplesRelation, true);
+						remainingPosExamples.removeAll(coveredExamples);
+					}
 				}
 			}// end condition
 		}

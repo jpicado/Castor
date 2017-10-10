@@ -58,7 +58,6 @@ public class CSVFileReader {
             		header = Arrays.asList(line);
             }
         } catch (IOException e) {
-        		e.printStackTrace();
         		throw new RuntimeException(e.getMessage());
         } finally {
         		try {
