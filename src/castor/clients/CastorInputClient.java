@@ -1,7 +1,7 @@
 package castor.clients;
 
-import castor.ddlindextract.main.DDLIndMain;
-import castor.modetransform.main.TransformMain;
+import castor.ddlindextract.DDLIndMain;
+import castor.modetransform.TransformMain;
 import org.apache.log4j.Logger;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
@@ -30,7 +30,6 @@ public class CastorInputClient {
 
 
     public static void main(String[] args) {
-        // TODO Auto-generated method stub
         CastorInputClient client = new CastorInputClient();
         client.preprocessInput(args);
     }
@@ -48,12 +47,12 @@ public class CastorInputClient {
         }
 
         logger.info("Preprocessing input ... ");
-        String indResult = null;
-        String modeResult = null;
+        Boolean indResult;
+        Boolean modeResult;
         if (ddl != null) {
             DDLIndMain ddlIndMain = new DDLIndMain();
             indResult = ddlIndMain.extractIndFromDDL(ddl);
-            if (indResult.equals("Failed")) {
+            if (indResult==false) {
                 logger.error("Error while extracting inds from ddl ...");
             }
         }
@@ -61,7 +60,7 @@ public class CastorInputClient {
         if (dataModelFile != null && transformSchema != null) {
             TransformMain transformMain = new TransformMain();
             modeResult = transformMain.generateModesUsingTranformation(dataModelFile, transformSchema);
-            if (modeResult.equals("Failed")) {
+            if (modeResult==false) {
                 logger.error("Error while generating modes from transformation ...");
             }
         }

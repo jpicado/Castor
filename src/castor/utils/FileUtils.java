@@ -68,7 +68,7 @@ public class FileUtils {
         return jsonObject;
 	}
 
-    public static String writeModeToJsonFormat(String target, String headMode, List<String> bodyMode, String dbName, String filePath) {
+    public static Boolean writeModeToJsonFormat(String target, String headMode, List<String> bodyMode, String dbName, String filePath) {
         JsonObject job = new JsonObject();
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         JsonParser jp = new JsonParser();
@@ -80,19 +80,10 @@ public class FileUtils {
         job.add("headMode", je1);
         job.add("bodyModes", je2);
         job.add("spName", je3);
-        try {
-            FileWriter file = new FileWriter(filePath);
-            //logger.debug(" ----------------  Json Output ------------------------");
-            file.write(gson.toJson(job));
-            file.flush();
-            return "Success";
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return "Failed";
+        return writeGsonToFile(filePath,gson.toJson(job));
     }
 
-    public static String writeIndsToJsonFormat(List<String> ind, Map<String, Integer> ordPos, String filePath) {
+    public static Boolean writeIndsToJsonFormat(List<String> ind, Map<String, Integer> ordPos, String filePath) {
         JsonObject jobParent = new JsonObject();
         JsonArray jsonArray = new JsonArray();
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -115,26 +106,19 @@ public class FileUtils {
             jsonArray.add(element);
         }
         jobParent.add("inds", jsonArray);
-        try {
-            FileWriter file = new FileWriter(filePath);
-//            System.out.println(" ----------------  Json Output ------------------------");
-            file.write(gson.toJson(jobParent));
-            file.flush();
-            file.close();
-            return "Success";
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return "Failed";
+        return writeGsonToFile(filePath,gson.toJson(jobParent));
     }
 
-    public static void writeInvalidPksToFile(List<String> invalidPks, String filePath) {
+    public static Boolean writeGsonToFile(String filePath, String fileContent){
         try {
-            Path out = Paths.get(filePath);
-            Files.write(out, invalidPks, Charset.defaultCharset());
+            FileWriter file = new FileWriter(filePath);
+            file.write(fileContent);
+            file.flush();
+            file.close();
+            return true;
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        return false;
     }
 }
