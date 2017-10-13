@@ -8,6 +8,7 @@
  */
 package castor.algorithms;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -563,14 +564,15 @@ public class CastorLearner implements Learner {
 	}
 	
 	/*
-	 * Remove literals that are not head-conneted from clause
+	 * Remove literals that are not head-connected from clause
 	 */
+	//TODO: can this be optimized?
 	private MyClause removeNotHeadConnectedLiterals(MyClause clause) {
-		Set<String> seenVariables = new HashSet<String>();
+		Set<Term> seenTerms = new HashSet<Term>();
 		
-		// Add head variables to seen variables
+		// Add head variables to seen terms
 		for (Term term : clause.getPositiveLiterals().get(0).getAtomicSentence().getArgs()) {
-			seenVariables.add(term.getSymbolicName());
+			seenTerms.add(term);
 		}
 		
 		// MyClause's list of literals is unmodifiable, so must create a new list
@@ -583,18 +585,25 @@ public class CastorLearner implements Learner {
 		   Literal literal = iterator.next();
 
 		   boolean headConnected = false;
-		   Set<String> literalVariables = new HashSet<String>();
-		   for (Term term : literal.getAtomicSentence().getArgs()) {
-			   literalVariables.add(term.getSymbolicName());
-			   if (seenVariables.contains(term.getSymbolicName())) {
-				   // Literal is head-connected
+		   
+		   Set<Term> literalConnectedTerms = new HashSet<Term>();
+		   literalConnectedTerms.addAll(literal.getAtomicSentence().getArgs());
+		   for (Literal otherLiteral : clause.getNegativeLiterals()) {
+			   // If there is an intersection between literal and otherLiteral terms, add otherLiteral terms to list
+			   if (!Collections.disjoint(literalConnectedTerms, otherLiteral.getAtomicSentence().getArgs())) {
+				   literalConnectedTerms.addAll(otherLiteral.getAtomicSentence().getArgs());
+			   }
+			   
+			   // Check if there's intersection between current list and head terms
+			   if (!Collections.disjoint(seenTerms, literalConnectedTerms)) {
 				   headConnected = true;
+				   break;
 			   }
 		   }
 		   
 		   if (headConnected) {
-			   // Literal is head-connected, so add its variables to seen variables
-			   seenVariables.addAll(literalVariables);
+			   // Literal is head-connected, so add its variables to seen terms
+			   seenTerms.addAll(literal.getAtomicSentence().getArgs());
 		   } else {
 			   // Remove literal because it is not head-connected
 			   iterator.remove();
@@ -609,8 +618,9 @@ public class CastorLearner implements Learner {
 	
 	/*
 	 * Create a new clause where literals in original clause for which INDs are not satisfied are removed
+	 * This version does not check that INDs in chain are satisfied, hence it returns wrong results
 	 */
-	private MyClause removeLiteralsWithUnsatisfiedInds(Schema schema, MyClause clause) {
+	private MyClause removeLiteralsWithUnsatisfiedIndsOLD(Schema schema, MyClause clause) {
 		List<Literal> newClauseLiterals = new LinkedList<Literal>();
 		
 		// For each literal, check if IND holds. If it does, add to list
@@ -625,7 +635,7 @@ public class CastorLearner implements Learner {
 				for (InclusionDependency ind : schema.getInclusionDependencies().get(literalPredicateName)) {
 					Term leftIndTerm = literal.getAtomicSentence().getArgs().get(ind.getLeftAttributeNumber());
 					
-					// Check if IND is satisifed
+					// Check if IND is satisfied
 					boolean indSatisfied = false;
 					for (int j = 0; j < clause.getNegativeLiterals().size(); j++) {
 						Literal otherLiteral = clause.getNegativeLiterals().get(j);
@@ -646,7 +656,7 @@ public class CastorLearner implements Learner {
 							}
 						}
 					}
-	
+					
 					// If IND is not satisfied, add literal to new clause
 					if (!indSatisfied) {
 						//newClauseLiterals.add(literal);
@@ -668,6 +678,86 @@ public class CastorLearner implements Learner {
 		MyClause newClause = new MyClause(newClauseLiterals);
 		
 		return newClause;
+	}
+	
+	/*
+	 * Create a new clause where literals in original clause for which INDs are not satisfied are removed (follows chains of INDs)
+	 */
+	private MyClause removeLiteralsWithUnsatisfiedInds(Schema schema, MyClause clause) {
+		List<Literal> clauseLiterals = new LinkedList<Literal>(clause.getNegativeLiterals());
+		List<Literal> newClauseLiterals = new LinkedList<Literal>();
+		
+		Iterator<Literal> iterator = clauseLiterals.iterator();
+		while (iterator.hasNext()) {
+		   Literal literal = iterator.next();
+		   
+		   if (!newClauseLiterals.contains(literal)) {
+			   List<Literal> literalsInIndChain = new LinkedList<Literal>();
+			   boolean indSatisfied = findLiteralsSatisfyingInds(schema, clauseLiterals, literal, new HashSet<String>(), literalsInIndChain);
+			   if (indSatisfied) {
+				   newClauseLiterals.addAll(literalsInIndChain);
+			   }
+		   }
+		}
+		
+		newClauseLiterals.addAll(clause.getPositiveLiterals());
+		
+		return new MyClause(newClauseLiterals);
+	}
+	
+	/*
+	 * Recursive method to check whether all INDs in chain starting from current literal are satisfied
+	 * Returns true if they are satisfied
+	 * Returns literals that satisfy INDs in argument outputLiterals
+	 */
+	private boolean findLiteralsSatisfyingInds(Schema schema, List<Literal> clauseLiterals, Literal currentLiteral, Set<String> seenPredicates, List<Literal> outputLiterals) {
+		boolean allIndsSatisfied = true;
+		
+		if (!seenPredicates.contains(currentLiteral.getAtomicSentence().getSymbolicName())
+				&& schema.getInclusionDependencies().containsKey(currentLiteral.getAtomicSentence().getSymbolicName())) {
+			
+			List<Literal> newLiteralsFromInds = new LinkedList<Literal>();
+			for (InclusionDependency ind : schema.getInclusionDependencies().get(currentLiteral.getAtomicSentence().getSymbolicName())) {
+				Term leftIndTerm = currentLiteral.getAtomicSentence().getArgs().get(ind.getLeftAttributeNumber());
+				
+				if (!seenPredicates.contains(ind.getRightPredicateName())) {
+					// Check if IND is satisfied
+					boolean indSatisfied = false;
+					for (int j = 0; j < clauseLiterals.size(); j++) {
+						Literal otherLiteral = clauseLiterals.get(j);
+						String otherLiteralPredicateName = otherLiteral.getAtomicSentence().getSymbolicName();
+						
+						if (otherLiteralPredicateName.equals(ind.getRightPredicateName())) {
+							Term rightIndTerm = otherLiteral.getAtomicSentence().getArgs().get(ind.getRightAttributeNumber());
+	
+							if (leftIndTerm.equals(rightIndTerm)) {
+								// Add current predicate to seen list
+								seenPredicates.add(currentLiteral.getAtomicSentence().getSymbolicName());
+								
+								// Follow chain
+								indSatisfied = findLiteralsSatisfyingInds(schema, clauseLiterals, otherLiteral, seenPredicates, newLiteralsFromInds);
+								
+								break;
+							}
+						}
+					}
+					
+					// If IND is not satisfied, add literal to new clause
+					if (!indSatisfied) {
+						//newClauseLiterals.add(literal);
+						allIndsSatisfied = false;
+						break;
+					}
+				}
+			}
+			
+			if (allIndsSatisfied) {
+				outputLiterals.add(currentLiteral);
+				outputLiterals.addAll(newLiteralsFromInds);
+			}
+		}
+
+		return allIndsSatisfied;
 	}
 	
 	/*
