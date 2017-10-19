@@ -17,7 +17,6 @@ import aima.core.logic.fol.parsing.ast.Term;
 import aima.core.logic.fol.parsing.ast.Variable;
 import castor.hypotheses.ClauseInfo;
 import castor.hypotheses.MyClause;
-import castor.utils.Formatter;
 import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
 

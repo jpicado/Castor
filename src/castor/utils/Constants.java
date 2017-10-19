@@ -31,22 +31,6 @@ public class Constants {
         }
     }
 
-    public enum FileName {
-        OUTPUT_MODE("out-preprocess/datamodel-schema.json"),
-        OUTPUT_IND("out-preprocess/ind-schema.json"),
-        OUTPUT_INVALID_PKS("out-preprocess/invalid-pks.txt");
-
-        private String value;
-
-        FileName(String value) {
-            this.value = value;
-        }
-
-        public String getValue() {
-            return value;
-        }
-    }
-
     public enum Regex {
         CLOSE_PARENTHESIS(")"), OPEN_PARENTHESIS("("), PARENTHESIS(") < ("), PERIOD("."), SUBSET("<"), SEMICOLON(";"),
         COMMA(",");

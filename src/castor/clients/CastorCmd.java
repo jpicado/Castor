@@ -29,6 +29,7 @@ import castor.dataaccess.db.GenericDAO;
 import castor.dataaccess.file.CSVFileReader;
 import castor.db.DBCommons;
 import castor.db.QueryGenerator;
+import castor.ddlindextract.DDLIndMain;
 import castor.hypotheses.ClauseInfo;
 import castor.language.InclusionDependency;
 import castor.language.Mode;
@@ -63,6 +64,9 @@ public class CastorCmd {
 
 	@Option(name = "-dataModel", usage = "Data model file.", required = true, handler=StringArrayOptionHandler.class)
 	private String[] dataModelFilePath;
+	
+	@Option(name = "-ddl", usage = "DDL file, used to extract INDs.", required = false, handler=StringArrayOptionHandler.class)
+	private String[] ddlFilePath = null;
 
 	@Option(name = "-sat", usage = "Only build bottom clause for example given in parameter e.")
 	private boolean saturation = false;
@@ -174,9 +178,19 @@ public class CastorCmd {
 				schema = genericDAO.getSchema();
 			}
 
-			// Get INDs from file, if given
+			// Get INDs from file or DDL
+			String indsFile = "indsFromDDL.json";
 			if (indsFilePath != null) {
-				String indsFile = getOption(indsFilePath);
+				indsFile = getOption(indsFilePath);
+			} else if (ddlFilePath != null) {
+				String ddlFile = getOption(ddlFilePath);
+				success = DDLIndMain.extractIndFromDDL(ddlFile, indsFile);
+				if (!success) {
+					return;
+				}
+			}
+			// If INDs were specified either on IND file or DDL file, read them
+			if (indsFilePath != null || ddlFilePath != null) {
 				JsonObject indsJson = FileUtils.convertFileToJSON(indsFile);
 				this.readINDsFromJson(indsJson);
 			}

@@ -28,7 +28,7 @@ public class TransformMain {
     private List<String> modes;
 
 
-    public Boolean generateModesUsingTranformation(String dataModelFile, String transformSchema) {
+    public Boolean generateModesUsingTranformation(String dataModelFile, String transformSchema, String outputFile) {
         logger.info("Running ModeTransformation ");
         // Get input mode information
         JsonObject dataModelJson = FileUtils.convertFileToJSON(dataModelFile);
@@ -38,7 +38,7 @@ public class TransformMain {
         // Get input transformation information
         this.readTransformationSchema(transformSchema);
         ModeGeneratorHelper.generateMode(tScehma, modes);
-        Boolean result = FileUtils.writeModeToJsonFormat(null, dataModel.getModeH().toString(), modes, dataModel.getSpName(), Constants.FileName.OUTPUT_MODE.getValue());
+        Boolean result = FileUtils.writeModeToJsonFormat(null, dataModel.getModeH().toString(), modes, dataModel.getSpName(), outputFile);
         return result;
     }
 
