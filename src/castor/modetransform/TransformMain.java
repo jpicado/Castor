@@ -23,21 +23,17 @@ public class TransformMain {
 
 
     final static Logger logger = Logger.getLogger(TransformMain.class);
-    private DataModel dataModel;
-    private TransformationSchema tScehma;
-    private List<String> modes;
 
-
-    public Boolean generateModesUsingTranformation(String dataModelFile, String transformSchema, String outputFile) {
+    public static boolean generateModesUsingTranformation(String dataModelFile, String transformSchema, String outputFile) {
         logger.info("Running ModeTransformation ");
         // Get input mode information
         JsonObject dataModelJson = FileUtils.convertFileToJSON(dataModelFile);
-        dataModel = this.readDataModelFromJson(dataModelJson);
-        tScehma = new TransformationSchema();
-        modes = new ArrayList<String>();
+        DataModel dataModel = readDataModelFromJson(dataModelJson);
+        TransformationSchema tSchema = new TransformationSchema();
+        List<String> modes = new ArrayList<String>();
         // Get input transformation information
-        this.readTransformationSchema(transformSchema);
-        ModeGeneratorHelper.generateMode(tScehma, modes);
+        readTransformationSchema(transformSchema,tSchema,dataModel);
+        ModeGeneratorHelper.generateMode(tSchema, modes);
         Boolean result = FileUtils.writeModeToJsonFormat(null, dataModel.getModeH().toString(), modes, dataModel.getSpName(), outputFile);
         return result;
     }
@@ -46,7 +42,7 @@ public class TransformMain {
     /*
      * Read data model from JSON object
      */
-    private DataModel readDataModelFromJson(JsonObject dataModelJson) {
+    private static DataModel readDataModelFromJson(JsonObject dataModelJson) {
         DataModel dataModel;
         try {
             logger.info("Reading mode file...");
@@ -57,13 +53,13 @@ public class TransformMain {
         return dataModel;
     }
 
-    private void readTransformationSchema(String transformFile) {
+    private static void readTransformationSchema(String transformFile, TransformationSchema tSchema, DataModel dataModel) {
         Stream<String> stream = null;
         try {
             logger.info("Reading Transformation file...");
             stream = Files.lines(Paths.get(transformFile));
             {
-                stream.filter(s -> !s.isEmpty()).forEach(s -> processTransformationSchema(s));
+                stream.filter(s -> !s.isEmpty()).forEach(s -> processTransformationSchema(s,tSchema,dataModel));
             }
         } catch (IOException e) {
             logger.error("Error while processing tranformation file");
@@ -72,12 +68,12 @@ public class TransformMain {
         stream.close();
     }
 
-    private void processTransformationSchema(String lineString) {
+    private static void processTransformationSchema(String lineString, TransformationSchema tSchema, DataModel dataModel) {
         lineString = lineString.replaceAll("\\s", "").toLowerCase();
         String[] line = lineString.split(Constants.TransformDelimeter.ARROW.getValue());
         TransformationTuple transformationTuple = null;
         try {
-            List<Relation> sourceRelation = createSourceRelationObject(line[0]);
+            List<Relation> sourceRelation = createSourceRelationObject(line[0],dataModel);
             List<Relation> targetRelation = createTargetRelationObject(line[1], sourceRelation);
             transformationTuple = new TransformationTuple();
             transformationTuple.setSourceRelation(sourceRelation);
@@ -85,10 +81,10 @@ public class TransformMain {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        this.tScehma.addToMembersList(transformationTuple);
+        tSchema.addToMembersList(transformationTuple);
     }
 
-    public List<Relation> createSourceRelationObject(String sourceRelationString) {
+    private static List<Relation> createSourceRelationObject(String sourceRelationString, DataModel dataModel) {
         logger.info("Creating source relation objects using :: " + sourceRelationString);
         List<Relation> sourceRelationList = new ArrayList<Relation>();
         String[] relations = sourceRelationString.split(Constants.TransformDelimeter.SLASH_CLOSE_PARA.getValue());
@@ -100,7 +96,7 @@ public class TransformMain {
             Relation sourceRelation = new Relation(relationName);
             String attributes = (String) relation.subSequence(relation.indexOf(Constants.TransformDelimeter.OPEN_PARA.getValue()) + 1, relation.length());
             String[] attributeArray = attributes.split(Constants.TransformDelimeter.COMMA.getValue());
-            List<Set<String>> modeTypes = this.dataModel.getModesBMap().get(relationName);
+            List<Set<String>> modeTypes = dataModel.getModesBMap().get(relationName);
             List<Map<String, Set<String>>> sourceRelationAttributes = new ArrayList<Map<String, Set<String>>>();
             List<Set<String>> attributeTypes = new ArrayList<Set<String>>();
             int count = 0;
@@ -119,7 +115,7 @@ public class TransformMain {
     }
 
 
-    public List<Relation> createTargetRelationObject(String targetRelationString, List<Relation> sourceRelation) throws Exception {
+    private static List<Relation> createTargetRelationObject(String targetRelationString, List<Relation> sourceRelation) throws Exception {
         logger.info("Creating target relation objects using :: " + targetRelationString);
         List<Relation> targetRelationList = new ArrayList<Relation>();
         String[] relations = targetRelationString.split(Constants.TransformDelimeter.SLASH_CLOSE_PARA.getValue());
@@ -163,7 +159,7 @@ public class TransformMain {
     }
 
 
-    public List<Set<String>> updateAttributeTypes(List<Set<String>> typeSet) {
+    private static List<Set<String>> updateAttributeTypes(List<Set<String>> typeSet) {
         List<Set<String>> typeSetList = new ArrayList<Set<String>>();
         for (Set<String> set : typeSet) {
             Set<String> temp = new HashSet<String>();
