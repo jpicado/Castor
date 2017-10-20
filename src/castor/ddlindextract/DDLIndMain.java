@@ -57,6 +57,7 @@ public class DDLIndMain {
         for (String refCol : refColName) {
             if (refTable.getPrimaryKeyCols().contains(refCol)) {
                 inds.add(Constants.Regex.OPEN_PARENTHESIS.getValue() + baseTableName + Constants.Regex.PERIOD.getValue() + baseColumnName.get(count) + Constants.Regex.PARENTHESIS.getValue() + refTableName + Constants.Regex.PERIOD.getValue() + refCol + Constants.Regex.CLOSE_PARENTHESIS.getValue() + "\n");
+                inds.add(Constants.Regex.OPEN_PARENTHESIS.getValue() + refTableName + Constants.Regex.PERIOD.getValue() + refCol + Constants.Regex.PARENTHESIS.getValue() + baseTableName + Constants.Regex.PERIOD.getValue() + baseColumnName.get(count) + Constants.Regex.CLOSE_PARENTHESIS.getValue() + "\n");
                 setOrdinalPosition(baseTable, baseColumnName.get(count), refTable, refCol, ordinalPos);
                 count++;
             } else {
