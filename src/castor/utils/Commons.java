@@ -6,7 +6,7 @@ import aima.core.logic.fol.parsing.ast.Term;
 
 public class Commons {
 
-	public static final String ALIAS_PREFIX = "t";
+	public static final String ALIAS_PREFIX = "T";
 	
 	// Must match variable prefix used in bottom clause generator
 	public static final String VARIABLE_PREFIX = "V";

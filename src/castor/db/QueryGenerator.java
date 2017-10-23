@@ -647,9 +647,9 @@ public class QueryGenerator {
 			String termName = headLiteral.getAtomicSentence().getArgs().get(i).getSymbolicName();
 			if (termAppearance.containsKey(termName)) {
 				String projection = termAppearance.get(termName).getFirst() + "." + termAppearance.get(termName).getSecond();
-				queryProject.append(projection + " AS att" + (i+1) + " ");
+				queryProject.append(projection + " ");
 			} else {
-				queryProject.append("''" + " AS att" + (i+1) + " ");
+				queryProject.append("''" + " ");
 			}
 			if (i < headLiteral.getAtomicSentence().getArgs().size() - 1) {
 				queryProject.append(", ");

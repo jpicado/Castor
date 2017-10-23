@@ -179,6 +179,7 @@ public class CastorCmd {
 			}
 
 			// Get INDs from file or DDL
+			//TODO hardcoded name, replace with name of ddl + INDs
 			String indsFile = "indsFromDDL.json";
 			if (indsFilePath != null) {
 				indsFile = getOption(indsFilePath);
