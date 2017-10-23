@@ -487,7 +487,7 @@ public class QueryGenerator {
 		// Add column names to select
 		for (int i = 0; i < tableToCover.getAttributeNames().size(); i++) {
 			String attribute = tableToCover.getAttributeNames().get(i);
-			query.append(headPredicateAlias + "." + attribute + " as att" + (i+1) + " ");
+			query.append(headPredicateAlias + "." + attribute + " ");
 			if (i < tableToCover.getAttributeNames().size() - 1) {
 				query.append(", ");
 			}
