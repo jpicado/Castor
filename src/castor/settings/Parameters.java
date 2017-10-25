@@ -6,6 +6,7 @@ public class Parameters {
 
 	// Default values for parameters
 	private boolean createStoredProcedure = true;
+	private boolean useStoredProcedure = true;
 	private double minPrecision = 0.5;
 	private double minRecall = 0;
 	private int minPos = 2;
@@ -23,7 +24,6 @@ public class Parameters {
 	private String dbURL = "localhost";
 	private String port = "21212";
 	private int randomSeed = 1;
-	private boolean useStoredProcedure = true;
 	
 	public boolean isCreateStoredProcedure() {
 		return createStoredProcedure;
@@ -146,5 +146,16 @@ public class Parameters {
 	}
 	public void setRandomSeed(int randomSeed) {
 		this.randomSeed = randomSeed;
+	}
+	
+	@Override
+	public String toString() {
+		return "Parameters [createStoredProcedure=" + createStoredProcedure + ", useStoredProcedure="
+				+ useStoredProcedure + ", minPrecision=" + minPrecision + ", minRecall=" + minRecall + ", minPos="
+				+ minPos + ", maxNoise=" + maxNoise + ", sample=" + sample + ", beam=" + beam + ", threads=" + threads
+				+ ", minimizeBottomClause=" + minimizeBottomClause + ", reductionMethod=" + reductionMethod
+				+ ", iterations=" + iterations + ", recall=" + recall + ", groundRecall=" + groundRecall + ", maxterms="
+				+ maxterms + ", useInds=" + useInds + ", dbURL=" + dbURL + ", port=" + port + ", randomSeed="
+				+ randomSeed + "]";
 	}
 }

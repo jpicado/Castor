@@ -154,6 +154,8 @@ public class CastorCmd {
 		String parametersFile = getOption(parametersFilePath);
 		JsonObject parametersJson = FileUtils.convertFileToJSON(parametersFile);
 		parameters = this.readParametersFromJson(parametersJson);
+		
+		logger.info(parameters.toString());
 
 		DAOFactory daoFactory = DAOFactory.getDAOFactory(DAOFactory.VOLTDB);
 		try {
