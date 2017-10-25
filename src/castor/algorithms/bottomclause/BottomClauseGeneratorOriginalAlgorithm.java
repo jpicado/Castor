@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +56,8 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 		
 		// Keep only ground modes
 		Mode groundModeH = modeH.toGroundMode();
-		Set<Mode> groundModesB = new HashSet<Mode>();
+		// Must keep order
+		Set<Mode> groundModesB = new LinkedHashSet<Mode>();
 		for (Mode mode : modesB) {
 			Mode groundMode = mode.toGroundMode();
 			groundModesB.add(groundMode);
