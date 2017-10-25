@@ -267,16 +267,23 @@ public class CastorCmd {
 					examplesSource, posTrainExamplesFile, negTrainExamplesFile);
 			NumbersKeeper.creatingCoverageTime = tw.time();
 
+			BottomClauseUtil.ALGORITHMS bottomClauseAlgorithm;
+			if (parameters.isUseStoredProcedure()) {
+				bottomClauseAlgorithm = BottomClauseUtil.ALGORITHMS.INSIDE_STORED_PROCEDURE;
+			}
+			else {
+				bottomClauseAlgorithm = BottomClauseUtil.ALGORITHMS.ORIGINAL;
+			}
 			if (saturation) {
 				// BOTTOM CLAUSE
-				BottomClauseUtil.generateBottomClauseForExample(BottomClauseUtil.ALGORITHMS.INSIDE_STORED_PROCEDURE,
+				BottomClauseUtil.generateBottomClauseForExample(bottomClauseAlgorithm,
 						genericDAO, bottomClauseConstructionDAO,
 						coverageEngine.getAllPosExamples().get(this.exampleForSaturation), this.schema,
 						this.dataModel, this.parameters);
 			} else if (groundSaturation) {
 				// GROUND BOTTOM CLAUSE
 				BottomClauseUtil.generateGroundBottomClauseForExample(
-						BottomClauseUtil.ALGORITHMS.INSIDE_STORED_PROCEDURE, genericDAO, bottomClauseConstructionDAO,
+						bottomClauseAlgorithm, genericDAO, bottomClauseConstructionDAO,
 						coverageEngine.getAllPosExamples().get(this.exampleForSaturation), this.schema,
 						this.dataModel, this.parameters);
 			} else {

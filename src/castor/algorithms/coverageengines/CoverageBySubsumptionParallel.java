@@ -77,7 +77,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 			
 			String negCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(negExamplesRelation, true);
 			GenericTableObject negativeResult = genericDAO.executeQuery(negCoverageQuery);
-			this.allPosExamples = negativeResult.getTable();
+			this.allNegExamples = negativeResult.getTable();
 		} else if (examplesSource == CoverageBySubsumptionParallel.EXAMPLES_SOURCE.FILE) {
 			// Get examples from file
 			this.allPosExamples = CSVFileReader.readCSV(posExamplesFile);

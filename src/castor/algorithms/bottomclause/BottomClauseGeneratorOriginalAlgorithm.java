@@ -76,7 +76,7 @@ public class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGener
 		Map<String, String> hashConstantToVariable = new HashMap<String, String>();
 		Map<String, String> hashVariableToConstant = new HashMap<String, String>();
 		return this.generateBottomClauseOneQueryPerRelationAttribute(genericDAO, hashConstantToVariable,
-				hashVariableToConstant, exampleTuple, schema, dataModel.getModeH(), dataModel.getModesB(), parameters.getIterations(), parameters.getRecall(), parameters.isUseInds(), true);
+				hashVariableToConstant, exampleTuple, schema, dataModel.getModeH(), dataModel.getModesB(), parameters.getIterations(), parameters.getGroundRecall(), parameters.isUseInds(), true);
 	}
 	
 	@Override
@@ -128,10 +128,9 @@ public class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGener
 			}
 			groupedModes.get(key).add(mode);
 		}
-
+		
 		// Create body literals
 		for (int j = 0; j < iterations; j++) {
-
 			// Create new inTerms to hold terms for this iteration
 			Map<String, Set<String>> newInTerms = new HashMap<String, Set<String>>();
 
@@ -160,7 +159,6 @@ public class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGener
 					if (inTerms.containsKey(type)) {
 						seenType = true;
 						knownTermsSet.addAll(inTerms.get(type));
-						break;
 					}
 				}
 				// If there is no list of known terms for attributeType, skip mode
@@ -184,7 +182,7 @@ public class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGener
 					clause.addNegativeLiteral(literal);
 				}
 			}
-
+			
 			// Add new terms to inTerms
 			Iterator<Map.Entry<String, Set<String>>> newInTermsIterator = newInTerms.entrySet().iterator();
 			while (newInTermsIterator.hasNext()) {

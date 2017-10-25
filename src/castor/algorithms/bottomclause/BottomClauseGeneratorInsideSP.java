@@ -78,7 +78,7 @@ public class BottomClauseGeneratorInsideSP implements BottomClauseGenerator {
 		// Call procedure that creates bottom clause
 		String example = String.join(DBCommons.ATTRIBUTE_DELIMITER, exampleTuple.getValues());
 		String spName = dataModel.getSpName() + DBCommons.GROUND_BOTTONCLAUSE_PROCEDURE_SUFFIX;
-        GenericTableObject result = bottomClauseConstructionDAO.executeStoredProcedure(spName, example, parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+        GenericTableObject result = bottomClauseConstructionDAO.executeStoredProcedure(spName, example, parameters.getIterations(), parameters.getGroundRecall(), parameters.getMaxterms());
         
         // Process results, which should contain a single row
         if (result != null && result.getTable().size() > 0) {
@@ -122,7 +122,7 @@ public class BottomClauseGeneratorInsideSP implements BottomClauseGenerator {
 		// Call procedure that creates ground bottom clause
 		String example = String.join(DBCommons.ATTRIBUTE_DELIMITER, exampleTuple.getValues());
 		String spName = dataModel.getSpName() + DBCommons.GROUND_BOTTONCLAUSE_PROCEDURE_SUFFIX;
-        GenericTableObject result = bottomClauseConstructionDAO.executeStoredProcedure(spName, example, parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+        GenericTableObject result = bottomClauseConstructionDAO.executeStoredProcedure(spName, example, parameters.getIterations(), parameters.getGroundRecall(), parameters.getMaxterms());
         
         // Process results, which should contain a single row
         if (result != null && result.getTable().size() > 0) {
