@@ -22,6 +22,7 @@ import org.apache.log4j.Logger;
 import aima.core.logic.fol.kb.data.Literal;
 import aima.core.logic.fol.parsing.ast.Term;
 import castor.algorithms.bottomclause.BottomClauseGenerator;
+import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
 import castor.algorithms.bottomclause.BottomClauseGeneratorOriginalAlgorithm;
 import castor.algorithms.clauseevaluation.ClauseEvaluator;
 import castor.algorithms.clauseevaluation.EvaluationFunctions;
@@ -54,6 +55,7 @@ public class ProGolem implements Learner {
 	private CoverageEngine coverageEngine;
 	private Random randomGenerator;
 	private ClauseEvaluator evaluator;
+	private BottomClauseGenerator saturator;
 
 	public ProGolem(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseContructionDAO, CoverageEngine coverageEngine, Parameters parameters) {
 		this.parameters = parameters;
@@ -62,6 +64,12 @@ public class ProGolem implements Learner {
 		this.coverageEngine = coverageEngine;
 		this.randomGenerator = new Random(parameters.getRandomSeed());
 		this.evaluator = new GenericEvaluator();
+		
+		if (parameters.isUseStoredProcedure()) {
+			saturator = new BottomClauseGeneratorInsideSP();
+		} else {
+			saturator = new BottomClauseGeneratorOriginalAlgorithm();
+		}
 	}
 	
 	public Parameters getParameters() {
@@ -308,18 +316,18 @@ public class ProGolem implements Learner {
 	 * Perform generalization using beam search + ARMG
 	 */
 	private ClauseInfo learnClause(Schema schema, DataModel dataModel, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth) {
-		BottomClauseGenerator saturator = new BottomClauseGeneratorOriginalAlgorithm();
+		TimeWatch tw = TimeWatch.start();
 		
 		// First unseen positive example (pop)
 		Tuple exampleTuple = remainingPosExamples.remove(0);
 		
 		// Generate bottom clause
-		TimeWatch tw = TimeWatch.start();
+		TimeWatch twSaturation = TimeWatch.start();
 		logger.info("Generating bottom clause for "+exampleTuple.getValues().toString()+"...");
 		MyClause bottomClause = saturator.generateBottomClause(genericDAO, bottomClauseConstructionDAO, exampleTuple, schema, dataModel, parameters);
 		logger.debug("Bottom clause: \n"+ Formatter.prettyPrint(bottomClause));
 		logger.info("Literals: " + bottomClause.getNumberLiterals());
-		logger.info("Saturation time: " + tw.time(TimeUnit.MILLISECONDS) + " milliseconds.");
+		logger.info("Saturation time: " + twSaturation.time(TimeUnit.MILLISECONDS) + " milliseconds.");
 		
 		// MINIMIZATION CAN BE USEFUL WHEN THERE ARE NO ISSUES IF LITERALS WITH VARIABLES ARE REMOVED BECAUSE THERE ARE LITERALS WITH CONSTANTS.
 		// IF LITERALS WITH VARIABLES ARE IMPORTANT (E.G. TO BE MORE GENERAL), MINIMIZATION SHOULD BE TURNED OFF.
@@ -395,6 +403,8 @@ public class ProGolem implements Learner {
 				bestScore = score;
 			}
 		}
+		
+		NumbersKeeper.learnClauseTime += tw.time();
 		
 		return bestClauseInfo;
 	}

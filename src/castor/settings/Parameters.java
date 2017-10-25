@@ -23,12 +23,19 @@ public class Parameters {
 	private String dbURL = "localhost";
 	private String port = "21212";
 	private int randomSeed = 1;
+	private boolean useStoredProcedure = true;
 	
 	public boolean isCreateStoredProcedure() {
 		return createStoredProcedure;
 	}
 	public void setCreateStoredProcedure(boolean createStoredProcedure) {
 		this.createStoredProcedure = createStoredProcedure;
+	}
+	public boolean isUseStoredProcedure() {
+		return useStoredProcedure;
+	}
+	public void setUseStoredProcedure(boolean useStoredProcedure) {
+		this.useStoredProcedure = useStoredProcedure;
 	}
 	public double getMinPrecision() {
 		return minPrecision;

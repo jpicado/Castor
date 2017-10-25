@@ -11,6 +11,7 @@ import org.voltdb.client.Client;
 
 import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
+import castor.algorithms.bottomclause.BottomClauseGeneratorOriginalAlgorithm;
 import castor.dataaccess.db.BottomClauseConstructionDAO;
 import castor.dataaccess.db.GenericDAO;
 import castor.dataaccess.db.GenericTableObject;
@@ -59,7 +60,12 @@ public class CoverageBySubsumption implements CoverageEngine {
 		this.negExamplesIndexes = new HashMap<Integer,Integer>();
 		
 		// Generate ground bottom clause for all examples, create clauses for each example, add to lists
-		BottomClauseGenerator saturator = new BottomClauseGeneratorInsideSP();
+		BottomClauseGenerator saturator;
+		if (parameters.isUseStoredProcedure()) {
+			saturator = new BottomClauseGeneratorInsideSP();
+		} else {
+			saturator = new BottomClauseGeneratorOriginalAlgorithm();
+		}
 		
 		List<Clause> posExamples = new LinkedList<Clause>();
 		List<Clause> negExamples = new LinkedList<Clause>();

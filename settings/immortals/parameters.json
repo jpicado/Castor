@@ -1,5 +1,6 @@
 {
 	"createStoredProcedure": true,
+	"useStoredProcedure": false,
 	"iterations": 1,
 	"minprec": 1.0,
 	"minrec": 1.0,

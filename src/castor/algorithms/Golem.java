@@ -29,6 +29,7 @@ import aima.core.logic.fol.parsing.ast.Variable;
 import aima.core.util.datastructure.Pair;
 import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
+import castor.algorithms.bottomclause.BottomClauseGeneratorOriginalAlgorithm;
 import castor.algorithms.clauseevaluation.BottomUpEvaluator;
 import castor.algorithms.clauseevaluation.ClauseEvaluator;
 import castor.algorithms.clauseevaluation.EvaluationFunctions;
@@ -60,6 +61,7 @@ public class Golem implements Learner {
 	private CoverageEngine coverageEngine;
 	private Random randomGenerator;
 	private ClauseEvaluator evaluator;
+	private BottomClauseGenerator saturator;
 
 	public Golem(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseContructionDAO, CoverageEngine coverageEngine, Parameters parameters) {
 		this.parameters = parameters;
@@ -68,6 +70,12 @@ public class Golem implements Learner {
 		this.coverageEngine = coverageEngine;
 		this.randomGenerator = new Random(parameters.getRandomSeed());
 		this.evaluator = new BottomUpEvaluator();
+		
+		if (parameters.isUseStoredProcedure()) {
+			saturator = new BottomClauseGeneratorInsideSP();
+		} else {
+			saturator = new BottomClauseGeneratorOriginalAlgorithm();
+		}
 	}
 	
 	public Parameters getParameters() {
@@ -299,13 +307,14 @@ public class Golem implements Learner {
 			logger.info("Best candidate has "+bestClauseInfo.getClause().getNumberLiterals() + " literals");
 			candidates = this.generateCandidateClausesFromClause(bestClauseInfo, schema, dataModel, localPosExamples, posExamplesRelation, negExamplesRelation);
 		}
+		
 		NumbersKeeper.learnClauseTime += tw.time();
+		
 		return bestClauseInfo;
 	}
 	
 	private List<ClauseInfo> generateCandidateClauses(Schema schema, DataModel dataModel, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
 		List<ClauseInfo> newClauses = new LinkedList<ClauseInfo>();
-		BottomClauseGenerator saturator = new BottomClauseGeneratorInsideSP();
 		
 		// Get sample of pairs
 		List<Pair<Tuple,Tuple>> pairs = this.selectRandomExamplePairs(remainingPosExamples, this.parameters.getSample());
@@ -332,7 +341,6 @@ public class Golem implements Learner {
 	
 	private List<ClauseInfo> generateCandidateClausesFromClause(ClauseInfo clauseInfo, Schema schema, DataModel dataModel, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
 		List<ClauseInfo> newClauses = new LinkedList<ClauseInfo>();
-		BottomClauseGenerator saturator = new BottomClauseGeneratorInsideSP();
 		
 		// Get sample
 		List<Tuple> sample = this.selectRandomExamples(remainingPosExamples, this.parameters.getSample());
@@ -400,7 +408,6 @@ public class Golem implements Learner {
 	
 	private List<ClauseInfo> generateCandidateClausesExhaustSample(Schema schema, DataModel dataModel, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
 		List<ClauseInfo> newClauses = new LinkedList<ClauseInfo>();
-		BottomClauseGenerator saturator = new BottomClauseGeneratorInsideSP();
 		
 		// Generate random sequence of indexes to access examples
 		List<Integer> indexes1 = generateSequence(remainingPosExamples.size());
@@ -442,7 +449,6 @@ public class Golem implements Learner {
 	
 	private List<ClauseInfo> generateCandidateClausesFromClauseExhaustSample(ClauseInfo clauseInfo, Schema schema, DataModel dataModel, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
 		List<ClauseInfo> newClauses = new LinkedList<ClauseInfo>();
-		BottomClauseGenerator saturator = new BottomClauseGeneratorInsideSP();
 		
 		// Generate random sequence of indexes to access examples
 		List<Integer> indexes = generateSequence(remainingPosExamples.size());

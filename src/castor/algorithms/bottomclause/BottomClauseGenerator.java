@@ -9,7 +9,7 @@ import castor.settings.DataModel;
 import castor.settings.Parameters;
 
 public interface BottomClauseGenerator {
-
+	
 	MyClause generateBottomClause(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters);
 	MyClause generateGroundBottomClause(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters);
 	String generateGroundBottomClauseString(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters);

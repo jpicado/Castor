@@ -22,6 +22,9 @@ public class JsonSettingsReader {
 		if (parametersJson.get("createStoredProcedure") != null) {
 			parameters.setCreateStoredProcedure(parametersJson.get("createStoredProcedure").getAsBoolean());
 		}
+		if (parametersJson.get("useStoredProcedure") != null) {
+			parameters.setUseStoredProcedure(parametersJson.get("useStoredProcedure").getAsBoolean());
+		}
 		if (parametersJson.get("minprec") != null) {
 			parameters.setMinPrecision(parametersJson.get("minprec").getAsDouble());
 		}
