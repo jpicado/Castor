@@ -1,8 +1,5 @@
 package castor.algorithms.coverageengines;
 
-import ida.ilp.logic.Clause;
-import ida.ilp.logic.subsumption.Matching;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -12,6 +9,7 @@ import java.util.Map;
 
 import org.voltdb.client.Client;
 
+import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
 import castor.dataaccess.db.BottomClauseConstructionDAO;
 import castor.dataaccess.db.GenericDAO;
@@ -23,8 +21,12 @@ import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
 import castor.mappings.MyClauseToIDAClause;
+import castor.settings.DataModel;
+import castor.settings.Parameters;
 import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
+import ida.ilp.logic.Clause;
+import ida.ilp.logic.subsumption.Matching;
 
 public class CoverageBySubsumption implements CoverageEngine {
 	
@@ -37,11 +39,12 @@ public class CoverageBySubsumption implements CoverageEngine {
 	private Matching positiveMatching;
 	private Matching negativeMatching;
 	
-	public CoverageBySubsumption(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Relation posExamplesRelation, Relation negExamplesRelation, String spName, int iterations, int recall, int maxterms) {
-		this.initialize(genericDAO, bottomClauseConstructionDAO, posExamplesRelation, negExamplesRelation, spName, iterations, recall, maxterms);
+	public CoverageBySubsumption(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Relation posExamplesRelation, Relation negExamplesRelation, Schema schema, DataModel dataModel, Parameters parameters) {
+		this.initialize(genericDAO, bottomClauseConstructionDAO, posExamplesRelation, negExamplesRelation, schema, dataModel, parameters);
 	}
 	
-	private void initialize(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Relation posExamplesRelation, Relation negExamplesRelation, String spName, int iterations, int recall, int maxterms) {
+	private void initialize(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Relation posExamplesRelation, Relation negExamplesRelation, 
+			Schema schema, DataModel dataModel, Parameters parameters) {
 		// Get all positive and negative examples
 		String posCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(posExamplesRelation, true);
 		GenericTableObject positiveResult = genericDAO.executeQuery(posCoverageQuery);
@@ -56,13 +59,15 @@ public class CoverageBySubsumption implements CoverageEngine {
 		this.negExamplesIndexes = new HashMap<Integer,Integer>();
 		
 		// Generate ground bottom clause for all examples, create clauses for each example, add to lists
-		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
+		BottomClauseGenerator saturator = new BottomClauseGeneratorInsideSP();
+		
 		List<Clause> posExamples = new LinkedList<Clause>();
 		List<Clause> negExamples = new LinkedList<Clause>();
 		int counter = 0;
 		for (Tuple exampleTuple : posExamplesTuples) {
 			try {
-				String groundClause = saturator.generateGroundBottomClauseString(bottomClauseConstructionDAO, exampleTuple, spName, iterations, Integer.MAX_VALUE, maxterms);
+				String groundClause = saturator.generateGroundBottomClauseString(genericDAO, bottomClauseConstructionDAO,
+						exampleTuple, schema, dataModel, parameters);
 				
 				// IDA Clause parses does not handle single quotes well. Remove them from example. Note they should also be removed when evaluating a hypothesis.
 				groundClause = groundClause.replaceAll("'", "");
@@ -83,7 +88,8 @@ public class CoverageBySubsumption implements CoverageEngine {
 		counter = 0;
 		for (Tuple exampleTuple : negExamplesTuples) {
 			try {
-				String groundClause = saturator.generateGroundBottomClauseString(bottomClauseConstructionDAO, exampleTuple, spName, iterations, Integer.MAX_VALUE, maxterms);
+				String groundClause = saturator.generateGroundBottomClauseString(genericDAO, bottomClauseConstructionDAO,
+						exampleTuple, schema, dataModel, parameters);
 				
 				// IDA Clause parses does not handle single quotes well. Remove them from example. Note they should also be removed when evaluating a hypothesis.
 				groundClause = groundClause.replaceAll("'", "");

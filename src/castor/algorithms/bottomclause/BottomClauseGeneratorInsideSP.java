@@ -10,25 +10,31 @@ import aima.core.logic.fol.parsing.ast.Predicate;
 import aima.core.logic.fol.parsing.ast.Term;
 import aima.core.logic.fol.parsing.ast.Variable;
 import castor.dataaccess.db.BottomClauseConstructionDAO;
+import castor.dataaccess.db.GenericDAO;
 import castor.dataaccess.db.GenericTableObject;
 import castor.db.DBCommons;
 import castor.hypotheses.MyClause;
+import castor.language.Schema;
 import castor.language.Tuple;
 import castor.mappings.MyClauseToIDAClause;
+import castor.settings.DataModel;
+import castor.settings.Parameters;
 import castor.utils.Commons;
 
-public class BottomClauseGeneratorInsideSP {
+public class BottomClauseGeneratorInsideSP implements BottomClauseGenerator {
 
 	/*
 	 * Bottom clause generation using a single stored procedure
 	 */
 	// Assumes that exampleTuple is for relation with same name as modeH
-	public MyClause generateBottomClause(BottomClauseConstructionDAO bottomClauseConstructionDAO, Tuple exampleTuple, String spName, int iterations, int recall, int maxterms) {
+	@Override
+	public MyClause generateBottomClause(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, 
+			Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters) {
 		MyClause clause = new MyClause();
 		
 		// Call procedure that creates bottom clause
 		String example = String.join(DBCommons.ATTRIBUTE_DELIMITER, exampleTuple.getValues());
-        GenericTableObject result = bottomClauseConstructionDAO.executeStoredProcedure(spName, example, iterations, recall, maxterms);
+        GenericTableObject result = bottomClauseConstructionDAO.executeStoredProcedure(dataModel.getSpName(), example, parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
         
         // Process results, which should contain a single row
         if (result != null && result.getTable().size() > 0) {
@@ -64,13 +70,15 @@ public class BottomClauseGeneratorInsideSP {
 		return clause;
 	}
 	
-	public MyClause generateGroundBottomClause(BottomClauseConstructionDAO bottomClauseConstructionDAO, Tuple exampleTuple, String spNameTemplate, int iterations, int recall, int maxterms) {
+	@Override
+	public MyClause generateGroundBottomClause(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, 
+			Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters) {
 		MyClause clause = new MyClause();
 		
 		// Call procedure that creates bottom clause
 		String example = String.join(DBCommons.ATTRIBUTE_DELIMITER, exampleTuple.getValues());
-		String spName = spNameTemplate + DBCommons.GROUND_BOTTONCLAUSE_PROCEDURE_SUFFIX;
-        GenericTableObject result = bottomClauseConstructionDAO.executeStoredProcedure(spName, example, iterations, recall, maxterms);
+		String spName = dataModel.getSpName() + DBCommons.GROUND_BOTTONCLAUSE_PROCEDURE_SUFFIX;
+        GenericTableObject result = bottomClauseConstructionDAO.executeStoredProcedure(spName, example, parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
         
         // Process results, which should contain a single row
         if (result != null && result.getTable().size() > 0) {
@@ -106,13 +114,15 @@ public class BottomClauseGeneratorInsideSP {
 		return clause;
 	}
 	
-	public String generateGroundBottomClauseString(BottomClauseConstructionDAO bottomClauseConstructionDAO, Tuple exampleTuple, String spNameTemplate, int iterations, int recall, int maxterms) {
+	@Override
+	public String generateGroundBottomClauseString(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, 
+			Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters) {
 		StringBuilder sb = new StringBuilder();
 		
 		// Call procedure that creates ground bottom clause
 		String example = String.join(DBCommons.ATTRIBUTE_DELIMITER, exampleTuple.getValues());
-		String spName = spNameTemplate + DBCommons.GROUND_BOTTONCLAUSE_PROCEDURE_SUFFIX;
-        GenericTableObject result = bottomClauseConstructionDAO.executeStoredProcedure(spName, example, iterations, recall, maxterms);
+		String spName = dataModel.getSpName() + DBCommons.GROUND_BOTTONCLAUSE_PROCEDURE_SUFFIX;
+        GenericTableObject result = bottomClauseConstructionDAO.executeStoredProcedure(spName, example, parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
         
         // Process results, which should contain a single row
         if (result != null && result.getTable().size() > 0) {

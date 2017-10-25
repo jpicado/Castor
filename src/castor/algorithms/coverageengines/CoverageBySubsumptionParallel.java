@@ -1,8 +1,5 @@
 package castor.algorithms.coverageengines;
 
-import ida.ilp.logic.Clause;
-import ida.ilp.logic.subsumption.Matching;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -16,6 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 import aima.core.util.datastructure.Pair;
+import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
 import castor.dataaccess.db.BottomClauseConstructionDAO;
 import castor.dataaccess.db.GenericDAO;
@@ -28,8 +26,12 @@ import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
 import castor.mappings.MyClauseToIDAClause;
+import castor.settings.DataModel;
+import castor.settings.Parameters;
 import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
+import ida.ilp.logic.Clause;
+import ida.ilp.logic.subsumption.Matching;
 
 public class CoverageBySubsumptionParallel implements CoverageEngine {
 
@@ -51,13 +53,12 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 	int negExamplesPerMatching;
 
 	public CoverageBySubsumptionParallel(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO,
-			Relation posExamplesRelation, Relation negExamplesRelation, String spName, int iterations, int recall,
-			int groundRecall, int maxterms, int threads, boolean withMatchings,
+			Relation posExamplesRelation, Relation negExamplesRelation, Schema schema, DataModel dataModel, Parameters parameters, boolean withMatchings,
 			CoverageBySubsumptionParallel.EXAMPLES_SOURCE examplesSource, String posExamplesFile, String negExamplesFile) {
-		this.threads = threads;
+		this.threads = parameters.getThreads();
 		if (withMatchings)
 			this.initWithMatchings(genericDAO, bottomClauseConstructionDAO, posExamplesRelation, negExamplesRelation,
-					spName, iterations, recall, groundRecall, maxterms, examplesSource, posExamplesFile, negExamplesFile);
+					schema, dataModel, parameters, examplesSource, posExamplesFile, negExamplesFile);
 		else
 			initWithoutMatchings(genericDAO, bottomClauseConstructionDAO, posExamplesRelation, negExamplesRelation, examplesSource, posExamplesFile, negExamplesFile);
 	}
@@ -86,8 +87,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 	}
 
 	private void initWithMatchings(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO,
-			Relation posExamplesRelation, Relation negExamplesRelation, String spName, int iterations, int recall,
-			int groundRecall, int maxterms,
+			Relation posExamplesRelation, Relation negExamplesRelation, Schema schema, DataModel dataModel, Parameters parameters,
 			CoverageBySubsumptionParallel.EXAMPLES_SOURCE examplesSource, String posExamplesFile, String negExamplesFile) {
 
 		// Get all positive and negative examples
@@ -117,7 +117,8 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 
 		// Generate ground bottom clause for all examples, create clauses for each
 		// example, add to lists
-		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
+		BottomClauseGenerator saturator = new BottomClauseGeneratorInsideSP();
+//		BottomClauseGenerator saturator = new BottomClauseGeneratorOriginalAlgorithm();
 		List<Clause> posExamples = new LinkedList<Clause>();
 		List<Clause> negExamples = new LinkedList<Clause>();
 		int counter = 0;
@@ -125,8 +126,8 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 			try {
 				// System.out.println("Generating ground bottom clause for positive example " +
 				// exampleTuple.getValues().toString()+"...");
-				String groundClause = saturator.generateGroundBottomClauseString(bottomClauseConstructionDAO,
-						exampleTuple, spName, iterations, groundRecall, maxterms);
+				String groundClause = saturator.generateGroundBottomClauseString(genericDAO, bottomClauseConstructionDAO,
+						exampleTuple, schema, dataModel, parameters);
 
 				// IDA Clause parses does not handle single quotes well. Remove them from
 				// example. Note they should also be removed when evaluating a hypothesis.
@@ -151,8 +152,8 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 			try {
 				// System.out.println("Generating ground bottom clause for negative example " +
 				// exampleTuple.getValues().toString()+"...");
-				String groundClause = saturator.generateGroundBottomClauseString(bottomClauseConstructionDAO,
-						exampleTuple, spName, iterations, groundRecall, maxterms);
+				String groundClause = saturator.generateGroundBottomClauseString(genericDAO, bottomClauseConstructionDAO,
+						exampleTuple, schema, dataModel, parameters);
 
 				// IDA Clause parses does not handle single quotes well. Remove them from
 				// example. Note they should also be removed when evaluating a hypothesis.

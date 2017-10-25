@@ -21,6 +21,7 @@ import org.apache.log4j.Logger;
 
 import aima.core.logic.fol.kb.data.Literal;
 import aima.core.logic.fol.parsing.ast.Term;
+import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.algorithms.bottomclause.BottomClauseGeneratorOriginalAlgorithm;
 import castor.algorithms.clauseevaluation.ClauseEvaluator;
 import castor.algorithms.clauseevaluation.EvaluationFunctions;
@@ -29,13 +30,14 @@ import castor.algorithms.coverageengines.CoverageEngine;
 import castor.algorithms.transformations.ClauseTransformations;
 import castor.algorithms.transformations.Reducer;
 import castor.algorithms.transformations.ReductionMethods;
+import castor.dataaccess.db.BottomClauseConstructionDAO;
 import castor.dataaccess.db.GenericDAO;
 import castor.hypotheses.ClauseInfo;
 import castor.hypotheses.MyClause;
-import castor.language.Mode;
 import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
+import castor.settings.DataModel;
 import castor.settings.Parameters;
 import castor.utils.Formatter;
 import castor.utils.NumbersKeeper;
@@ -48,13 +50,15 @@ public class ProGolem implements Learner {
 	
 	private Parameters parameters;
 	private GenericDAO genericDAO;
+	private BottomClauseConstructionDAO bottomClauseConstructionDAO;
 	private CoverageEngine coverageEngine;
 	private Random randomGenerator;
 	private ClauseEvaluator evaluator;
 
-	public ProGolem(GenericDAO genericDAO, CoverageEngine coverageEngine, Parameters parameters) {
+	public ProGolem(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseContructionDAO, CoverageEngine coverageEngine, Parameters parameters) {
 		this.parameters = parameters;
 		this.genericDAO = genericDAO;
+		this.bottomClauseConstructionDAO = bottomClauseContructionDAO;
 		this.coverageEngine = coverageEngine;
 		this.randomGenerator = new Random(parameters.getRandomSeed());
 		this.evaluator = new GenericEvaluator();
@@ -67,7 +71,7 @@ public class ProGolem implements Learner {
 	/*
 	 * Run learning algorithm
 	 */
-	public List<ClauseInfo> learn(Schema schema, Mode modeH, List<Mode> modesB, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, boolean globalDefinition) {
+	public List<ClauseInfo> learn(Schema schema, DataModel dataModel, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, boolean globalDefinition) {
 		TimeWatch tw = TimeWatch.start();
 		
 		logger.info("Training positive examples: " + this.coverageEngine.getAllPosExamples().size());
@@ -76,7 +80,7 @@ public class ProGolem implements Learner {
 		List<ClauseInfo> definition = new LinkedList<ClauseInfo>();
 		
 		// Call covering approach
-		definition.addAll(this.learnUsingCovering(schema, modeH, modesB, posExamplesRelation, negExamplesRelation, spNameTemplate, parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms(), parameters.getSample(), parameters.getBeam(), parameters.getReductionMethod(), globalDefinition));
+		definition.addAll(this.learnUsingCovering(schema, dataModel, posExamplesRelation, negExamplesRelation, spNameTemplate, parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms(), parameters.getSample(), parameters.getBeam(), parameters.getReductionMethod(), globalDefinition));
 	
 		// Get string representation of definition
 		StringBuilder sb = new StringBuilder();
@@ -156,7 +160,7 @@ public class ProGolem implements Learner {
 	/*
 	 * Learn a clause using covering approach
 	 */
-	private List<ClauseInfo> learnUsingCovering(Schema schema, Mode modeH, List<Mode> modesB, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int maxRecall, int maxterms, int sampleSize, int beamWidth, String reductionMethod, boolean globalDefinition) {
+	private List<ClauseInfo> learnUsingCovering(Schema schema, DataModel dataModel, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int maxRecall, int maxterms, int sampleSize, int beamWidth, String reductionMethod, boolean globalDefinition) {
 		List<ClauseInfo> definition = new LinkedList<ClauseInfo>();
 		
 		// Get all positive examples from database and keep them in memory
@@ -166,7 +170,7 @@ public class ProGolem implements Learner {
 			logger.info("Remaining uncovered examples: " + remainingPosExamples.size());
 			
 			// Compute best ARMG
-			ClauseInfo clauseInfo = learnClause(schema, modeH, modesB, remainingPosExamples, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, maxRecall, maxterms, sampleSize, beamWidth);
+			ClauseInfo clauseInfo = learnClause(schema, dataModel, remainingPosExamples, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, maxRecall, maxterms, sampleSize, beamWidth);
 			
 			// Get new positive examples covered
 			// Adding 1 to count seed example
@@ -303,8 +307,8 @@ public class ProGolem implements Learner {
 	/*
 	 * Perform generalization using beam search + ARMG
 	 */
-	private ClauseInfo learnClause(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth) {
-		BottomClauseGeneratorOriginalAlgorithm saturator = new BottomClauseGeneratorOriginalAlgorithm();
+	private ClauseInfo learnClause(Schema schema, DataModel dataModel, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth) {
+		BottomClauseGenerator saturator = new BottomClauseGeneratorOriginalAlgorithm();
 		
 		// First unseen positive example (pop)
 		Tuple exampleTuple = remainingPosExamples.remove(0);
@@ -312,7 +316,7 @@ public class ProGolem implements Learner {
 		// Generate bottom clause
 		TimeWatch tw = TimeWatch.start();
 		logger.info("Generating bottom clause for "+exampleTuple.getValues().toString()+"...");
-		MyClause bottomClause = saturator.generateBottomClause(genericDAO, exampleTuple, schema, modeH, modesB, iterations, recall, false);
+		MyClause bottomClause = saturator.generateBottomClause(genericDAO, bottomClauseConstructionDAO, exampleTuple, schema, dataModel, parameters);
 		logger.debug("Bottom clause: \n"+ Formatter.prettyPrint(bottomClause));
 		logger.info("Literals: " + bottomClause.getNumberLiterals());
 		logger.info("Saturation time: " + tw.time(TimeUnit.MILLISECONDS) + " milliseconds.");

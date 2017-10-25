@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +16,7 @@ import aima.core.logic.fol.parsing.ast.Predicate;
 import aima.core.logic.fol.parsing.ast.Term;
 import aima.core.logic.fol.parsing.ast.Variable;
 import aima.core.util.datastructure.Pair;
+import castor.dataaccess.db.BottomClauseConstructionDAO;
 import castor.dataaccess.db.GenericDAO;
 import castor.dataaccess.db.GenericTableObject;
 import castor.hypotheses.MyClause;
@@ -25,9 +25,12 @@ import castor.language.InclusionDependency;
 import castor.language.Mode;
 import castor.language.Schema;
 import castor.language.Tuple;
+import castor.mappings.MyClauseToIDAClause;
+import castor.settings.DataModel;
+import castor.settings.Parameters;
 import castor.utils.Commons;
 
-public class BottomClauseGeneratorOriginalAlgorithm {
+public class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGenerator {
 
 	private static final String SELECTIN_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s;";
 
@@ -40,59 +43,56 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 	/*
 	 * Generate bottom clause for one example
 	 */
-	public MyClause generateBottomClause(GenericDAO genericDAO, Tuple exampleTuple, Schema schema, Mode modeH,
-			List<Mode> modesB, int iterations, int recall, boolean applyInds) {
+	@Override
+	public MyClause generateBottomClause(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, 
+			Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters) {
 		Map<String, String> hashConstantToVariable = new HashMap<String, String>();
 		Map<String, String> hashVariableToConstant = new HashMap<String, String>();
 		return this.generateBottomClauseOneQueryPerRelationAttribute(genericDAO, hashConstantToVariable,
-				hashVariableToConstant, exampleTuple, schema, modeH, modesB, iterations, recall, applyInds);
+				hashVariableToConstant, exampleTuple, schema, dataModel.getModeH(), dataModel.getModesB(), parameters.getIterations(), parameters.getRecall(), parameters.isUseInds(), false);
 	}
 	
-	/*
-	 * Generate ground bottom clause for one example
-	 */
-	public MyClause generateGroundBottomClause(GenericDAO genericDAO, Tuple exampleTuple, Schema schema, Mode modeH,
-			List<Mode> modesB, int iterations, int recall, boolean applyInds) {
-		
-		// Keep only ground modes
-		Mode groundModeH = modeH.toGroundMode();
-		// Must keep order
-		Set<Mode> groundModesB = new LinkedHashSet<Mode>();
-		for (Mode mode : modesB) {
-			Mode groundMode = mode.toGroundMode();
-			groundModesB.add(groundMode);
-		}
-		List<Mode> groundModesBList = new LinkedList<Mode>(groundModesB);
-		
-		Map<String, String> hashConstantToVariable = new HashMap<String, String>();
-		Map<String, String> hashVariableToConstant = new HashMap<String, String>();
-		return this.generateBottomClauseOneQueryPerRelationAttribute(genericDAO, hashConstantToVariable,
-				hashVariableToConstant, exampleTuple, schema, groundModeH, groundModesBList, iterations, recall, applyInds);
-	}
-
 	/*
 	 * Generate bottom clause for each input example in examples list Reuses hash
 	 * function to keep consistency between variable associations
 	 */
-	public List<MyClause> generateBottomClauses(GenericDAO genericDAO, List<Tuple> examples, Schema schema, Mode modeH,
-			List<Mode> modesB, int iterations, int recall, boolean applyInds) {
+	public List<MyClause> generateBottomClauses(GenericDAO genericDAO, List<Tuple> examples, Schema schema, DataModel dataModel, Parameters parameters) {
 		List<MyClause> bottomClauses = new LinkedList<MyClause>();
 		Map<String, String> hashConstantToVariable = new HashMap<String, String>();
 		Map<String, String> hashVariableToConstant = new HashMap<String, String>();
 		for (Tuple example : examples) {
 			bottomClauses.add(this.generateBottomClauseOneQueryPerRelationAttribute(genericDAO, hashConstantToVariable,
-					hashVariableToConstant, example, schema, modeH, modesB, iterations, recall, applyInds));
+					hashVariableToConstant, example, schema, dataModel.getModeH(), dataModel.getModesB(), parameters.getIterations(), parameters.getRecall(), parameters.isUseInds(), false));
 		}
 		return bottomClauses;
+	}
+	
+	/*
+	 * Generate ground bottom clause for one example
+	 */
+	@Override
+	public MyClause generateGroundBottomClause(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, 
+			Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters) {
+		Map<String, String> hashConstantToVariable = new HashMap<String, String>();
+		Map<String, String> hashVariableToConstant = new HashMap<String, String>();
+		return this.generateBottomClauseOneQueryPerRelationAttribute(genericDAO, hashConstantToVariable,
+				hashVariableToConstant, exampleTuple, schema, dataModel.getModeH(), dataModel.getModesB(), parameters.getIterations(), parameters.getRecall(), parameters.isUseInds(), true);
+	}
+	
+	@Override
+	public String generateGroundBottomClauseString(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, 
+			Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters) {
+		MyClause clause = generateGroundBottomClause(genericDAO, bottomClauseConstructionDAO, exampleTuple, schema, dataModel, parameters);
+		return clause.toString2(MyClauseToIDAClause.NEGATE_SYMBOL);
 	}
 
 	/*
 	 * Bottom clause generation as described in original algorithm Queries database
 	 * only once per relation-input_attribute
 	 */
-	public MyClause generateBottomClauseOneQueryPerRelationAttribute(GenericDAO genericDAO,
+	private MyClause generateBottomClauseOneQueryPerRelationAttribute(GenericDAO genericDAO,
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant, Tuple exampleTuple,
-			Schema schema, Mode modeH, List<Mode> modesB, int iterations, int recall, boolean applyInds) {
+			Schema schema, Mode modeH, List<Mode> modesB, int iterations, int recall, boolean applyInds, boolean ground) {
 		MyClause clause = new MyClause();
 		Map<String, Set<String>> inTerms = new HashMap<String, Set<String>>();
 
@@ -103,6 +103,9 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 
 		// Create head literal
 		varCounter = 0;
+		if (ground) {
+			modeH = modeH.toGroundMode();
+		}
 		Predicate headLiteral = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, exampleTuple,
 				modeH, inTerms);
 		clause.addPositiveLiteral(headLiteral);
@@ -169,13 +172,13 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 				// Generate new literals for grouped modes
 				List<Predicate> newLiterals = operationForGroupedModes(genericDAO, schema, clause,
 						hashConstantToVariable, hashVariableToConstant, newInTerms, relationName, attributeName,
-						relationAttributeModes, groupedModes, knownTerms, recall);
+						relationAttributeModes, groupedModes, knownTerms, recall, ground);
 
 				// Apply INDs
 				if (applyInds) {
 					followIndChain(genericDAO, schema, clause, newLiterals, hashConstantToVariable,
 							hashVariableToConstant, newInTerms, groupedModes, recall, relationName,
-							new HashSet<String>());
+							new HashSet<String>(), ground);
 				}
 				for (Predicate literal : newLiterals) {
 					clause.addNegativeLiteral(literal);
@@ -201,7 +204,7 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> newInTerms, String relationName, String attributeName,
 			List<Mode> relationAttributeModes, Map<Pair<String, Integer>, List<Mode>> groupedModes, String knownTerms,
-			int recall) {
+			int recall, boolean ground) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 
 		// Create query and run
@@ -209,10 +212,19 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 		GenericTableObject result = genericDAO.executeQuery(query);
 
 		if (result != null) {
+			Set<String> usedModes = new HashSet<String>();
 			for (Mode mode : relationAttributeModes) {
+				if (ground) {
+					if (usedModes.contains(mode.toGroundModeString())) {
+						continue;
+					}
+					else {
+						mode = mode.toGroundMode();
+						usedModes.add(mode.toGroundModeString());
+					}
+				}
 				int solutionsCounter = 0;
 				for (Tuple tuple : result.getTable()) {
-
 					if (solutionsCounter >= recall)
 						break;
 
@@ -248,7 +260,8 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 				terms.add(new Variable(hashConstantToVariable.get(value)));
 			}
 			// Add constants to inTerms
-			if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.INPUT)) {
+			if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.INPUT) ||
+					mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
 				String variableType = mode.getArguments().get(i).getType();
 				if (!inTerms.containsKey(variableType)) {
 					inTerms.put(variableType, new HashSet<String>());
@@ -264,7 +277,7 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 			List<Predicate> newLiteralsForGroupedModes, Map<String, String> hashConstantToVariable,
 			Map<String, String> hashVariableToConstant, Map<String, Set<String>> newInTerms,
 			Map<Pair<String, Integer>, List<Mode>> groupedModes, int recall, String currentPredicate,
-			Set<String> seenPredicates) {
+			Set<String> seenPredicates, boolean ground) {
 
 		if (!seenPredicates.contains(currentPredicate)
 				&& schema.getInclusionDependencies().containsKey(currentPredicate)) {
@@ -274,7 +287,7 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 					// Apply IND
 					List<Predicate> literalsFromInd = applyInclusionDependency(genericDAO, schema, clause,
 							newLiteralsForGroupedModes, hashConstantToVariable, hashVariableToConstant, newInTerms, ind,
-							groupedModes, recall);
+							groupedModes, recall, ground);
 					addNotRepeated(newLiteralsForGroupedModes, literalsFromInd);
 
 					// Add current predicate to seen list
@@ -283,7 +296,7 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 					// Follow chain
 					followIndChain(genericDAO, schema, clause, newLiteralsForGroupedModes, hashConstantToVariable,
 							hashVariableToConstant, newInTerms, groupedModes, recall, ind.getRightPredicateName(),
-							seenPredicates);
+							seenPredicates, ground);
 				}
 			}
 		}
@@ -292,7 +305,7 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 	private List<Predicate> applyInclusionDependency(GenericDAO genericDAO, Schema schema, MyClause clause,
 			List<Predicate> newLiteralsForGroupedModes, Map<String, String> hashConstantToVariable,
 			Map<String, String> hashVariableToConstant, Map<String, Set<String>> newInTerms, InclusionDependency ind,
-			Map<Pair<String, Integer>, List<Mode>> groupedModes, int recall) {
+			Map<Pair<String, Integer>, List<Mode>> groupedModes, int recall, boolean ground) {
 
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 
@@ -332,7 +345,7 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 						value = leftIndTerm.getSymbolicName();
 					}
 					Set<String> termsSet = new HashSet<String>();
-					termsSet.add(value);
+					termsSet.add(value.replaceAll("^\"|\"$", ""));
 					String knownTerms = toListString(termsSet);
 
 					// Get modes for relation-attribute
@@ -346,7 +359,7 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 					// Generate new literals
 					List<Predicate> modeBLiterals = operationForGroupedModes(genericDAO, schema, clause,
 							hashConstantToVariable, hashVariableToConstant, newInTerms, relationName, attributeName,
-							relationAttributeModes, groupedModes, knownTerms, recall);
+							relationAttributeModes, groupedModes, knownTerms, recall, ground);
 					addNotRepeated(newLiterals, modeBLiterals);
 				}
 			}
@@ -375,7 +388,7 @@ public class BottomClauseGeneratorOriginalAlgorithm {
 	 * Bottom clause generation as described in original algorithm Assumes that
 	 * exampleTuple is for relation with same name as modeH
 	 */
-	public MyClause generateBottomClause(GenericDAO genericDAO, Map<String, String> hashConstantToVariable,
+	private MyClause generateBottomClause(GenericDAO genericDAO, Map<String, String> hashConstantToVariable,
 			Map<String, String> hashVariableToConstant, Tuple exampleTuple, Schema schema, Mode modeH,
 			List<Mode> modesB, int iterations, int recall) {
 		MyClause clause = new MyClause();

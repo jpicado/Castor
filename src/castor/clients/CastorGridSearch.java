@@ -199,16 +199,16 @@ public class CastorGridSearch {
         	
         	
         	// Create CoverageEngines
-            tw.reset();
-            logger.info("Creating train coverage engine...");
-            CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getGroundRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true, CoverageBySubsumptionParallel.EXAMPLES_SOURCE.DB, "", "");
-            long creatingCoverageTime = tw.time();
-            
-            logger.info("Creating validation coverage engine...");
-            CoverageEngine valCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posVal, negVal, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getGroundRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true, CoverageBySubsumptionParallel.EXAMPLES_SOURCE.DB, "", "");
-            
-            logger.info("Creating test coverage engine...");
-            CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTest, negTest, this.dataModel.getSpName(), this.parameters.getIterations(), this.parameters.getRecall(), this.parameters.getGroundRecall(), this.parameters.getMaxterms(), this.parameters.getThreads(), true, CoverageBySubsumptionParallel.EXAMPLES_SOURCE.DB, "", "");
+        tw.reset();
+        logger.info("Creating train coverage engine...");
+        CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.schema, this.dataModel, this.parameters, true, CoverageBySubsumptionParallel.EXAMPLES_SOURCE.DB, "", "");
+        long creatingCoverageTime = tw.time();
+        
+        logger.info("Creating validation coverage engine...");
+        CoverageEngine valCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posVal, negVal, this.schema, this.dataModel, this.parameters, true, CoverageBySubsumptionParallel.EXAMPLES_SOURCE.DB, "", "");
+        
+        logger.info("Creating test coverage engine...");
+        CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTest, negTest, this.schema, this.dataModel, this.parameters, true, CoverageBySubsumptionParallel.EXAMPLES_SOURCE.DB, "", "");
             
             // Create learner
         	logger.info("Learning...");
@@ -216,9 +216,9 @@ public class CastorGridSearch {
         	if (this.algorithm.equals(ALGORITHM_CASTOR)) {
         		learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
         	} else if (this.algorithm.equals(ALGORITHM_GOLEM)) {
-        		learner = new Golem(genericDAO, bottomClauseConstructionDAO, coverageEngine, dataModel, parameters);
+        		learner = new Golem(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
         	} else if (this.algorithm.equals(ALGORITHM_PROGOLEM)) {
-        		learner = new ProGolem(genericDAO, coverageEngine, parameters);
+        		learner = new ProGolem(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
         	} else {
         		throw new IllegalArgumentException("Learning algorithm " + this.algorithm + " not implemented.");
         	}
@@ -239,7 +239,7 @@ public class CastorGridSearch {
 					// Learn definition
 					NumbersKeeper.reset();
 					tw.reset();
-					List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName(), false);
+					List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel, posTrain, negTrain, this.dataModel.getSpName(), false);
 					NumbersKeeper.totalTime += tw.time();
 		            
 		            logger.info("Total time: " + (NumbersKeeper.totalTime + creatingCoverageTime));

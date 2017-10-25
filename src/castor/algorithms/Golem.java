@@ -27,6 +27,7 @@ import aima.core.logic.fol.parsing.ast.Predicate;
 import aima.core.logic.fol.parsing.ast.Term;
 import aima.core.logic.fol.parsing.ast.Variable;
 import aima.core.util.datastructure.Pair;
+import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
 import castor.algorithms.clauseevaluation.BottomUpEvaluator;
 import castor.algorithms.clauseevaluation.ClauseEvaluator;
@@ -38,7 +39,6 @@ import castor.dataaccess.db.BottomClauseConstructionDAO;
 import castor.dataaccess.db.GenericDAO;
 import castor.hypotheses.ClauseInfo;
 import castor.hypotheses.MyClause;
-import castor.language.Mode;
 import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
@@ -55,15 +55,13 @@ public class Golem implements Learner {
 	private static Logger logger = Logger.getLogger(Golem.class);
 	
 	private Parameters parameters;
-	private DataModel dataModel;
 	private GenericDAO genericDAO;
 	private BottomClauseConstructionDAO bottomClauseConstructionDAO;
 	private CoverageEngine coverageEngine;
 	private Random randomGenerator;
 	private ClauseEvaluator evaluator;
 
-	public Golem(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseContructionDAO, CoverageEngine coverageEngine, DataModel dataModel, Parameters parameters) {
-		this.dataModel = dataModel;
+	public Golem(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseContructionDAO, CoverageEngine coverageEngine, Parameters parameters) {
 		this.parameters = parameters;
 		this.genericDAO = genericDAO;
 		this.bottomClauseConstructionDAO = bottomClauseContructionDAO;
@@ -80,7 +78,7 @@ public class Golem implements Learner {
 	 * Run learning algorithm
 	 * Does not support globalDefinition parameter, but it is included as parameter to satisfy Learner interface.
 	 */
-	public List<ClauseInfo> learn(Schema schema, Mode modeH, List<Mode> modesB, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, boolean globalDefinition) {
+	public List<ClauseInfo> learn(Schema schema, DataModel dataModel, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, boolean globalDefinition) {
 		TimeWatch tw = TimeWatch.start();
 		
 		logger.info("Training positive examples: " + this.coverageEngine.getAllPosExamples().size());
@@ -89,7 +87,7 @@ public class Golem implements Learner {
 		List<ClauseInfo> definition = new LinkedList<ClauseInfo>();
 		
 		// Call covering approach
-		definition.addAll(this.learnUsingCovering(schema, modeH, modesB, posExamplesRelation, negExamplesRelation, spNameTemplate, parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms(), parameters.getSample(), parameters.getBeam(), parameters.getReductionMethod()));
+		definition.addAll(this.learnUsingCovering(schema, dataModel, posExamplesRelation, negExamplesRelation, spNameTemplate, parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms(), parameters.getSample(), parameters.getBeam(), parameters.getReductionMethod()));
 	
 		// Get string representation of definition
 		StringBuilder sb = new StringBuilder();
@@ -169,7 +167,7 @@ public class Golem implements Learner {
 	/*
 	 * Learn a clause using covering approach
 	 */
-	private List<ClauseInfo> learnUsingCovering(Schema schema, Mode modeH, List<Mode> modesB, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int maxRecall, int maxterms, int sampleSize, int beamWidth, String reductionMethod) {
+	private List<ClauseInfo> learnUsingCovering(Schema schema, DataModel dataModel, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int maxRecall, int maxterms, int sampleSize, int beamWidth, String reductionMethod) {
 		List<ClauseInfo> definition = new LinkedList<ClauseInfo>();
 		
 		// Get all positive examples from database and keep them in memory
@@ -180,7 +178,7 @@ public class Golem implements Learner {
 			logger.info("Remaining uncovered examples: " + remainingPosExamples.size() + ", remaining iterations: " + iterationsCounter);
 			
 			// Learn clause
-			ClauseInfo clauseInfo = learnClause(schema, modeH, modesB, remainingPosExamples, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, maxRecall, maxterms, sampleSize, beamWidth);
+			ClauseInfo clauseInfo = learnClause(schema, dataModel, remainingPosExamples, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, maxRecall, maxterms, sampleSize, beamWidth);
 			
 			// If clauseInfo is null, there are no more good clauses, so exit
 			if (clauseInfo == null) {
@@ -269,13 +267,13 @@ public class Golem implements Learner {
 		return satisfiesConditions;
 	}
 	
-	private ClauseInfo learnClause(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth) {
+	private ClauseInfo learnClause(Schema schema, DataModel dataModel, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth) {
 		TimeWatch tw = TimeWatch.start();
 		// Create local copy of remaining positive examples
 		List<Tuple> localPosExamples = new LinkedList<Tuple>(remainingPosExamples);
 		
 		// Create candidate clauses by doing RLGG of pairs of examples
-		List<ClauseInfo> candidates = this.generateCandidateClauses(schema, modeH, modesB, localPosExamples, posExamplesRelation, negExamplesRelation);
+		List<ClauseInfo> candidates = this.generateCandidateClauses(schema, dataModel, localPosExamples, posExamplesRelation, negExamplesRelation);
 		
 		ClauseInfo bestClauseInfo = null;
 		double bestScore = -1;
@@ -299,24 +297,24 @@ public class Golem implements Learner {
 			
 			// Generate new candidate clauses using LGG between bestClause and other pos examples
 			logger.info("Best candidate has "+bestClauseInfo.getClause().getNumberLiterals() + " literals");
-			candidates = this.generateCandidateClausesFromClause(bestClauseInfo, schema, modeH, modesB, localPosExamples, posExamplesRelation, negExamplesRelation);
+			candidates = this.generateCandidateClausesFromClause(bestClauseInfo, schema, dataModel, localPosExamples, posExamplesRelation, negExamplesRelation);
 		}
 		NumbersKeeper.learnClauseTime += tw.time();
 		return bestClauseInfo;
 	}
 	
-	private List<ClauseInfo> generateCandidateClauses(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
+	private List<ClauseInfo> generateCandidateClauses(Schema schema, DataModel dataModel, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
 		List<ClauseInfo> newClauses = new LinkedList<ClauseInfo>();
-		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
+		BottomClauseGenerator saturator = new BottomClauseGeneratorInsideSP();
 		
 		// Get sample of pairs
 		List<Pair<Tuple,Tuple>> pairs = this.selectRandomExamplePairs(remainingPosExamples, this.parameters.getSample());
 		
 		for (Pair<Tuple, Tuple> pair : pairs) {
 			// Saturate examples
-			MyClause clause1 = saturator.generateGroundBottomClause(bottomClauseConstructionDAO, pair.getFirst(), dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+			MyClause clause1 = saturator.generateBottomClause(genericDAO, bottomClauseConstructionDAO, pair.getFirst(), schema, dataModel, parameters);
 //			System.out.println(clause1.getNumberLiterals());
-			MyClause clause2 = saturator.generateGroundBottomClause(bottomClauseConstructionDAO, pair.getSecond(), dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+			MyClause clause2 = saturator.generateBottomClause(genericDAO, bottomClauseConstructionDAO, pair.getSecond(), schema, dataModel, parameters);
 //			System.out.println(clause2.getNumberLiterals());
 			
 			// Generalize
@@ -332,16 +330,16 @@ public class Golem implements Learner {
 		return newClauses;
 	}
 	
-	private List<ClauseInfo> generateCandidateClausesFromClause(ClauseInfo clauseInfo, Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
+	private List<ClauseInfo> generateCandidateClausesFromClause(ClauseInfo clauseInfo, Schema schema, DataModel dataModel, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
 		List<ClauseInfo> newClauses = new LinkedList<ClauseInfo>();
-		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
+		BottomClauseGenerator saturator = new BottomClauseGeneratorInsideSP();
 		
 		// Get sample
 		List<Tuple> sample = this.selectRandomExamples(remainingPosExamples, this.parameters.getSample());
 		
 		for (Tuple example : sample) {
 			// Saturate example
-			MyClause candidate = saturator.generateGroundBottomClause(bottomClauseConstructionDAO, example, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+			MyClause candidate = saturator.generateBottomClause(genericDAO, bottomClauseConstructionDAO, example, schema, dataModel, parameters);
 			
 			// Generalize
 			MyClause newClause = generalize(clauseInfo.getClause(), candidate, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, Reducer.MEASURE.CONSISTENCY);
@@ -400,9 +398,9 @@ public class Golem implements Learner {
 		return generated;
 	}
 	
-	private List<ClauseInfo> generateCandidateClausesExhaustSample(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
+	private List<ClauseInfo> generateCandidateClausesExhaustSample(Schema schema, DataModel dataModel, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
 		List<ClauseInfo> newClauses = new LinkedList<ClauseInfo>();
-		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
+		BottomClauseGenerator saturator = new BottomClauseGeneratorInsideSP();
 		
 		// Generate random sequence of indexes to access examples
 		List<Integer> indexes1 = generateSequence(remainingPosExamples.size());
@@ -418,8 +416,8 @@ public class Golem implements Learner {
 					Tuple example2 = remainingPosExamples.get(indexes2.get(j));
 					
 					// Saturate examples
-					MyClause clause1 = saturator.generateGroundBottomClause(bottomClauseConstructionDAO, example1, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
-					MyClause clause2 = saturator.generateGroundBottomClause(bottomClauseConstructionDAO, example2, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+					MyClause clause1 = saturator.generateBottomClause(genericDAO, bottomClauseConstructionDAO, example1, schema, dataModel, parameters);
+					MyClause clause2 = saturator.generateBottomClause(genericDAO, bottomClauseConstructionDAO, example2, schema, dataModel, parameters);;
 					
 					// Generalize
 					MyClause newClause = generalize(clause1, clause2, schema, remainingPosExamples, posExamplesRelation, negExamplesRelation, Reducer.MEASURE.CONSISTENCY);
@@ -442,9 +440,9 @@ public class Golem implements Learner {
 		return newClauses;
 	}
 	
-	private List<ClauseInfo> generateCandidateClausesFromClauseExhaustSample(ClauseInfo clauseInfo, Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
+	private List<ClauseInfo> generateCandidateClausesFromClauseExhaustSample(ClauseInfo clauseInfo, Schema schema, DataModel dataModel, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
 		List<ClauseInfo> newClauses = new LinkedList<ClauseInfo>();
-		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
+		BottomClauseGenerator saturator = new BottomClauseGeneratorInsideSP();
 		
 		// Generate random sequence of indexes to access examples
 		List<Integer> indexes = generateSequence(remainingPosExamples.size());
@@ -456,7 +454,7 @@ public class Golem implements Learner {
 			
 			// Saturate example
 			System.out.println("Generating bottom clause...");
-			MyClause candidate = saturator.generateGroundBottomClause(bottomClauseConstructionDAO, example, dataModel.getSpName(), parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
+			MyClause candidate = saturator.generateBottomClause(genericDAO, bottomClauseConstructionDAO, example, schema, dataModel, parameters);;
 			
 			// Generalize
 			System.out.println("Generalizing...");

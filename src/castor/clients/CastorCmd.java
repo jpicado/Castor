@@ -261,9 +261,7 @@ public class CastorCmd {
 			logger.info("Creating coverage engine...");
 			boolean createFullCoverageEngine = !saturation && !groundSaturation;
 			CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO,
-					posTrain, negTrain, this.dataModel.getSpName(), this.parameters.getIterations(),
-					this.parameters.getRecall(), this.parameters.getGroundRecall(), this.parameters.getMaxterms(),
-					this.parameters.getThreads(), createFullCoverageEngine,
+					posTrain, negTrain, this.schema, this.dataModel, this.parameters, createFullCoverageEngine,
 					examplesSource, posTrainExamplesFile, negTrainExamplesFile);
 			NumbersKeeper.creatingCoverageTime = tw.time();
 
@@ -272,15 +270,13 @@ public class CastorCmd {
 				BottomClauseUtil.generateBottomClauseForExample(BottomClauseUtil.ALGORITHMS.INSIDE_STORED_PROCEDURE,
 						genericDAO, bottomClauseConstructionDAO,
 						coverageEngine.getAllPosExamples().get(this.exampleForSaturation), this.schema,
-						this.dataModel.getModeH(), this.dataModel.getModesB(), this.parameters.getIterations(),
-						this.dataModel.getSpName(), this.parameters.getRecall(), this.parameters.getMaxterms(), this.parameters.isUseInds());
+						this.dataModel, this.parameters);
 			} else if (groundSaturation) {
 				// GROUND BOTTOM CLAUSE
 				BottomClauseUtil.generateGroundBottomClauseForExample(
 						BottomClauseUtil.ALGORITHMS.INSIDE_STORED_PROCEDURE, genericDAO, bottomClauseConstructionDAO,
 						coverageEngine.getAllPosExamples().get(this.exampleForSaturation), this.schema,
-						this.dataModel.getModeH(), this.dataModel.getModesB(), this.parameters.getIterations(),
-						this.dataModel.getSpName(), this.parameters.getRecall(), this.parameters.getMaxterms());
+						this.dataModel, this.parameters);
 			} else {
 				// LEARN
 				logger.info("Learning...");
@@ -288,14 +284,13 @@ public class CastorCmd {
 				if (this.algorithm.equals(ALGORITHM_CASTOR)) {
 					learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
 				} else if (this.algorithm.equals(ALGORITHM_GOLEM)) {
-					learner = new Golem(genericDAO, bottomClauseConstructionDAO, coverageEngine, dataModel, parameters);
+					learner = new Golem(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
 				} else if (this.algorithm.equals(ALGORITHM_PROGOLEM)) {
-					learner = new ProGolem(genericDAO, coverageEngine, parameters);
+					learner = new ProGolem(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
 				} else {
 					throw new IllegalArgumentException("Learning algorithm " + this.algorithm + " not implemented.");
 				}
-				List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel.getModeH(),
-						this.dataModel.getModesB(), posTrain, negTrain, this.dataModel.getSpName(), globalDefinition);
+				List<ClauseInfo> definition = learner.learn(this.schema, this.dataModel, posTrain, negTrain, this.dataModel.getSpName(), globalDefinition);
 
 				List<String> sqlLines = new LinkedList<String>();
 				if (outputSQL) {
@@ -375,10 +370,7 @@ public class CastorCmd {
 
 					logger.info("Evaluating on testing data...");
 					CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO,
-							bottomClauseConstructionDAO, posTest, negTest, this.dataModel.getSpName(),
-							this.parameters.getIterations(), this.parameters.getRecall(),
-							this.parameters.getGroundRecall(), this.parameters.getMaxterms(),
-							this.parameters.getThreads(), true,
+							bottomClauseConstructionDAO, posTest, negTest, this.schema, this.dataModel, this.parameters, true,
 							examplesSourceTest, posTestExamplesFile, negTestExamplesFile);
 					learner.evaluate(testCoverageEngine, this.schema, definition, posTest, negTest);
 				}

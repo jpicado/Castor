@@ -22,6 +22,7 @@ import org.apache.log4j.Logger;
 
 import aima.core.logic.fol.kb.data.Literal;
 import aima.core.logic.fol.parsing.ast.Term;
+import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
 import castor.algorithms.clauseevaluation.BottomUpEvaluator;
 import castor.algorithms.clauseevaluation.ClauseEvaluator;
@@ -36,10 +37,10 @@ import castor.dataaccess.db.GenericDAO;
 import castor.hypotheses.ClauseInfo;
 import castor.hypotheses.MyClause;
 import castor.language.InclusionDependency;
-import castor.language.Mode;
 import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
+import castor.settings.DataModel;
 import castor.settings.Parameters;
 import castor.utils.Commons;
 import castor.utils.Formatter;
@@ -74,7 +75,7 @@ public class CastorLearner implements Learner {
 	/*
 	 * Run learning algorithm
 	 */
-	public List<ClauseInfo> learn(Schema schema, Mode modeH, List<Mode> modesB, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, boolean globalDefinition) {
+	public List<ClauseInfo> learn(Schema schema, DataModel dataModel, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, boolean globalDefinition) {
 		TimeWatch tw = TimeWatch.start();
 		
 		logger.info("Training positive examples in table " + posExamplesRelation.getName() + ": " + this.coverageEngine.getAllPosExamples().size());
@@ -83,7 +84,7 @@ public class CastorLearner implements Learner {
 		List<ClauseInfo> definition = new LinkedList<ClauseInfo>();
 		
 		// Call covering approach
-		definition.addAll(this.learnUsingCovering(schema, modeH, modesB, posExamplesRelation, negExamplesRelation, spNameTemplate, parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms(), parameters.getSample(), parameters.getBeam(), parameters.getReductionMethod(), globalDefinition));
+		definition.addAll(this.learnUsingCovering(schema, dataModel, posExamplesRelation, negExamplesRelation, spNameTemplate, parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms(), parameters.getSample(), parameters.getBeam(), parameters.getReductionMethod(), globalDefinition));
 	
 		// Get string representation of definition
 		StringBuilder sb = new StringBuilder();
@@ -163,7 +164,7 @@ public class CastorLearner implements Learner {
 	/*
 	 * Learn a clause using covering approach
 	 */
-	private List<ClauseInfo> learnUsingCovering(Schema schema, Mode modeH, List<Mode> modesB, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int maxRecall, int maxterms, int sampleSize, int beamWidth, String reductionMethod, boolean globalDefinition) {
+	private List<ClauseInfo> learnUsingCovering(Schema schema, DataModel dataModel, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int maxRecall, int maxterms, int sampleSize, int beamWidth, String reductionMethod, boolean globalDefinition) {
 		List<ClauseInfo> definition = new LinkedList<ClauseInfo>();
 		
 		// Get all positive examples from database and keep them in memory
@@ -173,7 +174,7 @@ public class CastorLearner implements Learner {
 			logger.info("Remaining uncovered examples: " + remainingPosExamples.size());
 			
 			// Compute best ARMG
-			ClauseInfo clauseInfo = learnClause(schema, modeH, modesB, remainingPosExamples, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, maxRecall, maxterms, sampleSize, beamWidth);
+			ClauseInfo clauseInfo = learnClause(schema, dataModel, remainingPosExamples, posExamplesRelation, negExamplesRelation, spNameTemplate, iterations, maxRecall, maxterms, sampleSize, beamWidth);
 			
 			// Get new positive examples covered
 			// Adding 1 to count seed example
@@ -313,8 +314,9 @@ public class CastorLearner implements Learner {
 	/*
 	 * Perform generalization using beam search + ARMG
 	 */
-	private ClauseInfo learnClause(Schema schema, Mode modeH, List<Mode> modesB, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth) {
-		BottomClauseGeneratorInsideSP saturator = new BottomClauseGeneratorInsideSP();
+	private ClauseInfo learnClause(Schema schema, DataModel dataModel, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, String spNameTemplate, int iterations, int recall, int maxterms, int sampleSize, int beamWidth) {
+		BottomClauseGenerator saturator = new BottomClauseGeneratorInsideSP();
+//		BottomClauseGenerator saturator = new BottomClauseGeneratorOriginalAlgorithm();
 		
 		// First unseen positive example (pop)
 		Tuple exampleTuple = remainingPosExamples.remove(0);
@@ -322,7 +324,8 @@ public class CastorLearner implements Learner {
 		// Generate bottom clause
 		TimeWatch tw = TimeWatch.start();
 		logger.info("Generating bottom clause for "+exampleTuple.getValues().toString()+"...");
-		MyClause bottomClause = saturator.generateBottomClause(bottomClauseConstructionDAO, exampleTuple, spNameTemplate, iterations, recall, maxterms);
+		MyClause bottomClause = saturator.generateBottomClause(genericDAO, bottomClauseConstructionDAO, exampleTuple, schema, dataModel, parameters);
+		
 		logger.debug("Bottom clause: \n"+ Formatter.prettyPrint(bottomClause));
 		logger.info("Literals: " + bottomClause.getNumberLiterals());
 		logger.info("Saturation time: " + tw.time(TimeUnit.MILLISECONDS) + " milliseconds.");
