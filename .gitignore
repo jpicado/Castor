@@ -2,5 +2,6 @@
 /bin/
 /log/
 /sps/
+/spsTemp/
 /dist/
 /dist-GridSearch/

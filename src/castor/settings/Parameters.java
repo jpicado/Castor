@@ -19,7 +19,7 @@ public class Parameters {
 	private int iterations = 2;
 	private int recall = 10;
 	private int groundRecall = Integer.MAX_VALUE;
-	private int maxterms = 1000;
+	private int maxterms = Integer.MAX_VALUE;
 	private boolean useInds = true;
 	private String dbURL = "localhost";
 	private String port = "21212";
