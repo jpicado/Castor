@@ -14,24 +14,18 @@ public class DDLIndMain {
 
     final static Logger logger = Logger.getLogger(DDLIndMain.class);
 
-    public static Boolean extractIndFromDDL(String inputDDLFile, String outputFile) {
+    public static boolean extractIndFromDDL(String inputDDLFile, String outputFile) {
         logger.info("Running DDLIndExtraction ");
-        Map<String, TableObject> tables = readSQLFile(inputDDLFile);
+        Map<String, TableObject> tables = DDLParser.parseDDLFile(inputDDLFile);
         List<String> inds = new ArrayList<String>();
         List<String> invalidPks = new ArrayList<String>();
         Map<String, Integer> ordinalPos = new HashMap<String, Integer>();
         generateInds(tables, inds, invalidPks, ordinalPos);
-        Boolean result = FileUtils.writeIndsToJsonFormat(inds, ordinalPos, outputFile);
+        boolean result = FileUtils.writeIndsToJsonFormat(inds, ordinalPos, outputFile);
         if (!invalidPks.isEmpty()) {
             logger.info("Invalid primary keys found: " + invalidPks.toString());
         }
         return result;
-    }
-
-
-    private static Map<String, TableObject> readSQLFile(String inputPath) {
-        DDLParser ddlParser = new DDLParser();
-        return ddlParser.parseDDLFile(inputPath);
     }
 
     private static void generateInds(Map<String, TableObject> tables, List<String> inds, List<String> invalidPks, Map<String, Integer> ordinalPos) {
@@ -43,7 +37,6 @@ public class DDLIndMain {
             }
         }
     }
-
 
     //Create primary key map , table and pk column
     private static void isForeignKeyValid(ForeignKeyIndex index, Map<String, TableObject> tables, TableObject baseTable, List<String> inds, List<String> invalidPks, Map<String, Integer> ordinalPos) {

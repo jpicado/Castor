@@ -102,14 +102,14 @@ public class JsonSettingsReader {
 	/*
 	 * Read JSON object for data model and convert to object
 	 */
-	public static DataModel readDataModel(JsonObject dataModelJson) throws Exception {
+	public static DataModel readDataModel(JsonObject dataModelJson) {
 		Mode modeH;
 		List<Mode> modesB;
 		String spName;
 
 		// Read head mode
 		if (dataModelJson.get("headMode") == null) {
-			throw new Exception("Head mode not set in data model json.");
+			throw new IllegalArgumentException("Head mode not set in data model json.");
 		} else {
 			String modeHString = dataModelJson.get("headMode").getAsString();
 			modeH = Mode.stringToMode(modeHString);
@@ -117,7 +117,7 @@ public class JsonSettingsReader {
 		
 		// Read body modes
 		if (dataModelJson.get("bodyModes") == null) {
-			throw new Exception("Body modes not set in data model json.");
+			throw new IllegalArgumentException("Body modes not set in data model json.");
 		} else {
 			modesB = new LinkedList<Mode>();
 			JsonArray modesBArray = dataModelJson.get("bodyModes").getAsJsonArray();
@@ -129,7 +129,7 @@ public class JsonSettingsReader {
 		
 		// Read stored prodecure name
 		if (dataModelJson.get("spName") == null) {
-			throw new Exception("Stored procedure name not set in data model json.");
+			throw new IllegalArgumentException("Stored procedure name not set in data model json.");
 		} else {
 			spName = dataModelJson.get("spName").getAsString();
 		}
@@ -141,7 +141,7 @@ public class JsonSettingsReader {
 	/*
  * Read JSON object for data model and convert to object
  */
-	public static DataModel readDataModelForTransformation(JsonObject dataModelJson) throws Exception {
+	public static DataModel readDataModelForTransformation(JsonObject dataModelJson) {
 		Mode modeH;
 		List<Mode> modesB;
 		Map<String, List<Set<String>>> modesBMap;
@@ -149,7 +149,7 @@ public class JsonSettingsReader {
 
 		// Read head mode
 		if (dataModelJson.get("headMode") == null) {
-			throw new Exception("Head mode not set in data model json.");
+			throw new IllegalArgumentException("Head mode not set in data model json.");
 		} else {
 			String modeHString = dataModelJson.get("headMode").getAsString();
 			modeH = Mode.stringToMode(modeHString);
@@ -157,7 +157,7 @@ public class JsonSettingsReader {
 
 		// Read body modes
 		if (dataModelJson.get("bodyModes") == null) {
-			throw new Exception("Body modes not set in data model json.");
+			throw new IllegalArgumentException("Body modes not set in data model json.");
 		} else {
 			modesB = new LinkedList<Mode>();
 			modesBMap = new HashMap<String, List<Set<String>>>();
@@ -171,7 +171,7 @@ public class JsonSettingsReader {
 
 		// Read stored prodecure name
 		if (dataModelJson.get("spName") == null) {
-			throw new Exception("Stored procedure name not set in data model json.");
+			throw new IllegalArgumentException("Stored procedure name not set in data model json.");
 		} else {
 			spName = dataModelJson.get("spName").getAsString();
 		}
@@ -211,7 +211,7 @@ public class JsonSettingsReader {
 	/*
 	 * Read JSON object for schema and convert to object
 	 */
-	public static Schema readSchema(JsonObject schemaJson) throws Exception {
+	public static Schema readSchema(JsonObject schemaJson) {
 		String name = "";
 		Map<String, Relation> relations;
 		Map<String, List<InclusionDependency>> inds;
@@ -223,7 +223,7 @@ public class JsonSettingsReader {
 		
 		// Read relations
 		if (schemaJson.get("relations") == null) {
-			throw new Exception("Schema not set in schema json.");
+			throw new IllegalArgumentException("Schema not set in schema json.");
 		} else {
 			relations = new HashMap<String, Relation>();
 			JsonArray relationsArray = schemaJson.get("relations").getAsJsonArray();
@@ -249,13 +249,10 @@ public class JsonSettingsReader {
 	}
 	
 	/*
-	 * Read JSON object for schema and convert to object
+	 * Read JSON object for INDs and convert to object
 	 */
-	public static Map<String, List<InclusionDependency>> readINDs(JsonObject indsJson) throws Exception {
-		Map<String, List<InclusionDependency>> inds;
-		
-		// Read inclusion dependencies
-		inds = new HashMap<String, List<InclusionDependency>>();
+	public static Map<String, List<InclusionDependency>> readINDs(JsonObject indsJson)  {
+		Map<String, List<InclusionDependency>> inds = new HashMap<String, List<InclusionDependency>>();
 		JsonArray indsArray = indsJson.get("inds").getAsJsonArray();
 		for (int i = 0; i < indsArray.size(); i++) {
 			JsonObject indObject = indsArray.get(i).getAsJsonObject();
@@ -273,5 +270,37 @@ public class JsonSettingsReader {
 		}
 		
 		return inds;
+	}
+	
+	/*
+	 * Read JSON object containing metadata and convert to object
+	 */
+	public static Map<String, ModeMetadata> readMetadata(JsonObject metadataJson) {
+		Map<String, ModeMetadata> metadata = new HashMap<String, ModeMetadata>();
+		JsonArray attributesArray = metadataJson.get("attributes").getAsJsonArray();
+		for (int i = 0; i < attributesArray.size(); i++) {
+			JsonObject attributeObject = attributesArray.get(i).getAsJsonObject();
+			
+			// Name
+			String name = attributeObject.get("name").getAsString().toLowerCase();
+			
+			// Types
+			List<String> types = new LinkedList<String>();
+			JsonArray typesArray = attributeObject.get("types").getAsJsonArray();
+			for (int j = 0; j < typesArray.size(); j++) {
+				types.add(typesArray.get(j).getAsString());
+			}
+			
+			// Access modes
+			List<String> accessModes = new LinkedList<String>();
+			JsonArray accessModesArray = attributeObject.get("access_modes").getAsJsonArray();
+			for (int j = 0; j < accessModesArray.size(); j++) {
+				accessModes.add(accessModesArray.get(j).getAsString());
+			}
+			
+			metadata.put(name, new ModeMetadata(types, accessModes));
+		}
+		
+		return metadata;
 	}
 }

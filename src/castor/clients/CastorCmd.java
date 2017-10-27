@@ -1,5 +1,8 @@
 package castor.clients;
 
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -182,7 +185,9 @@ public class CastorCmd {
 
 			// Get INDs from file or DDL
 			//TODO hardcoded name, replace with name of ddl + INDs
-			String indsFile = "indsFromDDL.json";
+			String castorInputFolder = "castor-input/";
+			Files.createDirectories(Paths.get(castorInputFolder));
+			String indsFile = castorInputFolder + "inds.json";
 			if (indsFilePath != null) {
 				indsFile = getOption(indsFilePath);
 			} else if (ddlFilePath != null) {

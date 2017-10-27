@@ -68,7 +68,7 @@ public class FileUtils {
         return jsonObject;
 	}
 
-    public static Boolean writeModeToJsonFormat(String target, String headMode, List<String> bodyMode, String dbName, String filePath) {
+    public static boolean writeModeToJsonFormat(String target, String headMode, List<String> bodyMode, String dbName, String filePath) {
         JsonObject job = new JsonObject();
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
         JsonParser jp = new JsonParser();
@@ -83,7 +83,7 @@ public class FileUtils {
         return writeGsonToFile(filePath,gson.toJson(job));
     }
 
-    public static Boolean writeIndsToJsonFormat(List<String> ind, Map<String, Integer> ordPos, String filePath) {
+    public static boolean writeIndsToJsonFormat(List<String> ind, Map<String, Integer> ordPos, String filePath) {
         JsonObject jobParent = new JsonObject();
         JsonArray jsonArray = new JsonArray();
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -109,7 +109,7 @@ public class FileUtils {
         return writeGsonToFile(filePath,gson.toJson(jobParent));
     }
 
-    public static Boolean writeGsonToFile(String filePath, String fileContent){
+    public static boolean writeGsonToFile(String filePath, String fileContent){
         try {
             FileWriter file = new FileWriter(filePath);
             file.write(fileContent);
