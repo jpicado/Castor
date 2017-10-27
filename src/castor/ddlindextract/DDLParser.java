@@ -31,7 +31,6 @@ public class DDLParser {
 		StringBuilder sb = new StringBuilder();
 		Map<String, TableObject> tableMap = null;
 		try {
-			logger.info("Reading transformation file...");
 			stream = Files.lines(Paths.get(file));
 			{
 				stream.filter(s -> !s.isEmpty()).forEach(s -> sb.append(s.toLowerCase()));

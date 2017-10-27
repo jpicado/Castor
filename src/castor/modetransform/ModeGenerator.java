@@ -1,5 +1,8 @@
 package castor.modetransform;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -62,7 +65,14 @@ public class ModeGenerator {
 			}
 		}
 		
-		FileUtils.writeModeToJsonFormat(null, headMode, bodyModes, spName+"_"+target, outputModesFile);
+		try {
+			String outputFolder = FilenameUtils.getFullPathNoEndSeparator(outputModesFile);
+			Files.createDirectories(Paths.get(outputFolder));
+			FileUtils.writeModeToJsonFormat(null, headMode, bodyModes, spName+"_"+target, outputModesFile);
+		} catch (IOException e) {
+			throw new RuntimeException(e.getMessage());
+		}
+		
 		logger.info("Modes written to file " + outputModesFile);
 	}
 	
