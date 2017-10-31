@@ -493,6 +493,8 @@ public class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGener
 		builder.append("(");
 		int counter = 0;
 		for (String term : terms) {
+			// Escape single quotes
+			term = term.replace("'", "''");
 			builder.append("'" + term + "'");
 			if (counter < terms.size() - 1) {
 				builder.append(",");
