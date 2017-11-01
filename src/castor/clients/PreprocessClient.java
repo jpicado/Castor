@@ -80,7 +80,7 @@ public class PreprocessClient {
 			String dataModelFile = getOption(dataModelFilePath);
 			String transformSchema = getOption(transformSchemaPath);
 			String outputModesFile = getOption(outputModesFilePath);
-			boolean modeResult = TransformMain.generateModesUsingTranformation(dataModelFile, transformSchema, outputModesFile);
+			boolean modeResult = TransformMain.generateModesUsingTransformation(dataModelFile, transformSchema, outputModesFile);
 			if (modeResult == false) {
 				logger.error("Error while transformating modes using transformation.");
 			}

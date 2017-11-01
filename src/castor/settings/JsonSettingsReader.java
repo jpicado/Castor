@@ -144,7 +144,7 @@ public class JsonSettingsReader {
 	public static DataModel readDataModelForTransformation(JsonObject dataModelJson) {
 		Mode modeH;
 		List<Mode> modesB;
-		Map<String, List<Set<String>>> modesBMap;
+		Map<String, List<List<String>>> modesBMap;
 		String spName;
 
 		// Read head mode
@@ -160,7 +160,7 @@ public class JsonSettingsReader {
 			throw new IllegalArgumentException("Body modes not set in data model json.");
 		} else {
 			modesB = new LinkedList<Mode>();
-			modesBMap = new HashMap<String, List<Set<String>>>();
+			modesBMap = new HashMap<String, List<List<String>>>();
 			JsonArray modesBArray = dataModelJson.get("bodyModes").getAsJsonArray();
 			for (int i = 0; i < modesBArray.size(); i++) {
 				String modebString = modesBArray.get(i).getAsString();
@@ -180,31 +180,22 @@ public class JsonSettingsReader {
 	}
 
 	//Add the attribute type information to jsonmodel, add #attribute directly. Remove +/- from string
-	public static void initializeModesBodyMap(String modebString, Map<String, List<Set<String>>> modesBMap) {
+	public static void initializeModesBodyMap(String modebString, Map<String, List<List<String>>> modesBMap) {
 		String relationName = modebString.substring(0, modebString.indexOf(Constants.TransformDelimeter.OPEN_PARA.getValue()));
 		String attributes = (String) modebString.subSequence(modebString.indexOf(Constants.TransformDelimeter.OPEN_PARA.getValue()) + 1, modebString.indexOf(Constants.TransformDelimeter.CLOSE_PARA.getValue()));
 		String[] attributeArray = attributes.split(Constants.TransformDelimeter.COMMA.getValue());
-		int count = 0;
-		List<Set<String>> attributeTypeList = null;
+		List<List<String>> modeList = null;
 		if (!modesBMap.containsKey(relationName)) {
-			attributeTypeList = new ArrayList<Set<String>>();
+			modeList = new ArrayList<List<String>>();
 		} else {
-			attributeTypeList = modesBMap.get(relationName);
+			modeList = modesBMap.get(relationName);
 		}
+		List<String> attributesList = new ArrayList<>();
 		for (String attribute : attributeArray) {
-			if (!attribute.startsWith(Constants.ModeType.CONSTANT.getValue())) {
-				attribute = attribute.substring(1);
-			}
-			if (!modesBMap.containsKey(relationName)) {
-				Set<String> s = new HashSet<String>();
-				s.add(attribute);
-				attributeTypeList.add(s);
-			} else {
-				attributeTypeList.get(count).add(attribute);
-			}
-			count++;
+			attributesList.add(attribute);
 		}
-		modesBMap.put(relationName, attributeTypeList);
+		modeList.add(attributesList);
+		modesBMap.put(relationName, modeList);
 	}
 
 
