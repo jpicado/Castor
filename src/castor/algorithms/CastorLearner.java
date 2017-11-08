@@ -434,6 +434,9 @@ public class CastorLearner implements Learner {
 			if (!newLiterals.contains(literal)) {
 				List<Literal> chainLiterals = DataDependenciesUtils.findLiteralsInInclusionChain(schema, clause, literal);
 				
+//				List<Literal> chainLiterals = new LinkedList<Literal>();
+//				findLiteralsSatisfyingInds(schema, clause.getNegativeLiterals(), literal, new HashSet<String>(), chainLiterals);
+				
 				// Add all literals
 				newLiterals.addAll(chainLiterals);
 			}			
@@ -767,6 +770,8 @@ public class CastorLearner implements Learner {
 				outputLiterals.add(currentLiteral);
 				outputLiterals.addAll(newLiteralsFromInds);
 			}
+		} else if(!seenPredicates.contains(currentLiteral.getAtomicSentence().getSymbolicName())) {
+			outputLiterals.add(currentLiteral);
 		}
 
 		return allIndsSatisfied;
