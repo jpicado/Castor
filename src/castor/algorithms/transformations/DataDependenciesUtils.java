@@ -13,10 +13,52 @@ import castor.language.Schema;
 
 public class DataDependenciesUtils {
 
+	public static List<Literal> findLiteralsInInclusionChain(Schema schema, MyClause clause, Literal literal) {
+		return DataDependenciesUtils.findLiteralsInInclusionChain(schema, clause.getNegativeLiterals(), literal, new HashSet<String>());
+	}
+	
+	/*
+	 * Find all literals in the same inclusion chain as the given literal. Recursive.
+	 */
+	private static List<Literal> findLiteralsInInclusionChain(Schema schema, List<Literal> clauseLiterals, Literal currentLiteral, Set<String> seenPredicates) {
+		List<Literal> outputLiterals = new LinkedList<Literal>();
+		outputLiterals.add(currentLiteral);
+		
+		if (!seenPredicates.contains(currentLiteral.getAtomicSentence().getSymbolicName())
+				&& schema.getInclusionDependencies().containsKey(currentLiteral.getAtomicSentence().getSymbolicName())) {
+			
+			for (InclusionDependency ind : schema.getInclusionDependencies().get(currentLiteral.getAtomicSentence().getSymbolicName())) {
+				Term leftIndTerm = currentLiteral.getAtomicSentence().getArgs().get(ind.getLeftAttributeNumber());
+				
+				if (!seenPredicates.contains(ind.getRightPredicateName())) {
+					// Follow IND
+					for (int j = 0; j < clauseLiterals.size(); j++) {
+						Literal otherLiteral = clauseLiterals.get(j);
+						String otherLiteralPredicateName = otherLiteral.getAtomicSentence().getSymbolicName();
+						
+						if (otherLiteralPredicateName.equals(ind.getRightPredicateName())) {
+							Term rightIndTerm = otherLiteral.getAtomicSentence().getArgs().get(ind.getRightAttributeNumber());
+	
+							if (leftIndTerm.equals(rightIndTerm)) {
+								// Add current predicate to seen list
+								seenPredicates.add(currentLiteral.getAtomicSentence().getSymbolicName());
+								
+								// Follow chain
+								outputLiterals.addAll(findLiteralsInInclusionChain(schema, clauseLiterals, otherLiteral, seenPredicates));
+							}
+						}
+					}
+				}
+			}
+		}
+
+		return outputLiterals;
+	}
+	
 	/*
 	 * Find all literals in the same inclusion chain as the given literal. Chain is followed until there are no changes.
 	 */
-	public static List<Literal> findLiteralsInInclusionChain(Schema schema, MyClause clause, Literal literal) {
+	public static List<Literal> findLiteralsInInclusionChainOLD(Schema schema, MyClause clause, Literal literal) {
 		List<Literal> literals = new LinkedList<Literal>();
 		literals.add(literal);
 		return DataDependenciesUtils.findLiteralsInInclusionChain(schema, clause, literals);
