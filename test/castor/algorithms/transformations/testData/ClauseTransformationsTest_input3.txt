@@ -1,0 +1,21 @@
+query1_all(V0,V1,V2) :- cot_event_position(V0,V70,V29,V30,V73,V34,V71,V72), source(V1,V3,"15"), cot_event(V0,V1,"a-n-A-C-F-s",V6,V69,V26)
+
+query1_all(V0,V1,V2) :- cot_event_position(V0,V35,V29,V30,V38,V39,V70,V71), source(V1,V3,"15"), cot_event(V0,V1,"a-n-A-C-F-s",V6,V69,V27)
+
+query1_all(V0,V1,V2) :- source(V1,V3,"15"), cot_event_position(V0,V35,V29,V30,V72,V73,V70,V71), cot_event(V0,V1,"a-n-A-C-F-s",V6,V69,V27)
+
+query1_all(V0,V1,V2) :- source(V1,V3,"15"), cot_event_position(V0,V35,V29,V30,V72,V73,V70,V71), cot_event(V0,V1,"a-n-A-C-F-s",V6,V69,V27)
+
+query1_all(V0,V1,V2) :- source(V1,V3,"15"), cot_event(V0,V1,"a-n-A-C-F-s",V6,V69,V27), cot_event_position(V0,V70,V29,V30,V73,V74,V71,V72)
+
+query1_all(V0,V1,V2) :- cot_event_position(V0,V46,V28,V29,V49,V50,V47,V48), source(V1,V3,"15"), cot_event(V0,V1,"a-n-A-C-F-s",V6,V14,V26)
+
+query1_all(V0,V1,V2) :- source(V1,V3,"15"), cot_event(V0,V1,"a-n-A-C-F-s",V6,V69,V27), cot_event_position(V0,V70,V29,V30,V73,V74,V71,V72)
+
+query1_all(V0,V1,V2) :- source(V1,V3,"15"), cot_event_position(V0,V35,V29,V30,V72,V73,V70,V71), cot_event(V0,V1,"a-n-A-C-F-s",V6,V69,V27)
+
+query1_all(V0,V1,V2) :- source(V1,V3,"15"), cot_event(V0,V1,"a-n-A-C-F-s",V6,V69,V27), cot_event_position(V0,V35,V29,V30,V72,V66,V70,V71)
+
+query1_all(V0,V1,V2) :- source(V1,V3,"15"), cot_event(V0,V1,"a-n-A-C-F-s",V6,V69,V27), cot_event_position(V0,V35,V29,V30,V72,V66,V70,V71)
+
+query1_all(V0,V1,V2) :- cot_event_position(V0,V35,V29,V30,V72,V51,V70,V71), source(V1,V3,"15"), cot_event(V0,V1,"a-n-A-C-F-s",V6,V69,V27)

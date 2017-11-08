@@ -1,0 +1,1 @@
+query9_all(V0,V1,V2,V3,V4,V5) :- cot_event(V2,V0,"a-n-A-C-F-m",V8,V47,"201705071645"), source(V0,"ABD19E",V6), source(V0,V1,"8"), cot_event_position(V2,V29,V30,V30,V4,V5,V48,V49)

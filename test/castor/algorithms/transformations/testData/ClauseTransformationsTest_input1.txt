@@ -1,0 +1,4 @@
+query6_all(V0,V1,V2,V3) :- source(V4,V0,"5"), cot_event_position(V1,V24,V25,V25,V33,V34,V31,V32), cot_event(V1,V4,V2,V7,V30,V3)
+query6_all(V0,V1,V2,V3) :- source(V4,V0,"5"), cot_event(V1,V4,V2,V7,V65,V3), cot_event_position(V1,V66,V27,V28,V31,V32,V67,V68)
+query6_all(V0,V1,V2,V3) :- source(V4,V0,"8"), cot_event(V1,V4,"a-n-A-C-F-s",V7,V53,V3), cot_event_position(V1,V54,V25,V5,V57,V58,V55,V56)
+query6_all(V0,V1,V2,V3) :- cot_event(V1,V4,"a-n-A-C-F-s",V7,V69,V3), cot_event_position(V1,V47,V29,V30,V45,V46,V70,V71), source(V4,V0,V5)
