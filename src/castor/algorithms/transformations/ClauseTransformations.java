@@ -315,6 +315,26 @@ public class ClauseTransformations {
             }
         }
     }
+    
+    /*
+     * Minimize clause definition, a set of queries
+     */
+    public static void minimizeDefinition(List<ClauseInfo> definition){
+        //check if q1 is contained in q1
+        Iterator<ClauseInfo> iterator = definition.iterator();
+        while(iterator.hasNext()){
+        		ClauseInfo clauseInfo1 = (ClauseInfo) iterator.next();
+            for(ClauseInfo clauseInfo2: definition){
+                if(!clauseInfo1.getClause().equals(clauseInfo2.getClause())){
+                    boolean isQueryContained = determineQueryContainment(clauseInfo1.getClause(),clauseInfo2.getClause());
+                    if(isQueryContained){
+                        iterator.remove();
+                        break;
+                    }
+                }
+            }
+        }
+    }
 
     /*
      * This method is entry point for queryContaiment algorithm. It Determines if query q1 is contained in q2
