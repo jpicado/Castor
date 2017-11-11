@@ -410,8 +410,6 @@ public class CastorLearner implements Learner {
 		// NOTE: this is needed for some datasets (e.g. HIV-small, fold 2)
 		logger.info("Reordering bottom clause...");
 		bottomClause = this.reorderAccordingToINDs(schema, bottomClause);
-		
-		System.out.println(Formatter.prettyPrint(bottomClause));
 
 		logger.info("Generalizing clause...");
 

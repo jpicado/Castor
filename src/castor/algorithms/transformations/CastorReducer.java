@@ -51,7 +51,7 @@ public class CastorReducer {
 		
 		List<Term> headVariables = clause.getPositiveLiterals().get(0).getAtomicSentence().getArgs();
 		
-		List<List<Literal>> allChains = DataDependenciesUtils.findAllInclusionChains(schema, clause);
+		List<List<Literal>> allChains = DataDependenciesUtils.findAllInclusionChains2(schema, clause);
 		allChains = reorderChains(allChains, headVariables);
 		
 		// Get negative examples covered by clause (only used if measure is consistency)
