@@ -123,23 +123,7 @@ public class DataDependenciesUtils {
 	/*
 	 * Find all inclusion chains (instances of inclusion classes) in a clause
 	 */
-	public static List<List<Literal>> findAllInclusionChainsOLD(Schema schema, MyClause clause) {
-		List<List<Literal>> allChains = new LinkedList<List<Literal>>();
-		
-		for (Literal literal : clause.getNegativeLiterals()) {
-			// Create chain containing literal
-			List<Literal> currentChain = new LinkedList<Literal>();
-			currentChain.add(literal);
-			// Add literal to used predicates (a chain cannot have another literal with same predicate name)
-			Set<String> usedPredicates = new HashSet<String>();
-			usedPredicates.add(literal.getAtomicSentence().getSymbolicName());
-			
-			DataDependenciesUtils.findInclusionChainsAuxOLD(schema, clause, allChains, currentChain, usedPredicates, literal);
-		}
-		
-		return allChains;
-	}
-	// This implementation is faster
+	// This implementation had a bug, would run forever
 	public static List<List<Literal>> findAllInclusionChains(Schema schema, MyClause clause) {
 		List<List<Literal>> allChains = new LinkedList<List<Literal>>();
 		
@@ -182,78 +166,12 @@ public class DataDependenciesUtils {
 	}
 	
 	/*
-	 * Find all inclusion class instances in a clause given a literal
-	 */
-	public static List<List<Literal>> findInclusionChains(Schema schema, MyClause clause, Literal literal) {
-		List<List<Literal>> chains = new LinkedList<List<Literal>>();
-		// Create chain containing literal
-		List<Literal> currentChain = new LinkedList<Literal>();
-		currentChain.add(literal);
-		// Add literal to used predicates (a chain cannot have another literal with same predicate name)
-		Set<String> usedPredicates = new HashSet<String>();
-		usedPredicates.add(literal.getAtomicSentence().getSymbolicName());
-		
-		DataDependenciesUtils.findInclusionChainsAuxOLD(schema, clause, chains, currentChain, usedPredicates, literal);
-		return chains;
-	}
-	
-	/*
 	 * Auxiliary predicate to find all inclusion class instances
 	 */
-	private static void findInclusionChainsAuxOLD(Schema schema, MyClause clause, List<List<Literal>> chains, List<Literal> currentChain, Set<String> usedPredicates, Literal currentLiteral) {
-		boolean chainExtended = false;
-		String currentPredicate = currentLiteral.getAtomicSentence().getSymbolicName();
-		if (schema.getInclusionDependencies().containsKey(currentPredicate)) {
-			for (InclusionDependency ind : schema.getInclusionDependencies().get(currentPredicate)) {
-				// If right predicate in IND has not been added, process IND
-				if (!usedPredicates.contains(ind.getRightPredicateName())) {
-					Term leftIndTerm = currentLiteral.getAtomicSentence().getArgs().get(ind.getLeftAttributeNumber());
-					
-					// If IND holds with other literal, add that literal to literals in inclusion chain
-					for (int j = 0; j < clause.getNegativeLiterals().size(); j++) {
-						Literal otherLiteral = clause.getNegativeLiterals().get(j);
-						String otherLiteralPredicateName = otherLiteral.getAtomicSentence().getSymbolicName();
-	
-						if (otherLiteralPredicateName.equals(ind.getRightPredicateName())) {
-							Term rightIndTerm = otherLiteral.getAtomicSentence().getArgs().get(ind.getRightAttributeNumber());
-	
-							if (leftIndTerm.equals(rightIndTerm)) {
-								List<Literal> newChain = new LinkedList<Literal>(currentChain);
-								Set<String> newUsedPredicates = new HashSet<String>(usedPredicates);
-								
-								newChain.add(otherLiteral);
-								newUsedPredicates.add(otherLiteralPredicateName);
-								
-								DataDependenciesUtils.findInclusionChainsAuxOLD(schema, clause, chains, newChain, newUsedPredicates, otherLiteral);
-								chainExtended = true;
-							}
-						}
-					}
-				}
-			}
-		}
-		
-		if (!chainExtended) {
-			// Cannot make chain longer
-			// Add to list of chains if there is no other chain with exactly the same literals (order does not matter)
-			boolean repeatedChain = false;
-			for(List<Literal> chain : chains) {
-				if (sameChain(currentChain, chain)) {
-					repeatedChain = true;
-					break;
-				}
-            }
-			if (!repeatedChain) {
-				chains.add(currentChain);
-			}
-		}
-	}
-	// This implementation is faster
+	// This implementation had a bug, would run forever
 	private static void findInclusionChainsAux(Schema schema, MyClause clause, List<List<Literal>> chains, List<Literal> currentChain, Set<String> usedPredicates, int depth) {
 		boolean chainExtended = false;
-//		System.out.println("recursive call");
-//		System.out.println(usedPredicates.toString());
-		
+
 		for (Literal literal : currentChain) {
 			String predicate = literal.getAtomicSentence().getSymbolicName();
 			
@@ -304,7 +222,9 @@ public class DataDependenciesUtils {
 		}
 	}
 	
-	
+	/*
+	 * Recursive function that finds all instances of inclusion chains starting at literal, without using predicates in usedPredicates
+	 */
 	private static List<List<Literal>> findInclusionChainsAux2(Schema schema, MyClause clause, Literal literal, Set<String> usedPredicates) {
 		List<List<Literal>> chains = new LinkedList<List<Literal>>();
 		String predicate = literal.getAtomicSentence().getSymbolicName();
@@ -312,9 +232,11 @@ public class DataDependenciesUtils {
 		
 		if (schema.getInclusionDependencies().containsKey(predicate)) {
 			
+			// List of chains generated by each IND
 			List<List<List<Literal>>> chainsByInds = new LinkedList<List<List<Literal>>>();
 			for (InclusionDependency ind : schema.getInclusionDependencies().get(predicate)) {
 				
+				// List of chains generated by the current IND
 				List<List<Literal>> chainsByCurrentInd = new LinkedList<List<Literal>>();
 				
 				if (!usedPredicates.contains(ind.getRightPredicateName())) {
@@ -344,6 +266,7 @@ public class DataDependenciesUtils {
 				}
 			}
 			
+			// Compute all combinations of chains in chainsByInds
 			if (chainsByInds.size() > 0) {
 				List<List<Literal>> combinedChains = findAllCombinations(chainsByInds, 0);
 				if (combinedChains.size() > 0) {
@@ -356,6 +279,7 @@ public class DataDependenciesUtils {
 			}
 		}
 		
+		// If there were no changes, create a chain from current literal
 		if (!chainExtended) {
 			List<Literal> newChain = new LinkedList<Literal>();
 			newChain.add(literal);
@@ -365,6 +289,9 @@ public class DataDependenciesUtils {
 		return chains;
 	}
 	
+	/*
+	 * Recursive function that creates all combinations of chains
+	 */
 	private static List<List<Literal>> findAllCombinations(List<List<List<Literal>>> chainsByInds, int current) {
 		List<List<Literal>> chains = new LinkedList<List<Literal>>();
 		
