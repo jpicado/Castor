@@ -157,28 +157,37 @@ public class ClauseTransformations {
                 Map<Variable, Term> theta = mostGeneralUnifierOfLiteralWrtLiteral(literalRemoved.getAtomicSentence(), literalOfSubsumed.getAtomicSentence());
 
                 if (theta != null) {
-
                     // If head variable is substituted, save substitution
+                    boolean validSubstitution = true;
                     headSubstitutions.clear();
                     for (Variable var : theta.keySet()) {
                         if (headLiteral.getAtomicSentence().getArgs().contains(var)) {
-                            headSubstitutions.put(var, theta.get(var));
+                        		
+                        		if (headLiteral.getAtomicSentence().getArgs().contains(theta.get(var))) {
+                        			// Not a valid substitution if head variable is substituted by other head variable
+                        			validSubstitution = false;
+                        			break;
+                        		} else {
+                        			headSubstitutions.put(var, theta.get(var));
+                        		}
                         }
                     }
 
-                    // Apply substitution to all literals in c1 and check if they are in c2
-                    boolean subset = true;
-                    for (Literal literalOfSubsumer : subsumerClause.getNegativeLiterals()) {
-                        Literal literalOfSubsumerTheta = substVisitor.subst(theta, literalOfSubsumer);
-                        if (!subsumedClause.getNegativeLiterals().contains(literalOfSubsumerTheta)) {
-                            subset = false;
-                            break;
-                        }
-                    }
-                    // If c1\theta subset c2, then c1 subsumes c2
-                    if (subset) {
-                        subsumes = true;
-                        break;
+                    if (validSubstitution) {
+	                    // Apply substitution to all literals in c1 and check if they are in c2
+	                    boolean subset = true;
+	                    for (Literal literalOfSubsumer : subsumerClause.getNegativeLiterals()) {
+	                        Literal literalOfSubsumerTheta = substVisitor.subst(theta, literalOfSubsumer);
+	                        if (!subsumedClause.getNegativeLiterals().contains(literalOfSubsumerTheta)) {
+	                            subset = false;
+	                            break;
+	                        }
+	                    }
+	                    // If c1\theta subset c2, then c1 subsumes c2
+	                    if (subset) {
+	                        subsumes = true;
+	                        break;
+	                    }
                     }
                 }
             }

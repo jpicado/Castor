@@ -281,8 +281,7 @@ public class CastorLearner implements Learner {
 				}
 
 				// Final minimization to remove redundant literals
-				// clauseInfo.setMoreGeneralClause(this.transform(schema,
-				// clauseInfo.getClause()));
+//				 clauseInfo.setMoreGeneralClause(this.transform(schema, clauseInfo.getClause()));
 				clauseInfo = this.transform(schema, clauseInfo);
 
 				logger.info("After minimization - NumLits:" + clauseInfo.getClause().getNumberLiterals());
