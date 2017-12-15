@@ -235,6 +235,7 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 		StringBuilder sb = new StringBuilder();
 
 		if (!seenPredicates.contains(currentPredicate)
+				&& schema.getInclusionDependencies() != null
 				&& schema.getInclusionDependencies().containsKey(currentPredicate)) {
 			for (InclusionDependency ind : schema.getInclusionDependencies().get(currentPredicate)) {
 

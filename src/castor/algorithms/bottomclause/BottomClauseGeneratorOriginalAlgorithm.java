@@ -239,8 +239,12 @@ public class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGener
 
 					Predicate literal = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, tuple,
 							mode, newInTerms, distinctTerms);
-					addNotRepeated(newLiterals, literal);
-					solutionsCounter++;
+					
+					// Do not add literal if it's exactly the same as head literal
+					if (!literal.equals(clause.getPositiveLiterals().get(0).getAtomicSentence())) {
+						addNotRepeated(newLiterals, literal);
+						solutionsCounter++;
+					}
 				}
 			}
 

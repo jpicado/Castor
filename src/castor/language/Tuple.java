@@ -39,5 +39,10 @@ public class Tuple {
     public int hashCode() {
         return Objects.hash(this.values);
     }
+	
+	@Override
+	public String toString() {
+		return this.values.toString();
+	}
 
 }

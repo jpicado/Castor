@@ -133,9 +133,9 @@ public class CastorLearner implements Learner {
 	 */
 	public EvaluationResult evaluate(CoverageEngine testCoverageEngine, Schema schema, List<ClauseInfo> definition,
 			Relation testExamplesPos, Relation testExamplesNeg) {
-		logger.info("Testing positive examples in table " + testExamplesPos.getName() + ": "
+		logger.info("Positive examples in table " + testExamplesPos.getName() + ": "
 				+ testCoverageEngine.getAllPosExamples().size());
-		logger.info("Testing negative examples in table " + testExamplesNeg.getName() + ": "
+		logger.info("Negative examples in table " + testExamplesNeg.getName() + ": "
 				+ testCoverageEngine.getAllNegExamples().size());
 
 		// ClauseInfo contains information about covered examples from training set
@@ -422,6 +422,7 @@ public class CastorLearner implements Learner {
 		// Add 1 to scores to count seed example, which is not in remainingPosExamples
 		double clauseScore = this.computeScore(schema, remainingPosExamples, posExamplesRelation, negExamplesRelation,
 				bestARMGs.get(0)) + 1;
+		
 		logger.info("Best armg at iter " + iters + " - NumLits:" + bestARMGs.get(0).getClause().getNumberLiterals()
 				+ ", Score:" + clauseScore);
 
@@ -815,8 +816,9 @@ public class CastorLearner implements Learner {
 			Set<String> seenPredicates, List<Literal> outputLiterals) {
 		boolean allIndsSatisfied = true;
 
-		if (!seenPredicates.contains(currentLiteral.getAtomicSentence().getSymbolicName()) && schema
-				.getInclusionDependencies().containsKey(currentLiteral.getAtomicSentence().getSymbolicName())) {
+		if (!seenPredicates.contains(currentLiteral.getAtomicSentence().getSymbolicName())
+				&& schema.getInclusionDependencies() != null
+				&& schema.getInclusionDependencies().containsKey(currentLiteral.getAtomicSentence().getSymbolicName())) {
 
 			List<Literal> newLiteralsFromInds = new LinkedList<Literal>();
 			for (InclusionDependency ind : schema.getInclusionDependencies()

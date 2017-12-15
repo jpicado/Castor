@@ -677,13 +677,13 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 				if (isPositiveRelation)
 					matching = this.positiveMatchings[i];
 				else
-					matching = negativeMatchings[i];
+					matching = this.negativeMatchings[i];
 				// Add task
 				tasks.add(new Evaluator(matching, convertedClause, undecidedLocal, start, end));
 			}
 
 			// Perform all tasks in parallel
-			ExecutorService executor = Executors.newFixedThreadPool(4);
+			ExecutorService executor = Executors.newFixedThreadPool(threads);
 			// ExecutorService executor = Executors.newCachedThreadPool();
 			List<Future<Result>> results;
 			results = executor.invokeAll(tasks);
@@ -703,7 +703,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 		NumbersKeeper.coverageTime += tw.time();
 		NumbersKeeper.coverageCalls++;
 		NumbersKeeper.clauseLengthSum += clause.getNumberLiterals();
-
+		
 		return subsumptionResult;
 	}
 
