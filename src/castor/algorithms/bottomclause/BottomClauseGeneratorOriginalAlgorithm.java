@@ -29,12 +29,13 @@ import castor.mappings.MyClauseToIDAClause;
 import castor.settings.DataModel;
 import castor.settings.Parameters;
 import castor.utils.Commons;
+import castor.utils.RandomSet;
 
-public class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGenerator {
+public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGenerator {
 
-	private static final String SELECTIN_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s;";
+	protected static final String SELECTIN_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s;";
 
-	private int varCounter;
+	protected  int varCounter;
 
 	public BottomClauseGeneratorOriginalAlgorithm() {
 		varCounter = 0;
@@ -83,7 +84,7 @@ public class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGener
 	public String generateGroundBottomClauseString(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, 
 			Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters) {
 		MyClause clause = generateGroundBottomClause(genericDAO, bottomClauseConstructionDAO, exampleTuple, schema, dataModel, parameters);
-		return clause.toString2(MyClauseToIDAClause.NEGATE_SYMBOL);
+		return clause.toString2(MyClauseToIDAClause.POSITIVE_SYMBOL, MyClauseToIDAClause.NEGATE_SYMBOL);
 	}
 
 	/*
@@ -160,7 +161,7 @@ public class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGener
 
 				// Get known terms for all attribute types
 				boolean seenType = false;
-				Set<String> knownTermsSet = new HashSet<String>();
+				RandomSet<String> knownTermsSet = new RandomSet<String>();
 				for (String type : attributeTypes) {
 					if (inTerms.containsKey(type)) {
 						seenType = true;
@@ -171,12 +172,11 @@ public class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGener
 				if (!seenType) {
 					continue;
 				}
-				String knownTerms = toListString(knownTermsSet);
 
 				// Generate new literals for grouped modes
 				List<Predicate> newLiterals = operationForGroupedModes(genericDAO, schema, clause,
 						hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, relationName, attributeName,
-						relationAttributeModes, groupedModes, knownTerms, recall, ground);
+						relationAttributeModes, groupedModes, knownTermsSet, recall, ground);
 
 				// Apply INDs
 				if (applyInds) {
@@ -208,8 +208,15 @@ public class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGener
 
 		return clause;
 	}
+	
+	abstract protected List<Predicate> operationForGroupedModes(GenericDAO genericDAO, Schema schema, MyClause clause,
+			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
+			Map<String, Set<String>> newInTerms, Set<String> distinctTerms, String relationName, String attributeName,
+			List<Mode> relationAttributeModes, Map<Pair<String, Integer>, List<Mode>> groupedModes, RandomSet<String> knownTermsSet,
+			int recall, boolean ground);
+	
 
-	private List<Predicate> operationForGroupedModes(GenericDAO genericDAO, Schema schema, MyClause clause,
+	/*private List<Predicate> operationForGroupedModes(GenericDAO genericDAO, Schema schema, MyClause clause,
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> newInTerms, Set<String> distinctTerms, String relationName, String attributeName,
 			List<Mode> relationAttributeModes, Map<Pair<String, Integer>, List<Mode>> groupedModes, String knownTerms,
@@ -251,9 +258,9 @@ public class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGener
 		}
 
 		return newLiterals;
-	}
+	}*/
 
-	private Predicate createLiteralFromTuple(Map<String, String> hashConstantToVariable,
+	protected Predicate createLiteralFromTuple(Map<String, String> hashConstantToVariable,
 			Map<String, String> hashVariableToConstant, Tuple tuple, Mode mode, Map<String, Set<String>> inTerms, Set<String> distinctTerms) {
 		List<Term> terms = new ArrayList<Term>();
 		for (int i = 0; i < mode.getArguments().size(); i++) {
@@ -360,9 +367,8 @@ public class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGener
 						// value = leftIndTerm.substring(1, leftIndTerm.length()-1);
 						value = leftIndTerm.getSymbolicName();
 					}
-					Set<String> termsSet = new HashSet<String>();
+					RandomSet<String> termsSet = new RandomSet<String>();
 					termsSet.add(value.replaceAll("^\"|\"$", ""));
-					String knownTerms = toListString(termsSet);
 
 					// Get modes for relation-attribute
 					String relationName = ind.getRightPredicateName();
@@ -375,7 +381,7 @@ public class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGener
 					// Generate new literals
 					List<Predicate> modeBLiterals = operationForGroupedModes(genericDAO, schema, clause,
 							hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, relationName, attributeName,
-							relationAttributeModes, groupedModes, knownTerms, recall, ground);
+							relationAttributeModes, groupedModes, termsSet, recall, ground);
 					addNotRepeated(newLiterals, modeBLiterals);
 				}
 			}
@@ -386,7 +392,7 @@ public class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGener
 	/*
 	 * Add non-repeated newLiterals to literals
 	 */
-	private void addNotRepeated(List<Predicate> literals, List<Predicate> newLiterals) {
+	protected void addNotRepeated(List<Predicate> literals, List<Predicate> newLiterals) {
 		for (Predicate newLiteral : newLiterals) {
 			if (!literals.contains(newLiteral)) {
 				literals.add(newLiteral);
@@ -394,10 +400,30 @@ public class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGener
 		}
 	}
 
-	private void addNotRepeated(List<Predicate> literals, Predicate newLiteral) {
+	protected void addNotRepeated(List<Predicate> literals, Predicate newLiteral) {
 		if (!literals.contains(newLiteral)) {
 			literals.add(newLiteral);
 		}
+	}
+	
+	/*
+	 * Convert set to string "('item1','item2',...)"
+	 */
+	protected String toListString(Set<String> terms) {
+		StringBuilder builder = new StringBuilder();
+		builder.append("(");
+		int counter = 0;
+		for (String term : terms) {
+			// Escape single quotes
+			term = term.replace("'", "''");
+			builder.append("'" + term + "'");
+			if (counter < terms.size() - 1) {
+				builder.append(",");
+			}
+			counter++;
+		}
+		builder.append(")");
+		return builder.toString();
 	}
 
 	/*
@@ -487,25 +513,5 @@ public class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGener
 		}
 
 		return clause;
-	}
-
-	/*
-	 * Convert set to string "('item1','item2',...)"
-	 */
-	private String toListString(Set<String> terms) {
-		StringBuilder builder = new StringBuilder();
-		builder.append("(");
-		int counter = 0;
-		for (String term : terms) {
-			// Escape single quotes
-			term = term.replace("'", "''");
-			builder.append("'" + term + "'");
-			if (counter < terms.size() - 1) {
-				builder.append(",");
-			}
-			counter++;
-		}
-		builder.append(")");
-		return builder.toString();
 	}
 }

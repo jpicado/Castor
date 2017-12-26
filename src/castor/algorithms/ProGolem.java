@@ -22,8 +22,6 @@ import org.apache.log4j.Logger;
 import aima.core.logic.fol.kb.data.Literal;
 import aima.core.logic.fol.parsing.ast.Term;
 import castor.algorithms.bottomclause.BottomClauseGenerator;
-import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
-import castor.algorithms.bottomclause.BottomClauseGeneratorOriginalAlgorithm;
 import castor.algorithms.clauseevaluation.ClauseEvaluator;
 import castor.algorithms.clauseevaluation.EvaluationFunctions;
 import castor.algorithms.clauseevaluation.GenericEvaluator;
@@ -57,19 +55,14 @@ public class ProGolem implements Learner {
 	private ClauseEvaluator evaluator;
 	private BottomClauseGenerator saturator;
 
-	public ProGolem(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseContructionDAO, CoverageEngine coverageEngine, Parameters parameters) {
+	public ProGolem(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseContructionDAO, BottomClauseGenerator saturator, CoverageEngine coverageEngine, Parameters parameters) {
 		this.parameters = parameters;
 		this.genericDAO = genericDAO;
 		this.bottomClauseConstructionDAO = bottomClauseContructionDAO;
 		this.coverageEngine = coverageEngine;
 		this.randomGenerator = new Random(parameters.getRandomSeed());
 		this.evaluator = new GenericEvaluator();
-		
-		if (parameters.isUseStoredProcedure()) {
-			saturator = new BottomClauseGeneratorInsideSP();
-		} else {
-			saturator = new BottomClauseGeneratorOriginalAlgorithm();
-		}
+		this.saturator = saturator;
 	}
 	
 	public Parameters getParameters() {

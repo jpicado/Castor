@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import castor.algorithms.bottomclause.BottomClauseGenerator;
-import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
-import castor.algorithms.bottomclause.BottomClauseGeneratorOriginalAlgorithm;
 import castor.dataaccess.db.BottomClauseConstructionDAO;
 import castor.dataaccess.db.GenericDAO;
 import castor.dataaccess.db.GenericTableObject;
@@ -46,11 +44,12 @@ public class CoverageBySubsumptionParallelUsingMyMatching implements CoverageEng
 	
 //	private Set<String> clauses = new HashSet<String>();
 
-	public CoverageBySubsumptionParallelUsingMyMatching(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Relation posExamplesRelation, Relation negExamplesRelation, Schema schema, DataModel dataModel, Parameters parameters) {
-		this.initialize(genericDAO, bottomClauseConstructionDAO, posExamplesRelation, negExamplesRelation, schema, dataModel, parameters);
+	public CoverageBySubsumptionParallelUsingMyMatching(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, BottomClauseGenerator saturator, Relation posExamplesRelation, Relation negExamplesRelation, Schema schema, DataModel dataModel, Parameters parameters) {
+		this.initialize(genericDAO, bottomClauseConstructionDAO, saturator, posExamplesRelation, negExamplesRelation, schema, dataModel, parameters);
 	}
 	
-	private void initialize(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Relation posExamplesRelation, Relation negExamplesRelation, 
+	private void initialize(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, BottomClauseGenerator saturator,
+			Relation posExamplesRelation, Relation negExamplesRelation, 
 			Schema schema, DataModel dataModel, Parameters parameters) {
 		// Get all positive and negative examples
 		String posCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(posExamplesRelation, true);
@@ -66,13 +65,6 @@ public class CoverageBySubsumptionParallelUsingMyMatching implements CoverageEng
 		this.negExamplesIndexes = new HashMap<Integer,Integer>();
 		
 		// Generate ground bottom clause for all examples, create clauses for each example, add to lists
-		BottomClauseGenerator saturator;
-		if (parameters.isUseStoredProcedure()) {
-			saturator = new BottomClauseGeneratorInsideSP();
-		} else {
-			saturator = new BottomClauseGeneratorOriginalAlgorithm();
-		}
-		
 		List<Clause> posExamples = new LinkedList<Clause>();
 		List<Clause> negExamples = new LinkedList<Clause>();
 		int counter = 0;

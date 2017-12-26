@@ -15,6 +15,8 @@ import castor.algorithms.CastorLearner;
 import castor.algorithms.Golem;
 import castor.algorithms.Learner;
 import castor.algorithms.ProGolem;
+import castor.algorithms.bottomclause.BottomClauseGenerator;
+import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
 import castor.algorithms.bottomclause.StoredProcedureGeneratorSaturationInsideSP;
 import castor.algorithms.coverageengines.CoverageBySubsumptionParallel;
 import castor.algorithms.coverageengines.CoverageEngine;
@@ -197,28 +199,30 @@ public class CastorGridSearch {
         		minrecValues.add(0.0);
         	}
         	
+        	// Create saturator
+        	BottomClauseGenerator saturator = new BottomClauseGeneratorInsideSP();
         	
         	// Create CoverageEngines
         tw.reset();
         logger.info("Creating train coverage engine...");
-        CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTrain, negTrain, this.schema, this.dataModel, this.parameters, true, CoverageBySubsumptionParallel.EXAMPLES_SOURCE.DB, "", "");
+        CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, saturator, posTrain, negTrain, this.schema, this.dataModel, this.parameters, true, CoverageBySubsumptionParallel.EXAMPLES_SOURCE.DB, "", "");
         long creatingCoverageTime = tw.time();
         
         logger.info("Creating validation coverage engine...");
-        CoverageEngine valCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posVal, negVal, this.schema, this.dataModel, this.parameters, true, CoverageBySubsumptionParallel.EXAMPLES_SOURCE.DB, "", "");
+        CoverageEngine valCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, saturator, posVal, negVal, this.schema, this.dataModel, this.parameters, true, CoverageBySubsumptionParallel.EXAMPLES_SOURCE.DB, "", "");
         
         logger.info("Creating test coverage engine...");
-        CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, posTest, negTest, this.schema, this.dataModel, this.parameters, true, CoverageBySubsumptionParallel.EXAMPLES_SOURCE.DB, "", "");
+        CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, saturator, posTest, negTest, this.schema, this.dataModel, this.parameters, true, CoverageBySubsumptionParallel.EXAMPLES_SOURCE.DB, "", "");
             
             // Create learner
         	logger.info("Learning...");
         	Learner learner;
         	if (this.algorithm.equals(ALGORITHM_CASTOR)) {
-        		learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
+        		learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, saturator, coverageEngine, parameters, schema);
         	} else if (this.algorithm.equals(ALGORITHM_GOLEM)) {
-        		learner = new Golem(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
+        		learner = new Golem(genericDAO, bottomClauseConstructionDAO, saturator, coverageEngine, parameters);
         	} else if (this.algorithm.equals(ALGORITHM_PROGOLEM)) {
-        		learner = new ProGolem(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
+        		learner = new ProGolem(genericDAO, bottomClauseConstructionDAO, saturator, coverageEngine, parameters);
         	} else {
         		throw new IllegalArgumentException("Learning algorithm " + this.algorithm + " not implemented.");
         	}

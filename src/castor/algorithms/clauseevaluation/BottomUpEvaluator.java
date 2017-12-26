@@ -187,6 +187,6 @@ public class BottomUpEvaluator implements ClauseEvaluator {
 	}
 	
 	private String clauseToString(MyClause clause) {
-		return clause.toString2(MyClauseToIDAClause.NEGATE_SYMBOL);
+		return clause.toString2(MyClauseToIDAClause.POSITIVE_SYMBOL, MyClauseToIDAClause.NEGATE_SYMBOL);
 	}
 }

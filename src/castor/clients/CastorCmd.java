@@ -1,6 +1,5 @@
 package castor.clients;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -22,6 +21,12 @@ import castor.algorithms.CastorLearner;
 import castor.algorithms.Golem;
 import castor.algorithms.Learner;
 import castor.algorithms.ProGolem;
+import castor.algorithms.bottomclause.BottomClauseGenerator;
+import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
+import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSampling;
+import castor.algorithms.bottomclause.BottomClauseGeneratorOlkenSampling;
+import castor.algorithms.bottomclause.BottomClauseGeneratorOriginalAlgorithm;
+import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSampling;
 import castor.algorithms.bottomclause.BottomClauseUtil;
 import castor.algorithms.bottomclause.StoredProcedureGeneratorSaturationInsideSP;
 import castor.algorithms.coverageengines.CoverageBySubsumptionParallel;
@@ -38,9 +43,13 @@ import castor.language.InclusionDependency;
 import castor.language.Mode;
 import castor.language.Relation;
 import castor.language.Schema;
+import castor.profiling.StatisticsOlkenSampling;
+import castor.profiling.StatisticsStreamSampling;
+import castor.profiling.StatisticsExtractor;
 import castor.settings.DataModel;
 import castor.settings.JsonSettingsReader;
 import castor.settings.Parameters;
+import castor.settings.SamplingMethods;
 import castor.utils.FileUtils;
 import castor.utils.Formatter;
 import castor.utils.NumbersKeeper;
@@ -262,12 +271,33 @@ public class CastorCmd {
 					return;
 				}
 			}
-
+			
+			// Create saturator
+			BottomClauseGenerator saturator;
+			tw.reset();
+			if (parameters.isUseStoredProcedure()) {
+				saturator = new BottomClauseGeneratorInsideSP();
+			} else {
+				if (parameters.getSamplingMethod().equals(SamplingMethods.OLKEN))  {
+					logger.info("Use Olken sampling. Extracting statistics from database instance...");
+					StatisticsOlkenSampling statistics = StatisticsExtractor.extractStatisticsForOlkenSampling(genericDAO, schema);
+					saturator = new BottomClauseGeneratorOlkenSampling(parameters.getRandomSeed(), statistics);
+				} else if (parameters.getSamplingMethod().equals(SamplingMethods.STREAM)) {
+					logger.info("Use Stream sampling. Extracting statistics from database instance...");
+					StatisticsStreamSampling statistics = StatisticsExtractor.extractStatisticsForStreamSampling(genericDAO, schema);
+					saturator = new BottomClauseGeneratorStreamSampling(parameters.getRandomSeed(), statistics);
+				} else {
+					saturator = new BottomClauseGeneratorNaiveSampling();
+				}
+			}
+			NumbersKeeper.extractingStatisticsTime = tw.time();
+			
 			// Create CoverageEngine
 			tw.reset();
 			logger.info("Creating coverage engine...");
 			boolean createFullCoverageEngine = !saturation && !groundSaturation;
-			CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO,
+			//TODO extracting stats and computing saturator multiple times
+			CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, saturator,
 					posTrain, negTrain, this.schema, this.dataModel, this.parameters, createFullCoverageEngine,
 					examplesSource, posTrainExamplesFile, negTrainExamplesFile);
 			NumbersKeeper.creatingCoverageTime = tw.time();
@@ -282,13 +312,13 @@ public class CastorCmd {
 			if (saturation) {
 				// BOTTOM CLAUSE
 				BottomClauseUtil.generateBottomClauseForExample(bottomClauseAlgorithm,
-						genericDAO, bottomClauseConstructionDAO,
+						genericDAO, bottomClauseConstructionDAO, saturator,
 						coverageEngine.getAllPosExamples().get(this.exampleForSaturation), this.schema,
 						this.dataModel, this.parameters);
 			} else if (groundSaturation) {
 				// GROUND BOTTOM CLAUSE
 				BottomClauseUtil.generateGroundBottomClauseForExample(
-						bottomClauseAlgorithm, genericDAO, bottomClauseConstructionDAO,
+						bottomClauseAlgorithm, genericDAO, bottomClauseConstructionDAO, saturator,
 						coverageEngine.getAllPosExamples().get(this.exampleForSaturation), this.schema,
 						this.dataModel, this.parameters);
 			} else {
@@ -296,11 +326,11 @@ public class CastorCmd {
 				logger.info("Learning...");
 				Learner learner;
 				if (this.algorithm.equals(ALGORITHM_CASTOR)) {
-					learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
+					learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, saturator, coverageEngine, parameters, schema);
 				} else if (this.algorithm.equals(ALGORITHM_GOLEM)) {
-					learner = new Golem(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
+					learner = new Golem(genericDAO, bottomClauseConstructionDAO, saturator, coverageEngine, parameters);
 				} else if (this.algorithm.equals(ALGORITHM_PROGOLEM)) {
-					learner = new ProGolem(genericDAO, bottomClauseConstructionDAO, coverageEngine, parameters);
+					learner = new ProGolem(genericDAO, bottomClauseConstructionDAO, saturator, coverageEngine, parameters);
 				} else {
 					throw new IllegalArgumentException("Learning algorithm " + this.algorithm + " not implemented.");
 				}
@@ -383,8 +413,8 @@ public class CastorCmd {
 					}
 
 					logger.info("Evaluating on testing data...");
-					CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO,
-							bottomClauseConstructionDAO, posTest, negTest, this.schema, this.dataModel, this.parameters, true,
+					CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, saturator, 
+							posTest, negTest, this.schema, this.dataModel, this.parameters, true,
 							examplesSourceTest, posTestExamplesFile, negTestExamplesFile);
 					learner.evaluate(testCoverageEngine, this.schema, definition, posTest, negTest);
 				}
@@ -400,6 +430,7 @@ public class CastorCmd {
 				logger.info("Reduction time: " + NumbersKeeper.reducerTime);
 				logger.info("LGG time: " + NumbersKeeper.lggTime);
 				logger.info("LearnClause time: " + NumbersKeeper.learnClauseTime);
+				logger.info("Extracting statistics time (not included in total time): " + NumbersKeeper.extractingStatisticsTime);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

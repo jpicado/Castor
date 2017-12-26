@@ -24,6 +24,7 @@ public class Parameters {
 	private String dbURL = "localhost";
 	private String port = "21212";
 	private int randomSeed = 1;
+	private String samplingMethod = SamplingMethods.NAIVE;
 	
 	public boolean isCreateStoredProcedure() {
 		return createStoredProcedure;
@@ -147,7 +148,20 @@ public class Parameters {
 	public void setRandomSeed(int randomSeed) {
 		this.randomSeed = randomSeed;
 	}
-	
+	public String getSamplingMethod() {
+		return samplingMethod;
+	}
+	public void setSamplingMethod(String samplingMethod) {
+		if (samplingMethod.equals("naive")) {
+			this.samplingMethod = SamplingMethods.NAIVE;
+		} else if (samplingMethod.equals("olken")) {
+			this.samplingMethod = SamplingMethods.OLKEN;
+		} else if (samplingMethod.equals("stream")) {
+			this.samplingMethod = SamplingMethods.STREAM;
+		} else {
+			throw new IllegalArgumentException("Unknown sampling method.");
+		}
+	}
 	@Override
 	public String toString() {
 		return "Parameters [createStoredProcedure=" + createStoredProcedure + ", useStoredProcedure="

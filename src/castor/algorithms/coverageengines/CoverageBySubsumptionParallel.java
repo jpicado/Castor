@@ -16,6 +16,7 @@ import aima.core.util.datastructure.Pair;
 import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
 import castor.algorithms.bottomclause.BottomClauseGeneratorOriginalAlgorithm;
+import castor.algorithms.bottomclause.BottomClauseGeneratorOlkenSampling;
 import castor.dataaccess.db.BottomClauseConstructionDAO;
 import castor.dataaccess.db.GenericDAO;
 import castor.dataaccess.db.GenericTableObject;
@@ -27,8 +28,11 @@ import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
 import castor.mappings.MyClauseToIDAClause;
+import castor.profiling.StatisticsOlkenSampling;
+import castor.profiling.StatisticsExtractor;
 import castor.settings.DataModel;
 import castor.settings.Parameters;
+import castor.settings.SamplingMethods;
 import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
 import ida.ilp.logic.Clause;
@@ -53,18 +57,18 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 	int posExamplesPerMatching;
 	int negExamplesPerMatching;
 
-	public CoverageBySubsumptionParallel(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO,
+	public CoverageBySubsumptionParallel(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, BottomClauseGenerator saturator,
 			Relation posExamplesRelation, Relation negExamplesRelation, Schema schema, DataModel dataModel, Parameters parameters, boolean withMatchings,
 			CoverageBySubsumptionParallel.EXAMPLES_SOURCE examplesSource, String posExamplesFile, String negExamplesFile) {
 		this.threads = parameters.getThreads();
 		if (withMatchings)
-			this.initWithMatchings(genericDAO, bottomClauseConstructionDAO, posExamplesRelation, negExamplesRelation,
+			this.initWithMatchings(genericDAO, bottomClauseConstructionDAO, saturator, posExamplesRelation, negExamplesRelation,
 					schema, dataModel, parameters, examplesSource, posExamplesFile, negExamplesFile);
 		else
-			initWithoutMatchings(genericDAO, bottomClauseConstructionDAO, posExamplesRelation, negExamplesRelation, examplesSource, posExamplesFile, negExamplesFile);
+			initWithoutMatchings(genericDAO, posExamplesRelation, negExamplesRelation, examplesSource, posExamplesFile, negExamplesFile);
 	}
 
-	private void initWithoutMatchings(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO,
+	private void initWithoutMatchings(GenericDAO genericDAO,
 			Relation posExamplesRelation, Relation negExamplesRelation,
 			CoverageBySubsumptionParallel.EXAMPLES_SOURCE examplesSource, String posExamplesFile, String negExamplesFile) {
 
@@ -87,7 +91,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 		}
 	}
 
-	private void initWithMatchings(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO,
+	private void initWithMatchings(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, BottomClauseGenerator saturator,
 			Relation posExamplesRelation, Relation negExamplesRelation, Schema schema, DataModel dataModel, Parameters parameters,
 			CoverageBySubsumptionParallel.EXAMPLES_SOURCE examplesSource, String posExamplesFile, String negExamplesFile) {
 
@@ -118,20 +122,23 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 
 		// Generate ground bottom clause for all examples, create clauses for each
 		// example, add to lists
-		BottomClauseGenerator saturator;
-		if (parameters.isUseStoredProcedure()) {
-			saturator = new BottomClauseGeneratorInsideSP();
-		} else {
-			saturator = new BottomClauseGeneratorOriginalAlgorithm();
-		}
+//		BottomClauseGenerator saturator;
+//		if (parameters.isUseStoredProcedure()) {
+//			saturator = new BottomClauseGeneratorInsideSP();
+//		} else {
+//			if (parameters.getSamplingMethod().equals(SamplingMethods.OLKEN))  {
+//				DatabaseInstanceStatistics statistics = StatisticsExtractor.extractStatistics(genericDAO, schema);
+//				saturator = new BottomClauseGeneratorOlkenSampling(parameters.getRandomSeed(), statistics);
+//			} else {
+//				saturator = new BottomClauseGeneratorOriginalAlgorithm();
+//			}
+//		}
 		
 		List<Clause> posExamples = new LinkedList<Clause>();
 		List<Clause> negExamples = new LinkedList<Clause>();
 		int counter = 0;
 		for (Tuple exampleTuple : posExamplesTuples) {
 			try {
-				// System.out.println("Generating ground bottom clause for positive example " +
-				// exampleTuple.getValues().toString()+"...");
 				String groundClause = saturator.generateGroundBottomClauseString(genericDAO, bottomClauseConstructionDAO,
 						exampleTuple, schema, dataModel, parameters);
 
@@ -214,6 +221,18 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 				examplesForMatching.add(negExamples.get(j));
 			}
 			this.negativeMatchings[i] = new Matching(examplesForMatching);
+			
+			//TODO DELETE
+			////
+//			boolean[] undecided = new boolean[examplesForMatching.size()];
+//			for (int j = 0; j < undecided.length; j++) {undecided[j] = true;}
+//			Clause h = Clause.parse("target(V0), zero(V0), successor(V0, V1), successor(V1, V2), successor(V2, V3), target(V2)");
+//			int[] result = negativeMatchings[i].evaluateOnExamples(h, undecided);
+//			for (int j = 0; j < result.length; j++) {
+//				System.out.println(examplesForMatching.get(j));
+//				System.out.println(result[j]);
+//			}
+			////
 		}
 	}
 

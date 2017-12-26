@@ -76,6 +76,9 @@ public class JsonSettingsReader {
 		if (parametersJson.get("randomSeed") != null) {
 			parameters.setRandomSeed(parametersJson.get("randomSeed").getAsInt());
 		}
+		if (parametersJson.get("sampling") != null) {
+			parameters.setSamplingMethod(parametersJson.get("sampling").getAsString());
+		}
 		
 		return parameters;
 	}

@@ -159,12 +159,12 @@ public class MyClause {
 		return stringRep;
 	}
 	
-	public String toString2(String negateSymbol) {
+	public String toString2(String positiveSymbol, String negateSymbol) {
 		// This format is used by CoverageBySubsumption in Castor
 		if (null == stringRep2) {
 			StringBuilder sb = new StringBuilder();
 			for (int i = 0; i < positiveLiterals.size(); i++) {
-				sb.append(positiveLiterals.get(i).getAtomicSentence().toString()+",");
+				sb.append(positiveSymbol+positiveLiterals.get(i).getAtomicSentence().toString()+",");
 			}
 			for (int i = 0; i < negativeLiterals.size(); i++) {
 				sb.append(negateSymbol+negativeLiterals.get(i).getAtomicSentence().toString());

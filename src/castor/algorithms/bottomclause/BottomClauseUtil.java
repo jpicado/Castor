@@ -27,21 +27,14 @@ public class BottomClauseUtil {
 	/*
 	 * Generate bottom clause for a specific example
 	 */
-	public static MyClause generateBottomClauseForExample(BottomClauseUtil.ALGORITHMS bottomClauseAlgorithm, GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters) {
+	public static MyClause generateBottomClauseForExample(BottomClauseUtil.ALGORITHMS bottomClauseAlgorithm, GenericDAO genericDAO, 
+			BottomClauseConstructionDAO bottomClauseConstructionDAO, BottomClauseGenerator saturator,
+			Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters) {
 		MyClause clause = null;
 		TimeWatch watch;
 		
 		logger.info("Generating bottom clause for example <" + String.join(",", exampleTuple.getValues()) + ">...");
 		watch = TimeWatch.start();
-		
-		BottomClauseGenerator saturator;
-		if (bottomClauseAlgorithm == BottomClauseUtil.ALGORITHMS.ORIGINAL) {
-			saturator = new BottomClauseGeneratorOriginalAlgorithm();
-		} else if (bottomClauseAlgorithm == BottomClauseUtil.ALGORITHMS.INSIDE_STORED_PROCEDURE) {
-			saturator = new BottomClauseGeneratorInsideSP();
-		} else {
-			throw new IllegalArgumentException("Unsupported algorithm.");
-		}
 		clause = saturator.generateBottomClause(genericDAO, bottomClauseConstructionDAO, exampleTuple, schema, dataModel, parameters);
 		
 		logger.info("Bottom clause: \n"+ Formatter.prettyPrint(clause));
@@ -54,22 +47,15 @@ public class BottomClauseUtil {
 	/*
 	 * Generate ground bottom clause for a specific example
 	 */
-	public static String generateGroundBottomClauseForExample(BottomClauseUtil.ALGORITHMS bottomClauseAlgorithm, GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters) {
+	public static String generateGroundBottomClauseForExample(BottomClauseUtil.ALGORITHMS bottomClauseAlgorithm, 
+			GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, BottomClauseGenerator saturator, 
+			Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters) {
 		String clause = "";
 		TimeWatch watch;
 		
 		// Generate bottom clause
 		logger.info("Generating ground bottom clause for example <" + String.join(",", exampleTuple.getValues()) + ">...");
 		watch = TimeWatch.start();
-		
-		BottomClauseGenerator saturator;
-		if (bottomClauseAlgorithm == BottomClauseUtil.ALGORITHMS.ORIGINAL) {
-			saturator = new BottomClauseGeneratorOriginalAlgorithm();
-		} else if (bottomClauseAlgorithm == BottomClauseUtil.ALGORITHMS.INSIDE_STORED_PROCEDURE) {
-			saturator = new BottomClauseGeneratorInsideSP();
-		} else {
-			throw new IllegalArgumentException("Unsupported algorithm.");
-		}
 		clause = saturator.generateGroundBottomClauseString(genericDAO, bottomClauseConstructionDAO, exampleTuple, schema, dataModel, parameters);
 		
 		logger.info("Ground bottom clause: \n"+ clause);

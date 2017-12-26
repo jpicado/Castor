@@ -23,8 +23,6 @@ import org.apache.log4j.Logger;
 import aima.core.logic.fol.kb.data.Literal;
 import aima.core.logic.fol.parsing.ast.Term;
 import castor.algorithms.bottomclause.BottomClauseGenerator;
-import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
-import castor.algorithms.bottomclause.BottomClauseGeneratorOriginalAlgorithm;
 import castor.algorithms.clauseevaluation.BottomUpEvaluator;
 import castor.algorithms.clauseevaluation.ClauseEvaluator;
 import castor.algorithms.clauseevaluation.EvaluationFunctions;
@@ -61,20 +59,15 @@ public class CastorLearner implements Learner {
 	private ClauseEvaluator evaluator;
 	private BottomClauseGenerator saturator;
 
-	public CastorLearner(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseContructionDAO,
-			CoverageEngine coverageEngine, Parameters parameters) {
+	public CastorLearner(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseContructionDAO, BottomClauseGenerator saturator,
+			CoverageEngine coverageEngine, Parameters parameters, Schema schema) {
 		this.parameters = parameters;
 		this.genericDAO = genericDAO;
 		this.bottomClauseConstructionDAO = bottomClauseContructionDAO;
 		this.coverageEngine = coverageEngine;
 		this.randomGenerator = new Random(parameters.getRandomSeed());
 		this.evaluator = new BottomUpEvaluator();
-
-		if (parameters.isUseStoredProcedure()) {
-			saturator = new BottomClauseGeneratorInsideSP();
-		} else {
-			saturator = new BottomClauseGeneratorOriginalAlgorithm();
-		}
+		this.saturator = saturator;
 	}
 
 	public Parameters getParameters() {
