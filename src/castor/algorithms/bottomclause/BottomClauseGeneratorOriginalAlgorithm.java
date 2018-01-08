@@ -80,6 +80,9 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 				hashVariableToConstant, exampleTuple, schema, dataModel.getModeH(), dataModel.getModesB(), parameters.getIterations(), parameters.getGroundRecall(), parameters.isUseInds(), parameters.getMaxterms(), true);
 	}
 	
+	/*
+	 * Generate ground bottom clause for one example in string format
+	 */
 	@Override
 	public String generateGroundBottomClauseString(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, 
 			Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters) {
@@ -209,6 +212,10 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 		return clause;
 	}
 	
+	/*
+	 * Performs mode operation for set of modes with same relation name and input attribute.
+	 * Returns a list of new literals to be added to clause.
+	 */
 	abstract protected List<Predicate> operationForGroupedModes(GenericDAO genericDAO, Schema schema, MyClause clause,
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> newInTerms, Set<String> distinctTerms, String relationName, String attributeName,
@@ -260,6 +267,9 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 		return newLiterals;
 	}*/
 
+	/*
+	 * Creates a literal from a tuple and a mode.
+	 */
 	protected Predicate createLiteralFromTuple(Map<String, String> hashConstantToVariable,
 			Map<String, String> hashVariableToConstant, Tuple tuple, Mode mode, Map<String, Set<String>> inTerms, Set<String> distinctTerms) {
 		List<Term> terms = new ArrayList<Term>();
@@ -292,10 +302,14 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 				inTerms.get(variableType).add(value);
 //			}
 		}
+		
 		Predicate literal = new Predicate(mode.getPredicateName(), terms);
 		return literal;
 	}
 
+	/*
+	 * Recursively follow inclusion dependencies chain
+	 */
 	private void followIndChain(GenericDAO genericDAO, Schema schema, MyClause clause,
 			List<Predicate> newLiteralsForGroupedModes, Map<String, String> hashConstantToVariable,
 			Map<String, String> hashVariableToConstant, Map<String, Set<String>> newInTerms, Set<String> distinctTerms,
@@ -325,6 +339,9 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 		}
 	}
 
+	/*
+	 * Apply inclusion dependency to clause. Return list of new literals to be added to clause.
+	 */
 	private List<Predicate> applyInclusionDependency(GenericDAO genericDAO, Schema schema, MyClause clause,
 			List<Predicate> newLiteralsForGroupedModes, Map<String, String> hashConstantToVariable,
 			Map<String, String> hashVariableToConstant, Map<String, Set<String>> newInTerms, Set<String> distinctTerms, InclusionDependency ind,
@@ -400,6 +417,9 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 		}
 	}
 
+	/*
+	 * Add non-repeated newLiteral to literals
+	 */
 	protected void addNotRepeated(List<Predicate> literals, Predicate newLiteral) {
 		if (!literals.contains(newLiteral)) {
 			literals.add(newLiteral);

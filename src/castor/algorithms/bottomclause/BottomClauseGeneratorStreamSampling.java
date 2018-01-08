@@ -34,7 +34,7 @@ public class BottomClauseGeneratorStreamSampling extends BottomClauseGeneratorOr
 	}
 
 	/*
-	 * Implements ideas from Olken's random sampling algorithm
+	 * Implements Stream-Sampling algorithm from paper "On Random Sampling Over Joins"
 	 */
 	public List<Predicate> operationForGroupedModes(GenericDAO genericDAO, Schema schema, MyClause clause,
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
