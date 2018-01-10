@@ -60,6 +60,7 @@ public class BottomClauseGeneratorOlkenSampling extends BottomClauseGeneratorOri
 				// If randomValue does not appear in relation, break (to avoid infinite loops)
 				//TODO better way to avoid infinite loop?
 				if (cardinality == 0) {
+					accept = true;
 					break;
 				}
 				

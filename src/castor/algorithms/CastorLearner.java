@@ -93,7 +93,7 @@ public class CastorLearner implements Learner {
 				spNameTemplate, parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms(),
 				parameters.getSample(), parameters.getBeam(), parameters.getReductionMethod(), globalDefinition));
 		
-		ClauseTransformations.minimizeDefinition(definition);
+//		ClauseTransformations.minimizeDefinition(definition);
 
 		// Get string representation of definition
 		StringBuilder sb = new StringBuilder();
