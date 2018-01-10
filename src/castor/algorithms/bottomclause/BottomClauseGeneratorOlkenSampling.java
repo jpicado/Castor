@@ -32,7 +32,6 @@ public class BottomClauseGeneratorOlkenSampling extends BottomClauseGeneratorOri
 		this.statistics = statistics;
 	}
 
-
 	/*
 	 * Implements ideas from Olken's random sampling algorithm
 	 */
@@ -43,6 +42,7 @@ public class BottomClauseGeneratorOlkenSampling extends BottomClauseGeneratorOri
 			int recall, boolean ground) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 		
+		//TODO what if join is smaller than recall
 		long sampleSize = Math.min(recall, statistics.getRelationSize().get(relationName.toUpperCase()));
 		
 		// RAJOIN algorithm (from Olken's thesis)

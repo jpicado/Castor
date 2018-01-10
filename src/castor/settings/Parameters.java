@@ -170,6 +170,6 @@ public class Parameters {
 				+ ", minimizeBottomClause=" + minimizeBottomClause + ", reductionMethod=" + reductionMethod
 				+ ", iterations=" + iterations + ", recall=" + recall + ", groundRecall=" + groundRecall + ", maxterms="
 				+ maxterms + ", useInds=" + useInds + ", dbURL=" + dbURL + ", port=" + port + ", randomSeed="
-				+ randomSeed + "]";
+				+ randomSeed + ", samplingMethod=" + samplingMethod + "]";
 	}
 }
