@@ -35,7 +35,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 
 	protected static final String SELECTIN_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s;";
 
-	protected  int varCounter;
+	protected int varCounter;
 
 	public BottomClauseGeneratorOriginalAlgorithm() {
 		varCounter = 0;

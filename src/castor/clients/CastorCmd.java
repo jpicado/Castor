@@ -25,7 +25,6 @@ import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
 import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorOlkenSampling;
-import castor.algorithms.bottomclause.BottomClauseGeneratorOriginalAlgorithm;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSampling;
 import castor.algorithms.bottomclause.BottomClauseUtil;
 import castor.algorithms.bottomclause.StoredProcedureGeneratorSaturationInsideSP;
@@ -43,9 +42,9 @@ import castor.language.InclusionDependency;
 import castor.language.Mode;
 import castor.language.Relation;
 import castor.language.Schema;
+import castor.profiling.StatisticsExtractor;
 import castor.profiling.StatisticsOlkenSampling;
 import castor.profiling.StatisticsStreamSampling;
-import castor.profiling.StatisticsExtractor;
 import castor.settings.DataModel;
 import castor.settings.JsonSettingsReader;
 import castor.settings.Parameters;
@@ -287,7 +286,7 @@ public class CastorCmd {
 					StatisticsStreamSampling statistics = StatisticsExtractor.extractStatisticsForStreamSampling(genericDAO, schema);
 					saturator = new BottomClauseGeneratorStreamSampling(parameters.getRandomSeed(), statistics);
 				} else {
-					saturator = new BottomClauseGeneratorNaiveSampling();
+					saturator = new BottomClauseGeneratorNaiveSampling(true);
 				}
 			}
 			NumbersKeeper.extractingStatisticsTime = tw.time();
@@ -412,8 +411,11 @@ public class CastorCmd {
 						}
 					}
 
+					// For testing, use original bottom clause construction. Check parameters to determine whether to use sampling.
+					BottomClauseGenerator testSaturator = new BottomClauseGeneratorNaiveSampling(this.parameters.isSampleInTesting());
+					
 					logger.info("Evaluating on testing data...");
-					CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, saturator, 
+					CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, testSaturator, 
 							posTest, negTest, this.schema, this.dataModel, this.parameters, true,
 							examplesSourceTest, posTestExamplesFile, negTestExamplesFile);
 					learner.evaluate(testCoverageEngine, this.schema, definition, posTest, negTest);

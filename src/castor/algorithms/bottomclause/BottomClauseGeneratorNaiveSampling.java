@@ -18,6 +18,13 @@ import castor.utils.RandomSet;
 
 public class BottomClauseGeneratorNaiveSampling extends BottomClauseGeneratorOriginalAlgorithm {
 
+	private boolean sample;
+	
+	public BottomClauseGeneratorNaiveSampling(boolean sample) {
+		super();
+		this.sample = sample;
+	}
+	
 	@Override
 	public List<Predicate> operationForGroupedModes(GenericDAO genericDAO, Schema schema, MyClause clause,
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
@@ -25,6 +32,11 @@ public class BottomClauseGeneratorNaiveSampling extends BottomClauseGeneratorOri
 			List<Mode> relationAttributeModes, Map<Pair<String, Integer>, List<Mode>> groupedModes, RandomSet<String> knownTermsSet,
 			int recall, boolean ground) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
+		
+		// If sampling is turned off, set recall to max value
+		if (!this.sample) {
+			recall = Integer.MAX_VALUE;
+		}
 		
 		String knownTerms = toListString(knownTermsSet);
 

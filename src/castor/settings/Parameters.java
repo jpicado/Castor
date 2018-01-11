@@ -25,6 +25,7 @@ public class Parameters {
 	private String port = "21212";
 	private int randomSeed = 1;
 	private String samplingMethod = SamplingMethods.NAIVE;
+	private boolean sampleInTesting = false;
 	
 	public boolean isCreateStoredProcedure() {
 		return createStoredProcedure;
@@ -162,6 +163,12 @@ public class Parameters {
 			throw new IllegalArgumentException("Unknown sampling method.");
 		}
 	}
+	public boolean isSampleInTesting() {
+		return sampleInTesting;
+	}
+	public void setSampleInTesting(boolean sampleInTesting) {
+		this.sampleInTesting = sampleInTesting;
+	}
 	@Override
 	public String toString() {
 		return "Parameters [createStoredProcedure=" + createStoredProcedure + ", useStoredProcedure="
@@ -170,6 +177,6 @@ public class Parameters {
 				+ ", minimizeBottomClause=" + minimizeBottomClause + ", reductionMethod=" + reductionMethod
 				+ ", iterations=" + iterations + ", recall=" + recall + ", groundRecall=" + groundRecall + ", maxterms="
 				+ maxterms + ", useInds=" + useInds + ", dbURL=" + dbURL + ", port=" + port + ", randomSeed="
-				+ randomSeed + ", samplingMethod=" + samplingMethod + "]";
+				+ randomSeed + ", samplingMethod=" + samplingMethod + ", sampleInTesting=" + sampleInTesting + "]";
 	}
 }

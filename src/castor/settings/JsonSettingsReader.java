@@ -79,6 +79,9 @@ public class JsonSettingsReader {
 		if (parametersJson.get("sampling") != null) {
 			parameters.setSamplingMethod(parametersJson.get("sampling").getAsString());
 		}
+		if (parametersJson.get("sampleInTesting") != null) {
+			parameters.setSampleInTesting(parametersJson.get("sampleInTesting").getAsBoolean());
+		}
 		
 		return parameters;
 	}

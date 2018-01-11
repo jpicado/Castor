@@ -27,7 +27,7 @@ public class BottomClauseGeneratorOlkenSampling extends BottomClauseGeneratorOri
 	private StatisticsOlkenSampling statistics;
 
 	public BottomClauseGeneratorOlkenSampling(int seed, StatisticsOlkenSampling statistics) {
-		this.varCounter = 0;
+		super();
 		this.randomGenerator = new Random(seed);
 		this.statistics = statistics;
 	}
@@ -50,6 +50,9 @@ public class BottomClauseGeneratorOlkenSampling extends BottomClauseGeneratorOri
 			//TODO max number of times the run the following loop?
 			boolean accept = false;
 			while (accept == false) {
+				//TODO which approach is better?
+				
+				// APPROACH 1
 				// Sample a constant from known constants
 				String randomValue = knownTermsSet.get(randomGenerator.nextInt(knownTermsSet.size()));
 				
@@ -63,6 +66,27 @@ public class BottomClauseGeneratorOlkenSampling extends BottomClauseGeneratorOri
 					accept = true;
 					break;
 				}
+				
+				// APPROACH 2
+//				String randomValue = "";
+//				long cardinality = 0;
+//				for (int i = 0; i < knownTermsSet.size(); i++) {
+//					// Sample a constant from known constants
+//					randomValue = knownTermsSet.get(randomGenerator.nextInt(knownTermsSet.size()));
+//					
+//					// Find distinct tuples in relation with attribute = randomValue
+//					String queryCardinality = String.format(COUNT_DISTINCT_TUPLES_SQL_STATEMENT, relationName, attributeName, "'"+randomValue+"'");
+//					cardinality = genericDAO.executeScalarQuery(queryCardinality);
+//					
+//					if (cardinality > 0) {
+//						break;
+//					}
+//				}
+//				if (cardinality == 0) {
+//					accept = true;
+//					break;
+//				}
+				////
 				
 				// Compute probability to keep sample
 				Pair<String,String> key = new Pair<String, String>(relationName.toUpperCase(), attributeName.toUpperCase());
