@@ -54,38 +54,42 @@ public class BottomClauseGeneratorOlkenSampling extends BottomClauseGeneratorOri
 				
 				// APPROACH 1
 				// Sample a constant from known constants
-				String randomValue = knownTermsSet.get(randomGenerator.nextInt(knownTermsSet.size()));
+//				String randomValue = knownTermsSet.get(randomGenerator.nextInt(knownTermsSet.size()));
+//				
+//				// Find distinct tuples in relation with attribute = randomValue
+//				String queryCardinality = String.format(COUNT_DISTINCT_TUPLES_SQL_STATEMENT, relationName, attributeName, "'"+randomValue+"'");
+//				long cardinality = genericDAO.executeScalarQuery(queryCardinality);
+//				
+//				// If randomValue does not appear in relation, break (to avoid infinite loops)
+//				//TODO better way to avoid infinite loop?
+//				if (cardinality == 0) {
+////					knownTermsSet.remove(randomValue);
+//					accept = true;
+//					break;
+//				}
 				
-				// Find distinct tuples in relation with attribute = randomValue
-				String queryCardinality = String.format(COUNT_DISTINCT_TUPLES_SQL_STATEMENT, relationName, attributeName, "'"+randomValue+"'");
-				long cardinality = genericDAO.executeScalarQuery(queryCardinality);
+				// APPROACH 2
+				String randomValue = "";
+				long cardinality = 0;
+				for (int i = 0; i < knownTermsSet.size(); i++) {
+					// Sample a constant from known constants
+					randomValue = knownTermsSet.get(randomGenerator.nextInt(knownTermsSet.size()));
+					
+					// Find distinct tuples in relation with attribute = randomValue
+					String queryCardinality = String.format(COUNT_DISTINCT_TUPLES_SQL_STATEMENT, relationName, attributeName, "'"+randomValue+"'");
+					cardinality = genericDAO.executeScalarQuery(queryCardinality);
+					
+					if (cardinality == 0) {
+						knownTermsSet.remove(randomValue);
+					} else if (cardinality > 0) {
+						break;
+					}
+				}
 				
-				// If randomValue does not appear in relation, break (to avoid infinite loops)
-				//TODO better way to avoid infinite loop?
 				if (cardinality == 0) {
 					accept = true;
 					break;
 				}
-				
-				// APPROACH 2
-//				String randomValue = "";
-//				long cardinality = 0;
-//				for (int i = 0; i < knownTermsSet.size(); i++) {
-//					// Sample a constant from known constants
-//					randomValue = knownTermsSet.get(randomGenerator.nextInt(knownTermsSet.size()));
-//					
-//					// Find distinct tuples in relation with attribute = randomValue
-//					String queryCardinality = String.format(COUNT_DISTINCT_TUPLES_SQL_STATEMENT, relationName, attributeName, "'"+randomValue+"'");
-//					cardinality = genericDAO.executeScalarQuery(queryCardinality);
-//					
-//					if (cardinality > 0) {
-//						break;
-//					}
-//				}
-//				if (cardinality == 0) {
-//					accept = true;
-//					break;
-//				}
 				////
 				
 				// Compute probability to keep sample
