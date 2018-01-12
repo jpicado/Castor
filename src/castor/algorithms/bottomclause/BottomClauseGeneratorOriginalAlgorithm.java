@@ -193,15 +193,17 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 			}
 			
 			// Add new terms to inTerms
-			Iterator<Map.Entry<String, Set<String>>> newInTermsIterator = newInTerms.entrySet().iterator();
-			while (newInTermsIterator.hasNext()) {
-				Map.Entry<String, Set<String>> pair = (Map.Entry<String, Set<String>>) newInTermsIterator.next();
-				String variableType = pair.getKey();
-				if (!inTerms.containsKey(variableType)) {
-					inTerms.put(variableType, new HashSet<String>());
-				}
-				inTerms.get(variableType).addAll(newInTerms.get(variableType));
-			}
+//			Iterator<Map.Entry<String, Set<String>>> newInTermsIterator = newInTerms.entrySet().iterator();
+//			while (newInTermsIterator.hasNext()) {
+//				Map.Entry<String, Set<String>> pair = (Map.Entry<String, Set<String>>) newInTermsIterator.next();
+//				String variableType = pair.getKey();
+//				if (!inTerms.containsKey(variableType)) {
+//					inTerms.put(variableType, new HashSet<String>());
+//				}
+//				inTerms.get(variableType).addAll(newInTerms.get(variableType));
+//			}
+			inTerms.clear();
+			inTerms.putAll(newInTerms);
 			
 			// Stopping condition: check number of distinct terms
 		    if (distinctTerms.size() >= maxTerms) {

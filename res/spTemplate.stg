@@ -113,7 +113,7 @@ public class $name$ extends VoltProcedure {
 			$modesBOperations$
 
 			// Add new terms to inTerms
-			Iterator<Map.Entry<String,Set<String>\>> newInTermsIterator = newInTerms.entrySet().iterator();
+			/*Iterator<Map.Entry<String,Set<String>\>> newInTermsIterator = newInTerms.entrySet().iterator();
 		    while (newInTermsIterator.hasNext()) {
 		        Map.Entry<String,Set<String\>> pair = (Map.Entry<String,Set<String\>>)newInTermsIterator.next();
 		        String variableType = pair.getKey();
@@ -121,7 +121,9 @@ public class $name$ extends VoltProcedure {
 		        	inTerms.put(variableType, new HashSet<String>());
 		        }
 		        inTerms.get(variableType).addAll(newInTerms.get(variableType));
-		    }
+		    }*/
+		    inTerms.clear();
+			inTerms.putAll(newInTerms);
 		    
 		    // Stopping condition: check number of distinct terms
 		    if (distinctTerms.size() >= maxTerms) {
