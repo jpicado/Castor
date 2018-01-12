@@ -42,11 +42,8 @@ public class BottomClauseGeneratorOlkenSampling extends BottomClauseGeneratorOri
 			int recall, boolean ground) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 		
-		//TODO what if join is smaller than recall
-		long sampleSize = Math.min(recall, statistics.getRelationSize().get(relationName.toUpperCase()));
-		
 		// RAJOIN algorithm (from Olken's thesis)
-		for(int solutionsCounter=0; solutionsCounter < sampleSize; solutionsCounter++) {
+		for(int solutionsCounter=0; solutionsCounter < recall; solutionsCounter++) {
 			//TODO max number of times the run the following loop?
 			boolean accept = false;
 			while (accept == false) {
@@ -61,7 +58,6 @@ public class BottomClauseGeneratorOlkenSampling extends BottomClauseGeneratorOri
 //				long cardinality = genericDAO.executeScalarQuery(queryCardinality);
 //				
 //				// If randomValue does not appear in relation, break (to avoid infinite loops)
-//				//TODO better way to avoid infinite loop?
 //				if (cardinality == 0) {
 ////					knownTermsSet.remove(randomValue);
 //					accept = true;

@@ -71,7 +71,6 @@ public class BottomClauseGeneratorNaiveSampling extends BottomClauseGeneratorOri
 					}
 				}
 			}
-
 		}
 
 		return newLiterals;
