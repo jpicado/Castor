@@ -49,7 +49,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 			Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters) {
 		Map<String, String> hashConstantToVariable = new HashMap<String, String>();
 		Map<String, String> hashVariableToConstant = new HashMap<String, String>();
-		return this.generateBottomClauseOneQueryPerRelation(genericDAO, hashConstantToVariable,
+		return this.generateBottomClauseOneQueryPerRelationAttribute(genericDAO, hashConstantToVariable,
 				hashVariableToConstant, exampleTuple, schema, dataModel.getModeH(), dataModel.getModesB(), parameters.getIterations(), parameters.getRecall(), parameters.isUseInds(), parameters.getMaxterms(), false);
 	}
 	
