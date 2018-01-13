@@ -23,9 +23,9 @@ import castor.algorithms.Learner;
 import castor.algorithms.ProGolem;
 import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
-import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSampling;
-import castor.algorithms.bottomclause.BottomClauseGeneratorOlkenSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSampling;
+import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesNaiveSampling;
+import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesOlkenSampling;
 import castor.algorithms.bottomclause.BottomClauseUtil;
 import castor.algorithms.bottomclause.StoredProcedureGeneratorSaturationInsideSP;
 import castor.algorithms.coverageengines.CoverageBySubsumptionParallel;
@@ -280,13 +280,15 @@ public class CastorCmd {
 				if (parameters.getSamplingMethod().equals(SamplingMethods.OLKEN))  {
 					logger.info("Use Olken sampling. Extracting statistics from database instance...");
 					StatisticsOlkenSampling statistics = StatisticsExtractor.extractStatisticsForOlkenSampling(genericDAO, schema);
-					saturator = new BottomClauseGeneratorOlkenSampling(parameters.getRandomSeed(), statistics);
+//					saturator = new BottomClauseGeneratorOlkenSampling(parameters.getRandomSeed(), statistics);
+					saturator = new BottomClauseGeneratorWithGroupedModesOlkenSampling(parameters.getRandomSeed(), statistics);
 				} else if (parameters.getSamplingMethod().equals(SamplingMethods.STREAM)) {
 					logger.info("Use Stream sampling. Extracting statistics from database instance...");
 					StatisticsStreamSampling statistics = StatisticsExtractor.extractStatisticsForStreamSampling(genericDAO, schema);
 					saturator = new BottomClauseGeneratorStreamSampling(parameters.getRandomSeed(), statistics);
 				} else {
-					saturator = new BottomClauseGeneratorNaiveSampling(true);
+//					saturator = new BottomClauseGeneratorNaiveSampling(true);
+					saturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(true);
 				}
 			}
 			NumbersKeeper.extractingStatisticsTime = tw.time();
@@ -412,7 +414,8 @@ public class CastorCmd {
 					}
 
 					// For testing, use original bottom clause construction. Check parameters to determine whether to use sampling.
-					BottomClauseGenerator testSaturator = new BottomClauseGeneratorNaiveSampling(this.parameters.isSampleInTesting());
+//					BottomClauseGenerator testSaturator = new BottomClauseGeneratorNaiveSampling(this.parameters.isSampleInTesting());
+					BottomClauseGenerator testSaturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(this.parameters.isSampleInTesting());
 					
 					logger.info("Evaluating on testing data...");
 					CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, testSaturator, 

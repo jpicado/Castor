@@ -33,7 +33,7 @@ import castor.utils.RandomSet;
 
 public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGenerator {
 
-	protected static final String SELECTIN_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s;";
+	protected static final String SELECTIN_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s";
 
 	protected int varCounter;
 
@@ -117,7 +117,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 			modeH = modeH.toGroundMode();
 		}
 		Predicate headLiteral = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, exampleTuple,
-				modeH, inTerms, distinctTerms);
+				modeH, true, inTerms, distinctTerms);
 		clause.addPositiveLiteral(headLiteral);
 
 		// Group modes by relation name - input attribute position
@@ -223,57 +223,12 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 			Map<String, Set<String>> newInTerms, Set<String> distinctTerms, String relationName, String attributeName,
 			List<Mode> relationAttributeModes, Map<Pair<String, Integer>, List<Mode>> groupedModes, RandomSet<String> knownTermsSet,
 			int recall, boolean ground);
-	
-
-	/*private List<Predicate> operationForGroupedModes(GenericDAO genericDAO, Schema schema, MyClause clause,
-			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
-			Map<String, Set<String>> newInTerms, Set<String> distinctTerms, String relationName, String attributeName,
-			List<Mode> relationAttributeModes, Map<Pair<String, Integer>, List<Mode>> groupedModes, String knownTerms,
-			int recall, boolean ground) {
-		List<Predicate> newLiterals = new LinkedList<Predicate>();
-
-		// Create query and run
-		String query = String.format(SELECTIN_SQL_STATEMENT, relationName, attributeName, knownTerms);
-		GenericTableObject result = genericDAO.executeQuery(query);
-
-		if (result != null) {
-			Set<String> usedModes = new HashSet<String>();
-			for (Mode mode : relationAttributeModes) {
-				if (ground) {
-					if (usedModes.contains(mode.toGroundModeString())) {
-						continue;
-					}
-					else {
-						mode = mode.toGroundMode();
-						usedModes.add(mode.toGroundModeString());
-					}
-				}
-				int solutionsCounter = 0;
-				for (Tuple tuple : result.getTable()) {
-					if (solutionsCounter >= recall)
-						break;
-
-					Predicate literal = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, tuple,
-							mode, newInTerms, distinctTerms);
-					
-					// Do not add literal if it's exactly the same as head literal
-					if (!literal.equals(clause.getPositiveLiterals().get(0).getAtomicSentence())) {
-						addNotRepeated(newLiterals, literal);
-						solutionsCounter++;
-					}
-				}
-			}
-
-		}
-
-		return newLiterals;
-	}*/
 
 	/*
 	 * Creates a literal from a tuple and a mode.
 	 */
 	protected Predicate createLiteralFromTuple(Map<String, String> hashConstantToVariable,
-			Map<String, String> hashVariableToConstant, Tuple tuple, Mode mode, Map<String, Set<String>> inTerms, Set<String> distinctTerms) {
+			Map<String, String> hashVariableToConstant, Tuple tuple, Mode mode, boolean headMode, Map<String, Set<String>> inTerms, Set<String> distinctTerms) {
 		List<Term> terms = new ArrayList<Term>();
 		for (int i = 0; i < mode.getArguments().size(); i++) {
 			String value = tuple.getValues().get(i);
@@ -295,14 +250,15 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 				terms.add(new Variable(hashConstantToVariable.get(value)));
 			}
 			// Add constants to inTerms
-//			if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.INPUT) ||
-//					mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
+			if (headMode ||
+					mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.OUTPUT) ||
+					mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
 				String variableType = mode.getArguments().get(i).getType();
 				if (!inTerms.containsKey(variableType)) {
 					inTerms.put(variableType, new HashSet<String>());
 				}
 				inTerms.get(variableType).add(value);
-//			}
+			}
 		}
 		
 		Predicate literal = new Predicate(mode.getPredicateName(), terms);
@@ -449,9 +405,10 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 	}
 	
 	/*
+	 * Bottom clause generation as described in original algorithm, except that it only does one query to the DB per relation (even for different input attributes).
+	 * COPIED TO BottomClauseGeneratorWithGroupedModes
 	 * DOES NOT HANDLE INDS (CANNOT BE USED FOR SCHEMA INDEPENDENCE)
 	 */
-	//TODO INCOMPLETE
 	private MyClause generateBottomClauseOneQueryPerRelation(GenericDAO genericDAO,
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant, Tuple exampleTuple,
 			Schema schema, Mode modeH, List<Mode> modesB, int iterations, int recall, boolean applyInds, int maxTerms, boolean ground) {
@@ -462,6 +419,11 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 		}
 		
 		MyClause clause = new MyClause();
+		
+		// If sampling is turned off, set recall to max value
+//		if (!this.sample) {
+//			recall = Integer.MAX_VALUE;
+//		}
 		
 		// Known terms for a data type
 		Map<String, Set<String>> inTerms = new HashMap<String, Set<String>>();
@@ -475,7 +437,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 			modeH = modeH.toGroundMode();
 		}
 		Predicate headLiteral = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, exampleTuple,
-				modeH, inTerms, distinctTerms);
+				modeH, true, inTerms, distinctTerms);
 		clause.addPositiveLiteral(headLiteral);
 
 		// Group modes by relation name
@@ -489,8 +451,8 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 		
 		// Create body literals
 		for (int j = 0; j < iterations; j++) {
-			// Group the WHERE expressions of each mode into relations
-			Map<String, List<String>> relationsWhereExpressions = new HashMap<String, List<String>>();
+			// Group the expressions of each mode
+			Map<String, List<String>> relationsExpressions = new LinkedHashMap<String, List<String>>();
 			Set<Pair<String,Integer>> seenModesInputAttribute = new HashSet<Pair<String,Integer>>();
 			
 			for (Mode mode : modesB) {
@@ -504,12 +466,12 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 				
 				Pair<String,Integer> relationInputAttribute = new Pair<String,Integer>(mode.getPredicateName(), inputVarPosition);
 				if (!seenModesInputAttribute.contains(relationInputAttribute)) {
-					String expression = computeWhereExpression(mode, schema, inTerms);
+					String expression = computeExpression(mode, schema, inTerms);
 					if (!expression.isEmpty()) {
-						if (!relationsWhereExpressions.containsKey(mode.getPredicateName())) {
-							relationsWhereExpressions.put(mode.getPredicateName(), new LinkedList<String>());
+						if (!relationsExpressions.containsKey(mode.getPredicateName())) {
+							relationsExpressions.put(mode.getPredicateName(), new LinkedList<String>());
 						}
-						relationsWhereExpressions.get(mode.getPredicateName()).add(expression);
+						relationsExpressions.get(mode.getPredicateName()).add(expression);
 					}
 					
 					seenModesInputAttribute.add(relationInputAttribute);
@@ -519,21 +481,34 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 			// Create new inTerms to hold terms for this iteration
 			Map<String, Set<String>> newInTerms = new HashMap<String, Set<String>>();
 			
-			Iterator<Entry<String, List<String>>> expressionsIterator = relationsWhereExpressions.entrySet().iterator();
+			Iterator<Entry<String, List<String>>> expressionsIterator = relationsExpressions.entrySet().iterator();
 			while (expressionsIterator.hasNext()) {
 				Map.Entry<String, List<String>> pair = (Map.Entry<String, List<String>>) expressionsIterator.next();
 				String relation = pair.getKey();
 				List<String> expressions = pair.getValue();
 
 				// Create query
-				String query = "SELECT * FROM " + relation + " WHERE ";
+				// USING OR
+//				StringBuilder queryBuilder = new StringBuilder();
+//				queryBuilder.append("SELECT * FROM " + relation + " WHERE ");
+//				for (int i = 0; i < expressions.size(); i++) {
+//					queryBuilder.append(expressions.get(i));
+//					if (i < expressions.size() - 1) {
+//						queryBuilder.append(" OR ");
+//					}
+//				}
+//				queryBuilder.append(";");
+//				String query = queryBuilder.toString();
+				// USING UNION
+				StringBuilder queryBuilder = new StringBuilder();
 				for (int i = 0; i < expressions.size(); i++) {
-					query += expressions.get(i);
+					queryBuilder.append(expressions.get(i));
 					if (i < expressions.size() - 1) {
-						query += " OR ";
+						queryBuilder.append(" UNION ");
 					}
 				}
-				query += ";";
+				queryBuilder.append(";");
+				String query = queryBuilder.toString();
 
 				// Run query
 				GenericTableObject result = genericDAO.executeQuery(query);
@@ -558,7 +533,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 								break;
 
 							Predicate literal = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, tuple,
-									mode, newInTerms, distinctTerms);
+									mode, false, newInTerms, distinctTerms);
 							
 							// Do not add literal if it's exactly the same as head literal
 							if (!literal.equals(clause.getPositiveLiterals().get(0).getAtomicSentence())) {
@@ -593,9 +568,9 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 	}
 	
 	/*
-	 * Compute the WHERE expression to be used in an SQL query
+	 * Compute expression to be used in an SQL query
 	 */
-	private String computeWhereExpression(Mode mode, Schema schema, Map<String, Set<String>> inTerms) {
+	private String computeExpression(Mode mode, Schema schema, Map<String, Set<String>> inTerms) {
 		String expression = "";
 
 		int inputVarPosition = 0;
@@ -613,7 +588,11 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 		// If there is no list of known terms for attributeType, skip mode
 		if (inTerms.containsKey(attributeType)) {
 			String knownTerms = toListString(inTerms.get(attributeType));
-			expression += attributeName + " IN " + knownTerms;
+			// USING OR
+//			expression = attributeName + " IN " + knownTerms;
+			
+			// USING UNION
+			expression = String.format(SELECTIN_SQL_STATEMENT, mode.getPredicateName(), attributeName, knownTerms);
 		}
 		return expression;
 	}
@@ -643,7 +622,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 		// Create head literal
 		varCounter = 0;
 		Predicate headLiteral = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, exampleTuple,
-				modeH, inTerms, distinctTerms);
+				modeH, true, inTerms, distinctTerms);
 		clause.addPositiveLiteral(headLiteral);
 
 		// Create body literals
@@ -685,7 +664,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 							break;
 
 						Predicate literal = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant,
-								tuple, mode, newInTerms, distinctTerms);
+								tuple, mode, false, newInTerms, distinctTerms);
 						clause.addNegativeLiteral(literal);
 						solutionsCounter++;
 					}

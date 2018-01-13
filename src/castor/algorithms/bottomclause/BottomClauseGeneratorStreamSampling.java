@@ -99,7 +99,7 @@ public class BottomClauseGeneratorStreamSampling extends BottomClauseGeneratorOr
 					}
 					
 					Predicate literal = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, tuple,
-							mode, newInTerms, distinctTerms);
+							mode, false, newInTerms, distinctTerms);
 					
 					// Do not add literal if it's exactly the same as head literal
 					if (!literal.equals(clause.getPositiveLiterals().get(0).getAtomicSentence())) {

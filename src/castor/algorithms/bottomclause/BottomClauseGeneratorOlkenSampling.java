@@ -44,7 +44,7 @@ public class BottomClauseGeneratorOlkenSampling extends BottomClauseGeneratorOri
 		
 		// RAJOIN algorithm (from Olken's thesis)
 		for(int solutionsCounter=0; solutionsCounter < recall; solutionsCounter++) {
-			//TODO max number of times the run the following loop?
+			//TODO max number of times to run the following loop?
 			boolean accept = false;
 			while (accept == false) {
 				//TODO which approach is better?
@@ -78,6 +78,7 @@ public class BottomClauseGeneratorOlkenSampling extends BottomClauseGeneratorOri
 					if (cardinality == 0) {
 						knownTermsSet.remove(randomValue);
 					} else if (cardinality > 0) {
+						// found value
 						break;
 					}
 				}
@@ -116,7 +117,7 @@ public class BottomClauseGeneratorOlkenSampling extends BottomClauseGeneratorOri
 							}
 							
 							Predicate literal = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, tuple,
-									mode, newInTerms, distinctTerms);
+									mode, false, newInTerms, distinctTerms);
 							
 							// Do not add literal if it's exactly the same as head literal
 							if (!literal.equals(clause.getPositiveLiterals().get(0).getAtomicSentence())) {
