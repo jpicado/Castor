@@ -44,7 +44,58 @@ public class BottomClauseGeneratorWithGroupedModesOlkenSampling extends BottomCl
 			String relationName, List<Mode> relationModes, int recall, boolean ground) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 		
-		// Create queries to be used to exclude tuples (using EXCEPT)
+		// COUNT query: Count the number of potential tuples
+		List<String> expressions = new LinkedList<String>();
+		Set<String> seenModesInputAttributeForCountQuery = new HashSet<String>();
+		for (Mode mode : relationModes) {
+			// Find input attribute position
+			int inputVarPosition = 0;
+			for (int i = 0; i < mode.getArguments().size(); i++) {
+				if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.INPUT)) {
+					inputVarPosition = i;
+					break;
+				}
+			}
+			
+			// Get type for attribute in mode
+			String inputAttributeType = mode.getArguments().get(inputVarPosition).getType();
+			
+			// Skip mode if another mode with same relation and input attribute has already been seen
+			String key = mode.getPredicateName() + "_" + inputVarPosition + "_" + inputAttributeType;
+			if (!seenModesInputAttributeForCountQuery.contains(key)) {
+				String expression = computeExpression(mode, schema, inTerms);
+				if (!expression.isEmpty()) {
+					expressions.add(expression);
+				}
+				
+				seenModesInputAttributeForCountQuery.add(key);
+			}
+		}
+		
+		// If expressions is empty (haven't seen any constant for type, return)
+		if (expressions.isEmpty()) {
+			return newLiterals;
+		}
+		
+		// Create query
+		// USING UNION
+		StringBuilder countQueryBuilder = new StringBuilder();
+		for (int i = 0; i < expressions.size(); i++) {
+			countQueryBuilder.append(expressions.get(i));
+			if (i < expressions.size() - 1) {
+				countQueryBuilder.append(" UNION ");
+			}
+		}
+		String countQuery = "SELECT COUNT(*) FROM (" + countQueryBuilder.toString() + ") t;";
+		long numberOfTuples = genericDAO.executeScalarQuery(countQuery);
+		
+		// If number of tuples is zero, return
+		if (numberOfTuples == 0) {
+			return newLiterals;
+		}
+		// COUNT query
+		
+		// EXCEPT query: Create queries to be used to exclude tuples (using EXCEPT)
 		StringBuilder exceptQueryBuilder = new StringBuilder();
 		for (int i = 0; i < relationModes.get(0).getArguments().size(); i++) {
 			// Find all types for current attribute
@@ -74,8 +125,10 @@ public class BottomClauseGeneratorWithGroupedModesOlkenSampling extends BottomCl
 			}
 		}
 		String exceptQuery = exceptQueryBuilder.toString();
+		// EXCEPT query
 		
 		// RAJOIN algorithm (from Olken's thesis)
+		Set<Tuple> usedTuples = new HashSet<Tuple>();
 		for(int solutionsCounter=0; solutionsCounter < recall; solutionsCounter++) {
 			//TODO max number of times to run the following loop?
 			boolean accept = false;
@@ -174,7 +227,6 @@ public class BottomClauseGeneratorWithGroupedModesOlkenSampling extends BottomCl
 					}
 					queryBuilder.append(";");
 					String query = queryBuilder.toString();
-//					System.out.println(query);
 					
 					// Run query
 					GenericTableObject result = genericDAO.executeQuery(query);
@@ -182,12 +234,19 @@ public class BottomClauseGeneratorWithGroupedModesOlkenSampling extends BottomCl
 					if (result == null || result.getTable().isEmpty()) {
 						// If result is empty, join of current value is empty, so exit current loop
 						break;
+					} else if (usedTuples.size() == numberOfTuples) {
+						solutionsCounter += recall;
+						break;
 					} else {
-					
-//					if (result != null && result.getTable().size() > 0) {
 						// Sample a tuple from result
 						//TODO can we get a single sample directly from the query to the DB?
 						Tuple tuple = result.getTable().get(randomGenerator.nextInt(result.getTable().size()));
+						
+						// If I already used this tuple, skip and try to get another one
+						if (usedTuples.contains(tuple)) {
+							continue;
+						}
+						usedTuples.add(tuple);
 						
 						Set<String> usedModes = new HashSet<String>();
 						for (Mode mode : relationModes) {

@@ -297,7 +297,6 @@ public class CastorCmd {
 			tw.reset();
 			logger.info("Creating coverage engine...");
 			boolean createFullCoverageEngine = !saturation && !groundSaturation;
-			//TODO extracting stats and computing saturator multiple times
 			CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, saturator,
 					posTrain, negTrain, this.schema, this.dataModel, this.parameters, createFullCoverageEngine,
 					examplesSource, posTrainExamplesFile, negTrainExamplesFile);

@@ -50,10 +50,10 @@ public class BottomClauseGeneratorWithGroupedModesNaiveSampling extends BottomCl
 			}
 			
 			// Get type for attribute in mode
-			String type = mode.getArguments().get(inputVarPosition).getType();
+			String inputAttributeType = mode.getArguments().get(inputVarPosition).getType();
 			
 			// Skip mode if another mode with same relation and input attribute has already been seen
-			String key = mode.getPredicateName() + "_" + inputVarPosition + "_" + type;
+			String key = mode.getPredicateName() + "_" + inputVarPosition + "_" + inputAttributeType;
 			if (!seenModesInputAttribute.contains(key)) {
 				String expression = computeExpression(mode, schema, inTerms);
 				if (!expression.isEmpty()) {
@@ -133,35 +133,5 @@ public class BottomClauseGeneratorWithGroupedModesNaiveSampling extends BottomCl
 		}
 
 		return newLiterals;
-	}
-	
-	/*
-	 * Compute expression to be used in an SQL query
-	 */
-	private String computeExpression(Mode mode, Schema schema, Map<String, Set<String>> inTerms) {
-		String expression = "";
-
-		int inputVarPosition = 0;
-		for (int i = 0; i < mode.getArguments().size(); i++) {
-			if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.INPUT)) {
-				inputVarPosition = i;
-				break;
-			}
-		}
-
-		String attributeName = schema.getRelations().get(mode.getPredicateName().toUpperCase()).getAttributeNames()
-				.get(inputVarPosition);
-		String attributeType = mode.getArguments().get(inputVarPosition).getType();
-
-		// If there is no list of known terms for attributeType, skip mode
-		if (inTerms.containsKey(attributeType)) {
-			String knownTerms = toListString(inTerms.get(attributeType));
-			// USING OR
-//			expression = attributeName + " IN " + knownTerms;
-			
-			// USING UNION
-			expression = String.format(SELECTIN_SQL_STATEMENT, mode.getPredicateName(), attributeName, knownTerms);
-		}
-		return expression;
 	}
 }

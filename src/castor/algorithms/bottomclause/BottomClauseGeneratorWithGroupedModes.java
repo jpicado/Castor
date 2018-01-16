@@ -274,5 +274,33 @@ public abstract class BottomClauseGeneratorWithGroupedModes implements BottomCla
 		return builder.toString();
 	}
 	
-	
+	/*
+	 * Compute expression to be used in an SQL query
+	 */
+	protected String computeExpression(Mode mode, Schema schema, Map<String, Set<String>> inTerms) {
+		String expression = "";
+
+		int inputVarPosition = 0;
+		for (int i = 0; i < mode.getArguments().size(); i++) {
+			if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.INPUT)) {
+				inputVarPosition = i;
+				break;
+			}
+		}
+
+		String attributeName = schema.getRelations().get(mode.getPredicateName().toUpperCase()).getAttributeNames()
+				.get(inputVarPosition);
+		String attributeType = mode.getArguments().get(inputVarPosition).getType();
+
+		// If there is no list of known terms for attributeType, skip mode
+		if (inTerms.containsKey(attributeType)) {
+			String knownTerms = toListString(inTerms.get(attributeType));
+			// USING OR
+//			expression = attributeName + " IN " + knownTerms;
+			
+			// USING UNION
+			expression = String.format(SELECTIN_SQL_STATEMENT, mode.getPredicateName(), attributeName, knownTerms);
+		}
+		return expression;
+	}
 }
