@@ -258,7 +258,7 @@ public class $name$ extends VoltProcedure {
 		while(table.advanceRow() && solutionsCounter < recall) {
         	List<String> terms = new ArrayList<String>();
         	for (int i = 0; i < modeBArguments.length; i++) {
-        		String value = table.getString(i);
+        		String value = table.get(i, table.getColumnType(i)).toString();
 
         		if (getArgumentIdentifierType(modeBArguments[i]).equals(TYPE_CONSTANT)) {
         			terms.add('"'+value+'"');

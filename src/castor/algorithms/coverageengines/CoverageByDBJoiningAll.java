@@ -65,15 +65,9 @@ public class CoverageByDBJoiningAll implements CoverageEngine {
 	
 	@Override
 	public int countCoveredExamplesFromRelation(GenericDAO genericDAO, Schema schema, ClauseInfo clauseInfo, Relation examplesRelation, boolean positiveRelation) {
-		int covered = 0;
 		String query = QueryGenerator.generateQueryFromClauseAndCoverageTable(schema, clauseInfo.getClause(), examplesRelation, true);
-		GenericTableObject result = genericDAO.executeQuery(query);
-		if (result != null && result.getTable().size() > 0) {
-			covered = Integer.parseInt(result.getTable().get(0).getValues().get(0));
-		} else {
-			throw new IllegalStateException("An error occurred computing clause coverage.");
-		}
-		return covered;
+		long covered = genericDAO.executeScalarQuery(query);
+		return (int)covered;
 	}
 
 	@Override

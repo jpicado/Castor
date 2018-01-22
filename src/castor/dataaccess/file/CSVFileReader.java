@@ -28,7 +28,7 @@ public class CSVFileReader {
 
             String[] line;
             while ((line = reader.readNext()) != null) {
-                List<String> values = Arrays.asList(line);
+                List<Object> values = Arrays.asList((Object[]) line);
                 tuples.add(new Tuple(values));
             }
         } catch (IOException e) {

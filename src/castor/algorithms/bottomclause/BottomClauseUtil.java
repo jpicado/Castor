@@ -33,7 +33,7 @@ public class BottomClauseUtil {
 		MyClause clause = null;
 		TimeWatch watch;
 		
-		logger.info("Generating bottom clause for example <" + String.join(",", exampleTuple.getValues()) + ">...");
+		logger.info("Generating bottom clause for example <" + String.join(",", exampleTuple.getStringValues()) + ">...");
 		watch = TimeWatch.start();
 		clause = saturator.generateBottomClause(genericDAO, bottomClauseConstructionDAO, exampleTuple, schema, dataModel, parameters);
 		
@@ -54,7 +54,7 @@ public class BottomClauseUtil {
 		TimeWatch watch;
 		
 		// Generate bottom clause
-		logger.info("Generating ground bottom clause for example <" + String.join(",", exampleTuple.getValues()) + ">...");
+		logger.info("Generating ground bottom clause for example <" + String.join(",", exampleTuple.getStringValues()) + ">...");
 		watch = TimeWatch.start();
 		clause = saturator.generateGroundBottomClauseString(genericDAO, bottomClauseConstructionDAO, exampleTuple, schema, dataModel, parameters);
 		

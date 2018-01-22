@@ -57,7 +57,7 @@ public class StatisticsExtractor {
 				if (result != null) {
 					// For each value, compute number of tuples that contain it
 					for(Tuple tuple : result.getTable()) {
-						String value = tuple.getValues().get(0);
+						String value = tuple.getValues().get(0).toString();
 						
 						// Find number of distinct tuples in relation with attribute = value
 						String queryCardinality = String.format(COUNT_DISTINCT_TUPLES_SQL_STATEMENT, relation.getName(), attribute, "'"+value+"'");

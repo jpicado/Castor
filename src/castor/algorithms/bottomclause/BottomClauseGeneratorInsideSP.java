@@ -33,7 +33,7 @@ public class BottomClauseGeneratorInsideSP implements BottomClauseGenerator {
 		MyClause clause = new MyClause();
 		
 		// Call procedure that creates bottom clause
-		String example = String.join(DBCommons.ATTRIBUTE_DELIMITER, exampleTuple.getValues());
+		String example = String.join(DBCommons.ATTRIBUTE_DELIMITER, exampleTuple.getStringValues());
         GenericTableObject result = bottomClauseConstructionDAO.executeStoredProcedure(dataModel.getSpName(), example, parameters.getIterations(), parameters.getRecall(), parameters.getMaxterms());
         
         // Process results, which should contain a single row
@@ -41,7 +41,7 @@ public class BottomClauseGeneratorInsideSP implements BottomClauseGenerator {
         	// Each column is the string representation of a literal
         	Tuple row = result.getTable().get(0);
         	for (int i = 0; i < row.getValues().size(); i++) {
-				String column = row.getValues().get(i);
+				String column = row.getValues().get(i).toString();
         		// Extract predicate name and arguments from column
         		String[] tokens = column.split("\\(", 2);
     			String predicate = tokens[0];
@@ -76,7 +76,7 @@ public class BottomClauseGeneratorInsideSP implements BottomClauseGenerator {
 		MyClause clause = new MyClause();
 		
 		// Call procedure that creates bottom clause
-		String example = String.join(DBCommons.ATTRIBUTE_DELIMITER, exampleTuple.getValues());
+		String example = String.join(DBCommons.ATTRIBUTE_DELIMITER, exampleTuple.getStringValues());
 		String spName = dataModel.getSpName() + DBCommons.GROUND_BOTTONCLAUSE_PROCEDURE_SUFFIX;
         GenericTableObject result = bottomClauseConstructionDAO.executeStoredProcedure(spName, example, parameters.getIterations(), parameters.getGroundRecall(), parameters.getMaxterms());
         
@@ -85,7 +85,7 @@ public class BottomClauseGeneratorInsideSP implements BottomClauseGenerator {
         	// Each column is the string representation of a literal
         	Tuple row = result.getTable().get(0);
         	for (int i = 0; i < row.getValues().size(); i++) {
-				String column = row.getValues().get(i);
+				String column = row.getValues().get(i).toString();
         		// Extract predicate name and arguments from column
         		String[] tokens = column.split("\\(", 2);
     			String predicate = tokens[0];
@@ -120,7 +120,7 @@ public class BottomClauseGeneratorInsideSP implements BottomClauseGenerator {
 		StringBuilder sb = new StringBuilder();
 		
 		// Call procedure that creates ground bottom clause
-		String example = String.join(DBCommons.ATTRIBUTE_DELIMITER, exampleTuple.getValues());
+		String example = String.join(DBCommons.ATTRIBUTE_DELIMITER, exampleTuple.getStringValues());
 		String spName = dataModel.getSpName() + DBCommons.GROUND_BOTTONCLAUSE_PROCEDURE_SUFFIX;
         GenericTableObject result = bottomClauseConstructionDAO.executeStoredProcedure(spName, example, parameters.getIterations(), parameters.getGroundRecall(), parameters.getMaxterms());
         

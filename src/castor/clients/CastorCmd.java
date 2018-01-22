@@ -28,6 +28,7 @@ import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesNaive
 import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesOlkenSampling;
 import castor.algorithms.bottomclause.BottomClauseUtil;
 import castor.algorithms.bottomclause.StoredProcedureGeneratorSaturationInsideSP;
+import castor.algorithms.coverageengines.CoverageByDBJoiningAllSingleExample;
 import castor.algorithms.coverageengines.CoverageBySubsumptionParallel;
 import castor.algorithms.coverageengines.CoverageEngine;
 import castor.dataaccess.db.BottomClauseConstructionDAO;
@@ -300,6 +301,7 @@ public class CastorCmd {
 			CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, saturator,
 					posTrain, negTrain, this.schema, this.dataModel, this.parameters, createFullCoverageEngine,
 					examplesSource, posTrainExamplesFile, negTrainExamplesFile);
+//			CoverageEngine coverageEngine = new CoverageByDBJoiningAllSingleExample(genericDAO, posTrain, negTrain);
 			NumbersKeeper.creatingCoverageTime = tw.time();
 
 			BottomClauseUtil.ALGORITHMS bottomClauseAlgorithm;

@@ -37,22 +37,10 @@ public class ExamplesCoverage {
 	 * Returns the number of tuples in coverageRelation covered by the clause
 	 */
 	public static int clauseCoverage(GenericDAO genericDAO, Schema schema, MyClause clause, Relation coverageRelation) {
-		int score = 0;
-
 		// Create query to compute coverage of relation		
 		String query = QueryGenerator.generateQueryFromClauseAndCoverageTable(schema, clause, coverageRelation, true);
-		
-		// Perform query
-		GenericTableObject result = genericDAO.executeQuery(query);
-		
-		// Compute score
-		if (result != null && result.getTable().size() > 0) {
-			score = Integer.parseInt(result.getTable().get(0).getValues().get(0));
-		} else {
-			throw new IllegalStateException("An error occurred computing clause coverage.");
-		}
-		
-		return score;
+		long score = genericDAO.executeScalarQuery(query);
+		return (int)score;
 	}
 	
 	/*
@@ -72,21 +60,9 @@ public class ExamplesCoverage {
 	 * Returns the number of tuples in coverageRelation covered by the definition 
 	 */
 	public static int definitionCoverage(GenericDAO genericDAO, Schema schema, List<MyClause> definition, Relation coverageRelation) {
-		int score = 0;
-		
 		// Create query to compute total coverage of definition
 		String query = QueryGenerator.generateQueryFromDefinitionAndCoverageTable(schema, definition, coverageRelation);
-		
-		// Perform query
-		GenericTableObject result = genericDAO.executeQuery(query);
-		
-		// Compute score
-		if (result != null && result.getTable().size() > 0) {
-			score = Integer.parseInt(result.getTable().get(0).getValues().get(0));
-		} else {
-			throw new IllegalStateException("An error occurred computing definition coverage.");
-		}
-		
-		return score;
+		long score = genericDAO.executeScalarQuery(query);
+		return (int)score;
 	}
 }

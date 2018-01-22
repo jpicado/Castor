@@ -254,6 +254,7 @@ public class QueryGenerator {
 	 */
 	public static String generateQueryClauseEntailsExample(Schema schema, MyClause clause, Tuple tuple, Relation posExamplesRelation) {
 		StringBuilder query = new StringBuilder();
+		clause = reorderClause(clause);
 		
 		int tableCounter = 0;
 		//String headPredicate = clause.getPositiveLiterals().get(0).getAtomicSentence().getSymbolicName();
@@ -268,7 +269,7 @@ public class QueryGenerator {
 			String termName = clause.getPositiveLiterals().get(0).getAtomicSentence().getArgs().get(i).getSymbolicName();
 			if (!termAppearance.containsKey(termName)) {
 				//termAppearance.put(termName, new Pair<String,String>(headPredicateAlias, schema.getRelations().get(headPredicate).getAttributeNames().get(i)));
-				termAppearance.put(termName, new Pair<String,String>(headPredicateAlias, tuple.getValues().get(i)));
+				termAppearance.put(termName, new Pair<String,String>(headPredicateAlias, tuple.getValues().get(i).toString()));
 			}
 		}
 		
@@ -296,7 +297,7 @@ public class QueryGenerator {
 			}
 			
 			String attribute = schema.getRelations().get(headPredicate).getAttributeNames().get(i);
-			String value = tuple.getValues().get(i);
+			String value = tuple.getValues().get(i).toString();
 			query.append(attribute + " = '" + value + "' ");
 		}
 		query.append(") " + headPredicateAlias + " ");
@@ -325,7 +326,7 @@ public class QueryGenerator {
 					} else {
 						valueToCompare = termAppearance.get(termName).getFirst() + "." + termAppearance.get(termName).getSecond();
 					}
-					query.append(predicateAlias + "." + schema.getRelations().get(predicateName).getAttributeNames().get(i) 
+					query.append(predicateAlias + "." + schema.getRelations().get(predicateName.toUpperCase()).getAttributeNames().get(i) 
 							+ " = "
 							+ valueToCompare + " ");
 					
@@ -335,7 +336,7 @@ public class QueryGenerator {
 					
 				}
 				else {
-					termAppearance.put(termName, new Pair<String,String>(predicateAlias, schema.getRelations().get(predicateName).getAttributeNames().get(i)));
+					termAppearance.put(termName, new Pair<String,String>(predicateAlias, schema.getRelations().get(predicateName.toUpperCase()).getAttributeNames().get(i)));
 				}
 			}
 		}
@@ -358,7 +359,7 @@ public class QueryGenerator {
 			String termName = clause.getPositiveLiterals().get(0).getAtomicSentence().getArgs().get(i).getSymbolicName();
 			if (!termAppearance.containsKey(termName)) {
 				//termAppearance.put(termName, new Pair<String,String>(headPredicateAlias, schema.getRelations().get(headPredicate).getAttributeNames().get(i)));
-				termAppearance.put(termName, new Pair<String,String>(headPredicateAlias, tuple.getValues().get(i)));
+				termAppearance.put(termName, new Pair<String,String>(headPredicateAlias, tuple.getValues().get(i).toString()));
 			}
 		}
 		
@@ -387,7 +388,7 @@ public class QueryGenerator {
 			}
 			
 			String attribute = schema.getRelations().get(headPredicate).getAttributeNames().get(i);
-			String value = tuple.getValues().get(i);
+			String value = tuple.getValues().get(i).toString();
 			query.append(attribute + " = '" + value + "' ");
 		}
 		query.append(") " + headPredicateAlias + " ");
@@ -531,7 +532,7 @@ public class QueryGenerator {
 		if (countTuples) {
 			query.append(") " + Commons.newAlias(0));
 		}
-		query.append(";");
+//		query.append(";");
 		
 		return query.toString();
 	}

@@ -1,22 +1,33 @@
 package castor.language;
 
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 
 public class Tuple {
 
-	private List<String> values;
+	private List<Object> values;
 
-	public Tuple(List<String> values) {
+	public Tuple(List<Object> values) {
 		super();
 		this.values = values;
 	}
 
-	public List<String> getValues() {
+	public List<Object> getValues() {
 		return values;
 	}
+	
+	public List<String> getStringValues() {
+		List<String> stringValues = new LinkedList<String>();
+		
+		for (Object val : values) {
+			stringValues.add(val.toString());
+		}
+		
+		return stringValues;
+	}
 
-	public void setValues(List<String> values) {
+	public void setValues(List<Object> values) {
 		this.values = values;
 	}
 

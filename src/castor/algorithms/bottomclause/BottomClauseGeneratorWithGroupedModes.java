@@ -196,7 +196,7 @@ public abstract class BottomClauseGeneratorWithGroupedModes implements BottomCla
 			Map<String, Set<String>> inTerms, Map<String, Set<String>> previousIterationsInTerms, Set<String> distinctTerms) {
 		List<Term> terms = new ArrayList<Term>();
 		for (int i = 0; i < mode.getArguments().size(); i++) {
-			String value = tuple.getValues().get(i);
+			String value = tuple.getValues().get(i).toString();
 
 			if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
 				terms.add(new Constant("\"" + value + "\""));
