@@ -28,7 +28,6 @@ import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesNaive
 import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesOlkenSampling;
 import castor.algorithms.bottomclause.BottomClauseUtil;
 import castor.algorithms.bottomclause.StoredProcedureGeneratorSaturationInsideSP;
-import castor.algorithms.coverageengines.CoverageByDBJoiningAllSingleExample;
 import castor.algorithms.coverageengines.CoverageBySubsumptionParallel;
 import castor.algorithms.coverageengines.CoverageEngine;
 import castor.dataaccess.db.BottomClauseConstructionDAO;
@@ -303,6 +302,16 @@ public class CastorCmd {
 					examplesSource, posTrainExamplesFile, negTrainExamplesFile);
 //			CoverageEngine coverageEngine = new CoverageByDBJoiningAllSingleExample(genericDAO, posTrain, negTrain);
 			NumbersKeeper.creatingCoverageTime = tw.time();
+			
+			////
+//			TimeWatch twImportance = TimeWatch.start();
+//			logger.info("Computing values importance...");
+//			BottomClauseGeneratorWithGroupedModesImportanceSampling aa = new BottomClauseGeneratorWithGroupedModesImportanceSampling(false);
+//			Map<String, Map<String, Map<String, Pair<Integer, Integer>>>> valuesImportance = new HashMap<String, Map<String, Map<String, Pair<Integer, Integer>>>>();
+//			aa.run(genericDAO, coverageEngine.getAllPosExamples(), true, schema, dataModel, parameters, valuesImportance);
+//			aa.run(genericDAO, coverageEngine.getAllNegExamples(), false, schema, dataModel, parameters, valuesImportance);
+//			System.out.println("Took: " + twImportance.time());
+			////
 
 			BottomClauseUtil.ALGORITHMS bottomClauseAlgorithm;
 			if (parameters.isUseStoredProcedure()) {

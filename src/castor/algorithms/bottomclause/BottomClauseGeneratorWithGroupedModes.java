@@ -1,3 +1,4 @@
+//TODO must add application of INDs
 package castor.algorithms.bottomclause;
 
 import java.util.ArrayList;
