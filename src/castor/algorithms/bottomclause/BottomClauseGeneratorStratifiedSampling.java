@@ -1,6 +1,7 @@
 package castor.algorithms.bottomclause;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -9,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 
 import aima.core.logic.fol.parsing.ast.Constant;
@@ -32,15 +34,18 @@ import castor.utils.RandomSet;
 
 public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGenerator {
 
-	protected static final String SELECTIN_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s";
-	protected static final String SELECT_SQL_STATEMENT = "SELECT * FROM %s";
-	protected static final String SELECTDISTINCT_SQL_STATEMENT = "SELECT DISTINCT(%s) FROM %s";
-	protected static final String SELECTWHERE_SQL_STATEMENT = "SELECT * FROM %s WHERE %s";
+	private static final String SELECTIN_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s";
+	private static final String SELECTIN_TWOATTRIBUTES_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s AND %s IN %s";
+	private static final String PROJET_SELECTIN_SQL_STATEMENT = "SELECT DISTINCT(%s) FROM %s WHERE %s IN %s";
+	private static final String SELECTDISTINCT_IN_SQL_STATEMENT = "SELECT DISTINCT(%s) FROM %s WHERE %s IN %s";
+	private static final String SELECT_IN_WHERE_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s AND %s";
 	
-	protected int varCounter;
+	private int varCounter;
+	private Random randomGenerator;
 
-	public BottomClauseGeneratorStratifiedSampling(boolean sample) {
+	public BottomClauseGeneratorStratifiedSampling(int seed) {
 		this.varCounter = 0;
+		this.randomGenerator = new Random(seed);
 	}
 	
 	@Override
@@ -66,8 +71,6 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 	
 	public MyClause generateBottomClause(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, 
 			Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters, boolean ground) {
-		
-		
 		Map<Pair<String, Integer>, List<Mode>> groupedModes = new LinkedHashMap<Pair<String, Integer>, List<Mode>>();
 		Map<String, List<Pair<String, Integer>>> groupedRelationsByAttributeType = new LinkedHashMap<String, List<Pair<String, Integer>>>();
 		for (Mode mode : dataModel.getModesB()) {
@@ -92,33 +95,36 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 			if (!groupedRelationsByAttributeType.containsKey(inputAttributeType)) {
 				groupedRelationsByAttributeType.put(inputAttributeType, new LinkedList<Pair<String, Integer>>());
 			}
-			groupedRelationsByAttributeType.get(inputAttributeType).add(new Pair<String, Integer>(mode.getPredicateName(), inputAttributePosition));
+			if (!groupedRelationsByAttributeType.get(inputAttributeType).contains(key)) {
+				groupedRelationsByAttributeType.get(inputAttributeType).add(key);
+			}
 		}
 		
-		MyClause clause = new MyClause();
 		varCounter = 0;
+		MyClause clause = new MyClause();
 		Map<String, String> hashConstantToVariable = new HashMap<String, String>();
-		Map<String, String> hashVariableToConstant = new HashMap<String, String>();
 		
 		// Create head literal
 		Mode modeH = dataModel.getModeH();
 		if (ground) {
 			modeH = modeH.toGroundMode();
 		}
-		Predicate headLiteral = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, exampleTuple,
+		Predicate headLiteral = createLiteralFromTuple(hashConstantToVariable, exampleTuple,
 				dataModel.getModeH(), true);
 		clause.addPositiveLiteral(headLiteral);
 		
-		for (int i = 0; i < exampleTuple.getValues().size(); i++) {
+		// For each attribute, get relations that have attributes with same type, and call stratifiedSamplingRecursive
+		for (int i = 0; i < modeH.getArguments().size(); i++) {
 			String attributeType = modeH.getArguments().get(i).getType();
-			Set<Object> values = new HashSet<Object>();
-			values.add(exampleTuple.getValues().get(i));
+			List<String> values = new ArrayList<String>();
+			values.add(exampleTuple.getValues().get(i).toString());
 			
+			// For each relation that have attributes with same type, call stratifiedSamplingRecursive
 			for (Pair<String, Integer> relationInputAttributePair : groupedRelationsByAttributeType.get(attributeType)) {
 				String relationName = relationInputAttributePair.getFirst();
 				int inputAttributePosition = relationInputAttributePair.getSecond();
 				
-				stratifiedSamplingRecursive(genericDAO, schema, groupedModes, hashConstantToVariable, hashVariableToConstant, relationName, inputAttributePosition, values, parameters.getIterations(), 1, clause);
+				stratifiedSamplingRecursive(genericDAO, schema, groupedModes, groupedRelationsByAttributeType, hashConstantToVariable, relationName, inputAttributePosition, attributeType, values, parameters.getIterations(), 1, clause);
 			}
 		}
 		
@@ -126,21 +132,141 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 	}
 	
 	private List<Tuple> stratifiedSamplingRecursive(GenericDAO genericDAO, Schema schema, 
-			Map<Pair<String, Integer>, List<Mode>> groupedModes,
-			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant, 
-			String relationName, int inputAttributePosition, Set<Object> values, 
+			Map<Pair<String, Integer>, List<Mode>> groupedModes, Map<String, List<Pair<String, Integer>>> groupedRelationsByAttributeType,
+			Map<String, String> hashConstantToVariable, 
+			String relationName, int inputAttributePosition, String inputAttributeType, List<String> inputAttributeValues, 
 			int iterations, int currentIteration, MyClause clause) {
+		List<Tuple> sample = new LinkedList<Tuple>();
 		
+		// If  do not have known values for input attribute, return empty set of tuples
+		if (inputAttributeValues.isEmpty()) {
+			return sample;
+		}
+		
+		List<Mode> relationAttributeModes = groupedModes.get(new Pair<String, Integer>(relationName, inputAttributePosition));
 		String inputAttributeName = schema.getRelations().get(relationName.toUpperCase()).getAttributeNames().get(inputAttributePosition);
+		String inputAttributeKnownTerms = toListString(inputAttributeValues);
+		
+		if (iterations == currentIteration) {
+			// Base case: last iteration
+//			if (relationContainsConstants(relationAttributeModes)) {
+//				// Compute strata and add to sample one tuple from each stratum
+//				//TODO can this be optimized? Only need one tuple from each stratum
+////				List<List<Tuple>> strata = computeStrata(genericDAO, schema, relationName, inputAttributeName, inputAttributeKnownTerms, relationAttributeModes);
+////				for (List<Tuple> stratum : strata) {
+////					Tuple tuple = stratum.get(randomGenerator.nextInt(stratum.size()));
+////					sample.add(tuple);
+////				}
+//				sample.addAll(sampleFromStrata(genericDAO, schema, relationName, inputAttributeName, inputAttributeKnownTerms, relationAttributeModes));
+//			} else {
+//				String query = String.format(SELECTIN_SQL_STATEMENT + " LIMIT 10", relationName, inputAttributeName, inputAttributeKnownTerms);
+//				GenericTableObject result = genericDAO.executeQuery(query);
+//				if (result != null && result.getTable().size() > 0) {
+//					// Sample a tuple from relation
+//					//TODO can we get a single sample directly from the query to the DB?
+////					Tuple tuple = result.getTable().get(randomGenerator.nextInt(result.getTable().size()));
+////					sample.add(tuple);
+//					
+//					
+//					sample.addAll(result.getTable());
+//				}
+//			}
 			
-		return new LinkedList<Tuple>();
+			sample.addAll(sampleFromStrata(genericDAO, schema, relationName, inputAttributeName, inputAttributeKnownTerms, relationAttributeModes));
+		} else {
+			// Recursive call
+			int relationArity = relationAttributeModes.get(0).getArguments().size();
+			for (int i = 0; i < relationArity; i++) {
+				// Get values for attribute in position i of relation
+				String joinAttributeName = schema.getRelations().get(relationName.toUpperCase()).getAttributeNames().get(i);
+				List<String> values = projectSelectIn(genericDAO, relationName, joinAttributeName, inputAttributeName, inputAttributeKnownTerms);
+				
+				// Get all types in modes for this attribute
+				Set<String> attributeTypes = new HashSet<String>();
+				for (Mode mode : relationAttributeModes) {
+					attributeTypes.add(mode.getArguments().get(i).getType());
+				}
+				
+				for (String type : attributeTypes) {
+					for (Pair<String, Integer> relationInputAttributePair : groupedRelationsByAttributeType.get(type)) {
+						List<String> localValues = new ArrayList<String>(values);
+						
+						String joinRelationName = relationInputAttributePair.getFirst();
+						int joinAttributePosition = relationInputAttributePair.getSecond();
+						
+						if (relationName.equals(joinRelationName) && inputAttributePosition == joinAttributePosition) {
+							localValues.removeAll(inputAttributeValues);
+						}
+						
+						Set<String> seenJoinModesInputAttribute = new HashSet<String>();
+						for (Mode mode : groupedModes.get(new Pair<String, Integer>(joinRelationName, joinAttributePosition))) {
+							// Get type for attribute in mode
+							String joinAttributeType = mode.getArguments().get(inputAttributePosition).getType();
+							
+							// Skip mode if another mode with same relation and input attribute has already been seen
+							String key = joinRelationName + "_" + joinAttributePosition + "_" + joinAttributeType;
+							if (seenJoinModesInputAttribute.contains(key))
+								continue;
+							seenJoinModesInputAttribute.add(key);
+							
+							// Recursive call
+							List<Tuple> returnedTuples = stratifiedSamplingRecursive(genericDAO, schema, groupedModes, groupedRelationsByAttributeType, hashConstantToVariable, joinRelationName, joinAttributePosition, joinAttributeType, localValues, iterations, currentIteration + 1, clause);
+							
+							// Get tuples in relation that join with returnTuples
+							List<String> joinAttributeValues = projectFromTuples(returnedTuples, joinAttributePosition);
+							if (joinAttributeValues.size() > 0) {
+								String joinAttributeKnownTerms = toListString(joinAttributeValues);
+								String joinQuery = String.format(SELECTIN_TWOATTRIBUTES_SQL_STATEMENT, relationName, inputAttributeName, inputAttributeKnownTerms, joinAttributeName, joinAttributeKnownTerms);
+								GenericTableObject result = genericDAO.executeQuery(joinQuery);
+								if (result != null) {
+									sample.addAll(result.getTable());
+								}
+							}
+						}
+					}
+				}
+			}
+			
+			//TODO Compute strata for relation and check intersections
+//			sample.addAll(sampleFromStrata(genericDAO, schema, relationName, inputAttributeName, inputAttributeKnownTerms, relationAttributeModes));
+		}
+		
+		// Create literals for tuples in sample and add to clause
+		for (Tuple tuple : sample) {
+			for (Mode mode : relationAttributeModes) {
+				Predicate newLiteral = createLiteralFromTuple(hashConstantToVariable, tuple, mode, false);
+				clause.addNegativeLiteral(newLiteral);
+			}
+		}
+		
+		return sample;
+	}
+	
+	private List<String> projectSelectIn(GenericDAO genericDAO, String relationName, String projectAttributeName, String inputAttributeName,
+			String inputAttributeKnownTerms) {
+		List<String> values =  new ArrayList<String>();
+		String query = String.format(PROJET_SELECTIN_SQL_STATEMENT, projectAttributeName, relationName, inputAttributeName, inputAttributeKnownTerms);
+		GenericTableObject result = genericDAO.executeQuery(query);
+		if (result != null) {
+			for (Tuple tuple : result.getTable()) {
+				values.add(tuple.getStringValues().get(0));
+			}
+		}
+		return values;
+	}
+	
+	private List<String> projectFromTuples(List<Tuple> tuples, int projectPosition) {
+		List<String> values =  new ArrayList<String>();
+		for (Tuple tuple : tuples) {
+			values.add(tuple.getStringValues().get(projectPosition));
+		}
+		return values;
 	}
 	
 	/*
 	 * Creates a literal from a tuple and a mode.
 	 */
-	protected Predicate createLiteralFromTuple(Map<String, String> hashConstantToVariable,
-			Map<String, String> hashVariableToConstant, Tuple tuple, Mode mode, boolean headMode) {
+	protected Predicate createLiteralFromTuple(Map<String, String> hashConstantToVariable, Tuple tuple, Mode mode, boolean headMode) {
 		List<Term> terms = new ArrayList<Term>();
 		for (int i = 0; i < mode.getArguments().size(); i++) {
 			String value = tuple.getValues().get(i).toString();
@@ -154,28 +280,17 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 					varCounter++;
 
 					hashConstantToVariable.put(value, var);
-					hashVariableToConstant.put(var, value);
 				}
 				terms.add(new Variable(hashConstantToVariable.get(value)));
 			}
-			// Add constants to inTerms
-//			if (headMode ||
-//					mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.OUTPUT) ||
-//					mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
-//				String variableType = mode.getArguments().get(i).getType();
-//				if (!inTerms.containsKey(variableType)) {
-//					inTerms.put(variableType, new HashSet<String>());
-//				}
-//				inTerms.get(variableType).add(value);
-//			}
 		}
 		
 		Predicate literal = new Predicate(mode.getPredicateName(), terms);
 		return literal;
 	}
 	
-	private List<List<Tuple>> computeStrata(GenericDAO genericDAO, Schema schema, String relationName, List<Mode> relationModes) {
-		List<List<Tuple>> strata = new LinkedList<List<Tuple>>();
+	private List<Tuple> sampleFromStrata(GenericDAO genericDAO, Schema schema, String relationName, String inputAttributeName, String inputAttributeKnownTerms, List<Mode> relationModes) {
+		List<Tuple> sample = new ArrayList<Tuple>();
 		
 		// Get attributes that can be constant
 		RandomSet<String> constantAttributes = new RandomSet<String>();
@@ -190,15 +305,15 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 		
 		if (constantAttributes.isEmpty()) {
 			// Add whole table as stratum
-			String stratumQuery = String.format(SELECT_SQL_STATEMENT, relationName);
+			String stratumQuery = String.format(SELECTIN_SQL_STATEMENT + " LIMIT 10", relationName, inputAttributeName, inputAttributeKnownTerms);
 			GenericTableObject stratumResult = genericDAO.executeQuery(stratumQuery);
 			if (stratumResult != null) {
-				strata.add(stratumResult.getTable());
+				sample.addAll(stratumResult.getTable());
 			}
 		} else {
 			// Get regions
 			String constantAttributesString = String.join(",", constantAttributes);
-			String getRegionsQuery = String.format(SELECTDISTINCT_SQL_STATEMENT, constantAttributesString, relationName);
+			String getRegionsQuery = String.format(SELECTDISTINCT_IN_SQL_STATEMENT, constantAttributesString, relationName, inputAttributeName, inputAttributeKnownTerms);
 			
 			GenericTableObject getRegionsResult = genericDAO.executeQuery(getRegionsQuery);
 			if (getRegionsResult != null) {
@@ -212,11 +327,65 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 						String attribute = constantAttributes.get(i);
 						String value = tuple.getValues().get(i).toString();
 						
-						whereExpression.append(attribute + "=" + value);
+						whereExpression.append(attribute + "='" + value + "'");
 					}
 					
 					// Get stratum
-					String stratumQuery = String.format(SELECTWHERE_SQL_STATEMENT, relationName, whereExpression.toString()); 
+					String stratumQuery = String.format(SELECT_IN_WHERE_SQL_STATEMENT + " LIMIT 10", relationName, inputAttributeName, inputAttributeKnownTerms, whereExpression.toString());
+					GenericTableObject stratumResult = genericDAO.executeQuery(stratumQuery);
+					if (stratumResult != null) {
+						sample.addAll(stratumResult.getTable());
+					}
+				}
+			}
+		}
+		
+		return sample;
+	}
+	
+	private List<List<Tuple>> computeStrata(GenericDAO genericDAO, Schema schema, String relationName, String inputAttributeName, String inputAttributeKnownTerms, List<Mode> relationModes) {
+		List<List<Tuple>> strata = new ArrayList<List<Tuple>>();
+		
+		// Get attributes that can be constant
+		RandomSet<String> constantAttributes = new RandomSet<String>();
+		for (Mode mode : relationModes) {
+			for (int i=0; i < mode.getArguments().size(); i++) {
+				if (mode.getArguments().get(i).getIdentifierType() == IdentifierType.CONSTANT) {
+					String attributeName = schema.getRelations().get(relationName.toUpperCase()).getAttributeNames().get(i);
+					constantAttributes.add(attributeName);
+				}
+			}
+		}
+		
+		if (constantAttributes.isEmpty()) {
+			// Add whole table as stratum
+			String stratumQuery = String.format(SELECTIN_SQL_STATEMENT, relationName, inputAttributeName, inputAttributeKnownTerms);
+			GenericTableObject stratumResult = genericDAO.executeQuery(stratumQuery);
+			if (stratumResult != null) {
+				strata.add(stratumResult.getTable());
+			}
+		} else {
+			// Get regions
+			String constantAttributesString = String.join(",", constantAttributes);
+			String getRegionsQuery = String.format(SELECTDISTINCT_IN_SQL_STATEMENT, constantAttributesString, relationName, inputAttributeName, inputAttributeKnownTerms);
+			
+			GenericTableObject getRegionsResult = genericDAO.executeQuery(getRegionsQuery);
+			if (getRegionsResult != null) {
+				// Each tuple represents a region
+				for (Tuple tuple : getRegionsResult.getTable()) {
+					StringBuilder whereExpression = new StringBuilder();
+					for (int i = 0; i < constantAttributes.size(); i++) {
+						if (i > 0)
+							whereExpression.append(" AND ");
+						
+						String attribute = constantAttributes.get(i);
+						String value = tuple.getValues().get(i).toString();
+						
+						whereExpression.append(attribute + "='" + value + "'");
+					}
+					
+					// Get stratum
+					String stratumQuery = String.format(SELECT_IN_WHERE_SQL_STATEMENT, relationName, inputAttributeName, inputAttributeKnownTerms, whereExpression.toString());
 					GenericTableObject stratumResult = genericDAO.executeQuery(stratumQuery);
 					if (stratumResult != null) {
 						strata.add(stratumResult.getTable());
@@ -228,7 +397,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 		return strata;
 	}
 	
-	public void runComputeValuesImportance(GenericDAO genericDAO, List<Tuple> examples, boolean isPositive, Schema schema, DataModel dataModel, Parameters parameters, Map<String, Map<String, Map<String, Pair<Integer, Integer>>>> valuesImportance) {
+	private void runComputeValuesImportance(GenericDAO genericDAO, List<Tuple> examples, boolean isPositive, Schema schema, DataModel dataModel, Parameters parameters, Map<String, Map<String, Map<String, Pair<Integer, Integer>>>> valuesImportance) {
 		for (Tuple example : examples) {
 			this.computeValuesImportance(valuesImportance, genericDAO, example, isPositive, schema, dataModel.getModeH(), dataModel.getModesB(), parameters.getIterations(), parameters.isUseInds(), parameters.getMaxterms());
 		}
@@ -462,7 +631,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 	/*
 	 * Convert set to string "('item1','item2',...)"
 	 */
-	protected String toListString(Set<String> terms) {
+	private String toListString(Collection<String> terms) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("(");
 		int counter = 0;

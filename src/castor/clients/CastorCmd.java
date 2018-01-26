@@ -23,6 +23,7 @@ import castor.algorithms.Learner;
 import castor.algorithms.ProGolem;
 import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
+import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesNaiveSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesOlkenSampling;
@@ -286,6 +287,8 @@ public class CastorCmd {
 					logger.info("Use Stream sampling. Extracting statistics from database instance...");
 					StatisticsStreamSampling statistics = StatisticsExtractor.extractStatisticsForStreamSampling(genericDAO, schema);
 					saturator = new BottomClauseGeneratorStreamSampling(parameters.getRandomSeed(), statistics);
+				} else if (parameters.getSamplingMethod().equals(SamplingMethods.STRATIFIED)) {
+					saturator = new BottomClauseGeneratorStratifiedSampling(parameters.getRandomSeed());
 				} else {
 //					saturator = new BottomClauseGeneratorNaiveSampling(true);
 					saturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(true);

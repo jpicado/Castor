@@ -159,6 +159,8 @@ public class Parameters {
 			this.samplingMethod = SamplingMethods.OLKEN;
 		} else if (samplingMethod.equals("stream")) {
 			this.samplingMethod = SamplingMethods.STREAM;
+		} else if (samplingMethod.equals("stratified")) {
+			this.samplingMethod = SamplingMethods.STRATIFIED;
 		} else {
 			throw new IllegalArgumentException("Unknown sampling method.");
 		}
