@@ -26,6 +26,7 @@ public class Parameters {
 	private int randomSeed = 1;
 	private String samplingMethod = SamplingMethods.NAIVE;
 	private boolean sampleInTesting = false;
+	private boolean sampleGroundBottomClauses = false;
 	
 	public boolean isCreateStoredProcedure() {
 		return createStoredProcedure;
@@ -171,6 +172,12 @@ public class Parameters {
 	public void setSampleInTesting(boolean sampleInTesting) {
 		this.sampleInTesting = sampleInTesting;
 	}
+	public boolean isSampleGroundBottomClauses() {
+		return sampleGroundBottomClauses;
+	}
+	public void setSampleGroundBottomClauses(boolean sampleGroundBottomClauses) {
+		this.sampleGroundBottomClauses = sampleGroundBottomClauses;
+	}
 	@Override
 	public String toString() {
 		return "Parameters [createStoredProcedure=" + createStoredProcedure + ", useStoredProcedure="
@@ -179,6 +186,7 @@ public class Parameters {
 				+ ", minimizeBottomClause=" + minimizeBottomClause + ", reductionMethod=" + reductionMethod
 				+ ", iterations=" + iterations + ", recall=" + recall + ", groundRecall=" + groundRecall + ", maxterms="
 				+ maxterms + ", useInds=" + useInds + ", dbURL=" + dbURL + ", port=" + port + ", randomSeed="
-				+ randomSeed + ", samplingMethod=" + samplingMethod + ", sampleInTesting=" + sampleInTesting + "]";
+				+ randomSeed + ", samplingMethod=" + samplingMethod + ", sampleInTesting=" + sampleInTesting
+				+ ", sampleGroundBottomClauses=" + sampleGroundBottomClauses + "]";
 	}
 }

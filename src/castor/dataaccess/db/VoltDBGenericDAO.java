@@ -13,6 +13,7 @@ import org.voltdb.client.ProcCallException;
 import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
+import castor.utils.Pair;
 
 public class VoltDBGenericDAO implements GenericDAO {
 
@@ -36,6 +37,49 @@ public class VoltDBGenericDAO implements GenericDAO {
 					row.add(table.get(i, table.getColumnType(i)));
 				}
 				result.add(new Tuple(row));
+			}
+		} catch (IOException | ProcCallException e) {
+			throw new RuntimeException(e);
+		}
+
+		return new GenericTableObject(result);
+	}
+	
+	@Override
+	public GenericTableObject executeQueryWithSelectLimit(String query, List<Pair<Integer,Object>> selectConditions, int limit) {
+		List<Tuple> result = new ArrayList<Tuple>();
+
+		try {
+			// Run query
+			ClientResponse response = VoltDBConnectionContainer.getInstance().getClient()
+					.callProcedure(VoltDBGenericDAO.ADHOC_QUERY, query);
+			VoltTable table = response.getResults()[0];
+
+			// Put results in Table object
+			int resultsCounter = 0;
+			while (table.advanceRow()) {
+				List<Object> row = new ArrayList<Object>();
+				for (int i = 0; i < table.getColumnCount(); i++) {
+					row.add(table.get(i, table.getColumnType(i)));
+				}
+				
+				boolean keep = true;
+				for (Pair<Integer,Object> selectCondition : selectConditions) {
+					int attributePosition = selectCondition.getFirst();
+					Object desiredValue = selectCondition.getSecond();
+					if (!row.get(attributePosition).equals(desiredValue)) {
+						keep = false;
+						break;
+					}
+				}
+				
+				if (keep) {
+					result.add(new Tuple(row));
+					resultsCounter++;
+					
+					if (resultsCounter == limit)
+						break;
+				}
 			}
 		} catch (IOException | ProcCallException e) {
 			throw new RuntimeException(e);

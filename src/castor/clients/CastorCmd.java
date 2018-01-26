@@ -278,6 +278,7 @@ public class CastorCmd {
 			if (parameters.isUseStoredProcedure()) {
 				saturator = new BottomClauseGeneratorInsideSP();
 			} else {
+				//TODO Note that BottomClauseGeneratorWithGrouped does not use inclusion dependencies; not schema independent
 				if (parameters.getSamplingMethod().equals(SamplingMethods.OLKEN))  {
 					logger.info("Use Olken sampling. Extracting statistics from database instance...");
 					StatisticsOlkenSampling statistics = StatisticsExtractor.extractStatisticsForOlkenSampling(genericDAO, schema);
@@ -296,11 +297,18 @@ public class CastorCmd {
 			}
 			NumbersKeeper.extractingStatisticsTime = tw.time();
 			
+			BottomClauseGenerator coverageEngineSaturator;
+			if (parameters.isSampleGroundBottomClauses()) {
+				coverageEngineSaturator = saturator;
+			} else {
+				coverageEngineSaturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(false);
+			}
+			
 			// Create CoverageEngine
 			tw.reset();
 			logger.info("Creating coverage engine...");
 			boolean createFullCoverageEngine = !saturation && !groundSaturation;
-			CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, saturator,
+			CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, coverageEngineSaturator,
 					posTrain, negTrain, this.schema, this.dataModel, this.parameters, createFullCoverageEngine,
 					examplesSource, posTrainExamplesFile, negTrainExamplesFile);
 //			CoverageEngine coverageEngine = new CoverageByDBJoiningAllSingleExample(genericDAO, posTrain, negTrain);
