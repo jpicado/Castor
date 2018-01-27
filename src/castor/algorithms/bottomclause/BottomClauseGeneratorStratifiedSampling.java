@@ -161,7 +161,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 			
 			// Random sample
 			for (List<Tuple> stratum : strata) {
-				sample.addAll(randomSampleFromList(stratum, sampleSize));
+				sample.addAll(randomSampleFromList(stratum, sampleSize, false));
 			}
 			
 			// Sample by order
@@ -223,7 +223,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 			// Check if sample includes tuples in each stratum. If not, add tuples from stratum to sample.
 			for (List<Tuple> stratum : strata) {
 				if (!isIntersect(sample, stratum)) {
-					sample.addAll(randomSampleFromList(stratum, sampleSize));
+					sample.addAll(randomSampleFromList(stratum, sampleSize, false));
 				}
 			}
 		}
@@ -253,17 +253,27 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 	}
 
 	/*
-	 * Get a random sample from list
+	 * Get a random sample from list, without replacement.
 	 */
-	private List<Tuple> randomSampleFromList(List<Tuple> list, int sampleSize) {
+	private List<Tuple> randomSampleFromList(List<Tuple> list, int sampleSize, boolean withReplacement) {
 		List<Tuple> sample = new LinkedList<Tuple>();
-		int resultsCounter = 0;
-		while (resultsCounter < sampleSize) {
-			//TODO sample without replacement?
-			Tuple tuple = list.get(randomGenerator.nextInt(list.size()));
-			sample.add(tuple);
-			resultsCounter++;
+		
+		if (list.size() <= sampleSize) {
+			sample.addAll(list);
+		} else {
+			Set<Integer> usedIndexes = new HashSet<Integer>();
+			int resultsCounter = 0;
+			while (resultsCounter < sampleSize) {
+				//TODO sample without replacement?
+				int randomIndex = randomGenerator.nextInt(list.size());
+				if (withReplacement || !usedIndexes.contains(randomIndex)) {
+					sample.add(list.get(randomIndex));
+					resultsCounter++;
+					usedIndexes.add(randomIndex);
+				}
+			}
 		}
+		
 		return sample;
 	}
 	
