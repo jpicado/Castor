@@ -1,9 +1,11 @@
 package castor.algorithms.bottomclause;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import aima.core.logic.fol.parsing.ast.Predicate;
@@ -18,10 +20,12 @@ import castor.language.Tuple;
 public class BottomClauseGeneratorWithGroupedModesNaiveSampling extends BottomClauseGeneratorWithGroupedModes {
 
 	private boolean sample;
+	private Random randomGenerator;
 	
-	public BottomClauseGeneratorWithGroupedModesNaiveSampling(boolean sample) {
+	public BottomClauseGeneratorWithGroupedModesNaiveSampling(boolean sample, int seed) {
 		super();
 		this.sample = sample;
+		this.randomGenerator = new Random(seed);
 	}
 	
 	@Override
@@ -29,7 +33,7 @@ public class BottomClauseGeneratorWithGroupedModesNaiveSampling extends BottomCl
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> inTerms, Map<String, Set<String>> newInTerms, Map<String, Set<String>> previousIterationsInTerms,
 			Set<String> distinctTerms,
-			String relationName, List<Mode> relationModes, int recall, boolean ground) {
+			String relationName, List<Mode> relationModes, int recall, boolean ground, boolean shuffleTuples) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 		
 		// If sampling is turned off, set recall to max value
@@ -93,6 +97,10 @@ public class BottomClauseGeneratorWithGroupedModesNaiveSampling extends BottomCl
 			GenericTableObject result = genericDAO.executeQuery(query);
 	
 			if (result != null) {
+				if (shuffleTuples) {
+					Collections.shuffle(result.getTable(), randomGenerator);
+				}
+				
 				Set<String> usedModes = new HashSet<String>();
 				for (Mode mode : relationModes) {
 					if (ground) {

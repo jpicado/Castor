@@ -1,9 +1,11 @@
 package castor.algorithms.bottomclause;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 import aima.core.logic.fol.parsing.ast.Predicate;
@@ -19,10 +21,12 @@ import castor.utils.RandomSet;
 public class BottomClauseGeneratorNaiveSampling extends BottomClauseGeneratorOriginalAlgorithm {
 
 	private boolean sample;
+	private Random randomGenerator;
 	
-	public BottomClauseGeneratorNaiveSampling(boolean sample) {
+	public BottomClauseGeneratorNaiveSampling(boolean sample, int seed) {
 		super();
 		this.sample = sample;
+		this.randomGenerator = new Random(seed);
 	}
 	
 	@Override
@@ -30,7 +34,7 @@ public class BottomClauseGeneratorNaiveSampling extends BottomClauseGeneratorOri
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> newInTerms, Set<String> distinctTerms, String relationName, String attributeName,
 			List<Mode> relationAttributeModes, Map<Pair<String, Integer>, List<Mode>> groupedModes, RandomSet<String> knownTermsSet,
-			int recall, boolean ground) {
+			int recall, boolean ground, boolean shuffleTuples) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 		
 		// If sampling is turned off, set recall to max value
@@ -42,9 +46,14 @@ public class BottomClauseGeneratorNaiveSampling extends BottomClauseGeneratorOri
 
 		// Create query and run
 		String query = String.format(SELECTIN_SQL_STATEMENT, relationName, attributeName, knownTerms);
+		System.out.println(query);
 		GenericTableObject result = genericDAO.executeQuery(query);
 
 		if (result != null) {
+			if (shuffleTuples) {
+				Collections.shuffle(result.getTable(), randomGenerator);
+			}
+			
 			Set<String> usedModes = new HashSet<String>();
 			for (Mode mode : relationAttributeModes) {
 				if (ground) {

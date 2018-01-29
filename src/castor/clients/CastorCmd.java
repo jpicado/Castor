@@ -23,9 +23,9 @@ import castor.algorithms.Learner;
 import castor.algorithms.ProGolem;
 import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
+import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSampling;
-import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesNaiveSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesOlkenSampling;
 import castor.algorithms.bottomclause.BottomClauseUtil;
 import castor.algorithms.bottomclause.StoredProcedureGeneratorSaturationInsideSP;
@@ -291,8 +291,8 @@ public class CastorCmd {
 				} else if (parameters.getSamplingMethod().equals(SamplingMethods.STRATIFIED)) {
 					saturator = new BottomClauseGeneratorStratifiedSampling(parameters.getRandomSeed());
 				} else {
-//					saturator = new BottomClauseGeneratorNaiveSampling(true);
-					saturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(true);
+					saturator = new BottomClauseGeneratorNaiveSampling(true, parameters.getRandomSeed());
+//					saturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(true);
 				}
 			}
 			NumbersKeeper.extractingStatisticsTime = tw.time();
@@ -301,7 +301,7 @@ public class CastorCmd {
 			if (parameters.isSampleGroundBottomClauses()) {
 				coverageEngineSaturator = saturator;
 			} else {
-				coverageEngineSaturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(false);
+				coverageEngineSaturator = new BottomClauseGeneratorNaiveSampling(false, parameters.getRandomSeed());
 			}
 			
 			// Create CoverageEngine
@@ -311,18 +311,8 @@ public class CastorCmd {
 			CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, coverageEngineSaturator,
 					posTrain, negTrain, this.schema, this.dataModel, this.parameters, createFullCoverageEngine,
 					examplesSource, posTrainExamplesFile, negTrainExamplesFile);
-//			CoverageEngine coverageEngine = new CoverageByDBJoiningAllSingleExample(genericDAO, posTrain, negTrain);
+//			CoverageEngine coverageEngine = new CoverageByDBJoiningAllSingleExample(genericDAO, posTrain, negTrain, parameters);
 			NumbersKeeper.creatingCoverageTime = tw.time();
-			
-			////
-//			TimeWatch twImportance = TimeWatch.start();
-//			logger.info("Computing values importance...");
-//			BottomClauseGeneratorWithGroupedModesImportanceSampling aa = new BottomClauseGeneratorWithGroupedModesImportanceSampling(false);
-//			Map<String, Map<String, Map<String, Pair<Integer, Integer>>>> valuesImportance = new HashMap<String, Map<String, Map<String, Pair<Integer, Integer>>>>();
-//			aa.run(genericDAO, coverageEngine.getAllPosExamples(), true, schema, dataModel, parameters, valuesImportance);
-//			aa.run(genericDAO, coverageEngine.getAllNegExamples(), false, schema, dataModel, parameters, valuesImportance);
-//			System.out.println("Took: " + twImportance.time());
-			////
 
 			BottomClauseUtil.ALGORITHMS bottomClauseAlgorithm;
 			if (parameters.isUseStoredProcedure()) {
@@ -436,7 +426,7 @@ public class CastorCmd {
 
 					// For testing, use original bottom clause construction. Check parameters to determine whether to use sampling.
 //					BottomClauseGenerator testSaturator = new BottomClauseGeneratorNaiveSampling(this.parameters.isSampleInTesting());
-					BottomClauseGenerator testSaturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(this.parameters.isSampleInTesting());
+					BottomClauseGenerator testSaturator = new BottomClauseGeneratorNaiveSampling(this.parameters.isSampleInTesting(), parameters.getRandomSeed());
 					
 					logger.info("Evaluating on testing data...");
 					CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, testSaturator, 

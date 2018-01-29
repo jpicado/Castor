@@ -27,6 +27,8 @@ public class Parameters {
 	private String samplingMethod = SamplingMethods.NAIVE;
 	private boolean sampleInTesting = false;
 	private boolean sampleGroundBottomClauses = false;
+	private boolean shuffleExamples = false;
+	private boolean shuffleTuples = false;//TODO only works in naive sampling original and groupedModes bottom clause construction
 	
 	public boolean isCreateStoredProcedure() {
 		return createStoredProcedure;
@@ -178,6 +180,18 @@ public class Parameters {
 	public void setSampleGroundBottomClauses(boolean sampleGroundBottomClauses) {
 		this.sampleGroundBottomClauses = sampleGroundBottomClauses;
 	}
+	public boolean isShuffleExamples() {
+		return shuffleExamples;
+	}
+	public void setShuffleExamples(boolean shuffleExamples) {
+		this.shuffleExamples = shuffleExamples;
+	}
+	public boolean isShuffleTuples() {
+		return shuffleTuples;
+	}
+	public void setShuffleTuples(boolean shuffleTuples) {
+		this.shuffleTuples = shuffleTuples;
+	}
 	@Override
 	public String toString() {
 		return "Parameters [createStoredProcedure=" + createStoredProcedure + ", useStoredProcedure="
@@ -187,6 +201,7 @@ public class Parameters {
 				+ ", iterations=" + iterations + ", recall=" + recall + ", groundRecall=" + groundRecall + ", maxterms="
 				+ maxterms + ", useInds=" + useInds + ", dbURL=" + dbURL + ", port=" + port + ", randomSeed="
 				+ randomSeed + ", samplingMethod=" + samplingMethod + ", sampleInTesting=" + sampleInTesting
-				+ ", sampleGroundBottomClauses=" + sampleGroundBottomClauses + "]";
+				+ ", sampleGroundBottomClauses=" + sampleGroundBottomClauses + ", shuffleExamples=" + shuffleExamples
+				+ ", shuffleTuples=" + shuffleTuples + "]";
 	}
 }

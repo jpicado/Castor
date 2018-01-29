@@ -4,10 +4,12 @@ package castor.algorithms.coverageengines;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.dataaccess.db.BottomClauseConstructionDAO;
@@ -63,6 +65,12 @@ public class CoverageBySubsumptionParallelUsingMyMatching implements CoverageEng
 		List<Tuple> negExamplesTuples = negativeResult.getTable();
 		this.allNegExamples = new LinkedList<Tuple>();
 		this.negExamplesIndexes = new HashMap<Integer,Integer>();
+		
+		if (parameters.isShuffleExamples()) {
+			Random randomGenerator = new Random(parameters.getRandomSeed());
+			Collections.shuffle(posExamplesTuples, randomGenerator);
+			Collections.shuffle(negExamplesTuples, randomGenerator);
+		}
 		
 		// Generate ground bottom clause for all examples, create clauses for each example, add to lists
 		List<Clause> posExamples = new LinkedList<Clause>();

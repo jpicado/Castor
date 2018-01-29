@@ -1,8 +1,10 @@
 package castor.algorithms.coverageengines;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 
 import castor.dataaccess.db.GenericDAO;
 import castor.dataaccess.db.GenericTableObject;
@@ -12,17 +14,18 @@ import castor.hypotheses.MyClause;
 import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
+import castor.settings.Parameters;
 
 public class CoverageByDBJoiningAllSingleExample implements CoverageEngine {
 
 	private List<Tuple> allPosExamples;
 	private List<Tuple> allNegExamples;
 	
-	public CoverageByDBJoiningAllSingleExample(GenericDAO genericDAO, Relation posExamplesRelation, Relation negExamplesRelation) {
-		this.initialize(genericDAO, posExamplesRelation, negExamplesRelation);
+	public CoverageByDBJoiningAllSingleExample(GenericDAO genericDAO, Relation posExamplesRelation, Relation negExamplesRelation, Parameters parameters) {
+		this.initialize(genericDAO, posExamplesRelation, negExamplesRelation, parameters);
 	}
 	
-	private void initialize(GenericDAO genericDAO, Relation posExamplesRelation, Relation negExamplesRelation) {
+	private void initialize(GenericDAO genericDAO, Relation posExamplesRelation, Relation negExamplesRelation, Parameters parameters) {
 		// Get all positive and negative examples
 		String posCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(posExamplesRelation, true);
 		GenericTableObject posResult = genericDAO.executeQuery(posCoverageQuery);
@@ -31,6 +34,12 @@ public class CoverageByDBJoiningAllSingleExample implements CoverageEngine {
 		String negCoverageQuery = QueryGenerator.generateQuerySelectAllTuples(negExamplesRelation, true);
 		GenericTableObject negResult = genericDAO.executeQuery(negCoverageQuery);
 		this.allNegExamples = negResult.getTable();
+		
+		if (parameters.isShuffleExamples()) {
+			Random randomGenerator = new Random(parameters.getRandomSeed());
+			Collections.shuffle(this.allPosExamples, randomGenerator);
+			Collections.shuffle(this.allNegExamples, randomGenerator);
+		}
 	}
 	
 	@Override

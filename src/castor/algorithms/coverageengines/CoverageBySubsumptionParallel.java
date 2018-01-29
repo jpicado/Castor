@@ -2,10 +2,12 @@ package castor.algorithms.coverageengines;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -59,11 +61,11 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 			this.initWithMatchings(genericDAO, bottomClauseConstructionDAO, saturator, posExamplesRelation, negExamplesRelation,
 					schema, dataModel, parameters, examplesSource, posExamplesFile, negExamplesFile);
 		else
-			initWithoutMatchings(genericDAO, posExamplesRelation, negExamplesRelation, examplesSource, posExamplesFile, negExamplesFile);
+			initWithoutMatchings(genericDAO, posExamplesRelation, negExamplesRelation, parameters, examplesSource, posExamplesFile, negExamplesFile);
 	}
 
 	private void initWithoutMatchings(GenericDAO genericDAO,
-			Relation posExamplesRelation, Relation negExamplesRelation,
+			Relation posExamplesRelation, Relation negExamplesRelation, Parameters parameters,
 			CoverageBySubsumptionParallel.EXAMPLES_SOURCE examplesSource, String posExamplesFile, String negExamplesFile) {
 
 		// Get all positive and negative examples
@@ -83,6 +85,10 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 		} else {
 			throw new IllegalArgumentException("Unsupported example source.");
 		}
+		
+		Random randomGenerator = new Random(parameters.getRandomSeed());
+		Collections.shuffle(this.allPosExamples, randomGenerator);
+		Collections.shuffle(this.allNegExamples, randomGenerator);
 	}
 
 	private void initWithMatchings(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, BottomClauseGenerator saturator,
@@ -109,24 +115,16 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 			throw new IllegalArgumentException("Unsupported example source.");
 		}
 		
+		if (parameters.isShuffleExamples()) {
+			Random randomGenerator = new Random(parameters.getRandomSeed());
+			Collections.shuffle(posExamplesTuples, randomGenerator);
+			Collections.shuffle(negExamplesTuples, randomGenerator);
+		}
+		
 		this.allPosExamples = new LinkedList<Tuple>();
 		this.posExamplesIndexes = new HashMap<Integer, Integer>();
 		this.allNegExamples = new LinkedList<Tuple>();
 		this.negExamplesIndexes = new HashMap<Integer, Integer>();
-
-		// Generate ground bottom clause for all examples, create clauses for each
-		// example, add to lists
-//		BottomClauseGenerator saturator;
-//		if (parameters.isUseStoredProcedure()) {
-//			saturator = new BottomClauseGeneratorInsideSP();
-//		} else {
-//			if (parameters.getSamplingMethod().equals(SamplingMethods.OLKEN))  {
-//				DatabaseInstanceStatistics statistics = StatisticsExtractor.extractStatistics(genericDAO, schema);
-//				saturator = new BottomClauseGeneratorOlkenSampling(parameters.getRandomSeed(), statistics);
-//			} else {
-//				saturator = new BottomClauseGeneratorOriginalAlgorithm();
-//			}
-//		}
 		
 		List<Clause> posExamples = new LinkedList<Clause>();
 		List<Clause> negExamples = new LinkedList<Clause>();

@@ -40,7 +40,7 @@ public class BottomClauseGeneratorStreamSampling extends BottomClauseGeneratorOr
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> newInTerms, Set<String> distinctTerms, String relationName, String attributeName,
 			List<Mode> relationAttributeModes, Map<Pair<String, Integer>, List<Mode>> groupedModes, RandomSet<String> knownTermsSet,
-			int recall, boolean ground) {
+			int recall, boolean ground, boolean shuffleTuples) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 		
 		long sampleSize = Math.min(recall, statistics.getRelationSize().get(relationName.toUpperCase()));
