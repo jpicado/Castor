@@ -1,6 +1,5 @@
 package castor.algorithms.bottomclause;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,7 +33,7 @@ public class BottomClauseGeneratorNaiveSampling extends BottomClauseGeneratorOri
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> newInTerms, Set<String> distinctTerms, String relationName, String attributeName,
 			List<Mode> relationAttributeModes, Map<Pair<String, Integer>, List<Mode>> groupedModes, RandomSet<String> knownTermsSet,
-			int recall, boolean ground, boolean shuffleTuples) {
+			int recall, boolean ground, boolean randomizeRecall) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 		
 		// If sampling is turned off, set recall to max value
@@ -46,42 +45,91 @@ public class BottomClauseGeneratorNaiveSampling extends BottomClauseGeneratorOri
 
 		// Create query and run
 		String query = String.format(SELECTIN_SQL_STATEMENT, relationName, attributeName, knownTerms);
-		System.out.println(query);
 		GenericTableObject result = genericDAO.executeQuery(query);
-
+		
 		if (result != null) {
-			if (shuffleTuples) {
-				Collections.shuffle(result.getTable(), randomGenerator);
-			}
-			
-			Set<String> usedModes = new HashSet<String>();
-			for (Mode mode : relationAttributeModes) {
-				if (ground) {
-					if (usedModes.contains(mode.toGroundModeString())) {
-						continue;
-					}
-					else {
-						mode = mode.toGroundMode();
-						usedModes.add(mode.toGroundModeString());
-					}
-				}
+			if (!randomizeRecall || result.getTable().size() <= recall) {
+				// Get first tuples from result
 				int solutionsCounter = 0;
 				for (Tuple tuple : result.getTable()) {
 					if (solutionsCounter >= recall)
 						break;
-
-					Predicate literal = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, tuple,
-							mode, false, newInTerms, distinctTerms);
 					
-					// Do not add literal if it's exactly the same as head literal
-					if (!literal.equals(clause.getPositiveLiterals().get(0).getAtomicSentence())) {
-						addNotRepeated(newLiterals, literal);
+					modeOperationsForTuple(tuple, newLiterals, clause, hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, relationAttributeModes, ground);
+					solutionsCounter++;
+				}
+			} else {
+				// Get random tuples from result (without replacement)
+				Set<Integer> usedIndexes = new HashSet<Integer>();
+				int solutionsCounter = 0;
+				while (solutionsCounter < recall) {
+					int randomIndex = randomGenerator.nextInt(result.getTable().size());
+					if (!usedIndexes.contains(randomIndex)) {
+						Tuple tuple = result.getTable().get(randomIndex);
+						usedIndexes.add(randomIndex);
+						
+						modeOperationsForTuple(tuple, newLiterals, clause, hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, relationAttributeModes, ground);
 						solutionsCounter++;
 					}
 				}
 			}
 		}
+		
+//		if (result != null) {
+//			Set<String> usedModes = new HashSet<String>();
+//			for (Mode mode : relationAttributeModes) {
+//				if (ground) {
+//					if (usedModes.contains(mode.toGroundModeString())) {
+//						continue;
+//					}
+//					else {
+//						mode = mode.toGroundMode();
+//						usedModes.add(mode.toGroundModeString());
+//					}
+//				}
+//				int solutionsCounter = 0;
+//				for (Tuple tuple : result.getTable()) {
+//					if (solutionsCounter >= recall)
+//						break;
+//
+//					Predicate literal = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, tuple,
+//							mode, false, newInTerms, distinctTerms);
+//					
+//					// Do not add literal if it's exactly the same as head literal
+//					if (!literal.equals(clause.getPositiveLiterals().get(0).getAtomicSentence())) {
+//						addNotRepeated(newLiterals, literal);
+//						solutionsCounter++;
+//					}
+//				}
+//			}
+//		}
 
 		return newLiterals;
+	}
+	
+	private void modeOperationsForTuple(Tuple tuple, List<Predicate> newLiterals, MyClause clause, 
+			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
+			Map<String, Set<String>> newInTerms, Set<String> distinctTerms,
+			List<Mode> relationAttributeModes, boolean ground) {
+		Set<String> usedModes = new HashSet<String>();
+		for (Mode mode : relationAttributeModes) {
+			if (ground) {
+				if (usedModes.contains(mode.toGroundModeString())) {
+					continue;
+				}
+				else {
+					mode = mode.toGroundMode();
+					usedModes.add(mode.toGroundModeString());
+				}
+			}
+			
+			Predicate literal = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, tuple,
+					mode, false, newInTerms, distinctTerms);
+			
+			// Do not add literal if it's exactly the same as head literal
+			if (!literal.equals(clause.getPositiveLiterals().get(0).getAtomicSentence())) {
+				addNotRepeated(newLiterals, literal);
+			}
+		}
 	}
 }

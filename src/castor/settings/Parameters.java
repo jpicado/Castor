@@ -28,7 +28,7 @@ public class Parameters {
 	private boolean sampleInTesting = false;
 	private boolean sampleGroundBottomClauses = false;
 	private boolean shuffleExamples = false;
-	private boolean shuffleTuples = false;//TODO only works in naive sampling original and groupedModes bottom clause construction
+	private boolean randomizeRecall = false;
 	
 	public boolean isCreateStoredProcedure() {
 		return createStoredProcedure;
@@ -186,11 +186,11 @@ public class Parameters {
 	public void setShuffleExamples(boolean shuffleExamples) {
 		this.shuffleExamples = shuffleExamples;
 	}
-	public boolean isShuffleTuples() {
-		return shuffleTuples;
+	public boolean isRandomizeRecall() {
+		return randomizeRecall;
 	}
-	public void setShuffleTuples(boolean shuffleTuples) {
-		this.shuffleTuples = shuffleTuples;
+	public void setRandomizeRecall(boolean randomizeRecall) {
+		this.randomizeRecall = randomizeRecall;
 	}
 	@Override
 	public String toString() {
@@ -202,6 +202,6 @@ public class Parameters {
 				+ maxterms + ", useInds=" + useInds + ", dbURL=" + dbURL + ", port=" + port + ", randomSeed="
 				+ randomSeed + ", samplingMethod=" + samplingMethod + ", sampleInTesting=" + sampleInTesting
 				+ ", sampleGroundBottomClauses=" + sampleGroundBottomClauses + ", shuffleExamples=" + shuffleExamples
-				+ ", shuffleTuples=" + shuffleTuples + "]";
+				+ ", randomizeRecall=" + randomizeRecall + "]";
 	}
 }

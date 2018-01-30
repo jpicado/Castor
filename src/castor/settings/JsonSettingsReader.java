@@ -88,8 +88,8 @@ public class JsonSettingsReader {
 		if (parametersJson.get("shuffleExamples") != null) {
 			parameters.setShuffleExamples(parametersJson.get("shuffleExamples").getAsBoolean());
 		}
-		if (parametersJson.get("shuffleTuples") != null) {
-			parameters.setShuffleTuples(parametersJson.get("shuffleTuples").getAsBoolean());
+		if (parametersJson.get("randomizeRecall") != null) {
+			parameters.setRandomizeRecall(parametersJson.get("randomizeRecall").getAsBoolean());
 		}
 		
 		return parameters;
