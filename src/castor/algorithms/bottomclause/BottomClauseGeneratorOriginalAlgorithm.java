@@ -163,16 +163,14 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 				}
 
 				// Get known terms for all attribute types
-				boolean seenType = false;
 				RandomSet<String> knownTermsSet = new RandomSet<String>();
 				for (String type : attributeTypes) {
 					if (inTerms.containsKey(type)) {
-						seenType = true;
 						knownTermsSet.addAll(inTerms.get(type));
 					}
 				}
 				// If there is no list of known terms for attributeType, skip mode
-				if (!seenType) {
+				if (knownTermsSet.isEmpty()) {
 					continue;
 				}
 
