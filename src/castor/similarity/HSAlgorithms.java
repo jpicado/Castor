@@ -31,7 +31,7 @@ public class HSAlgorithms {
 		HSTree hsTree = hs.buildHSTree(l);
 //		System.out.println(hsTree.getInvertedIndex().toString());
 		
-//		System.out.println(hs.hsSearch(hsTree, "bro", 1));
+//		System.out.println(hs.hsSearch(hsTree, "bro", 7));
 		
 //		System.out.println(hs.generateSubstrings("ssi", hsTree, 11, 2, 1, 0));
 		System.out.println(hs.editDistance("ovner loevi", "abna levina"));
@@ -42,7 +42,7 @@ public class HSAlgorithms {
 		matchedSegments.add(new Pair<String,Integer>("n",0));
 		matchedSegments.add(new Pair<String,Integer>("l",0));
 		matchedSegments.add(new Pair<String,Integer>("ev",0));
-		System.out.println(hs.hsSearchVerificationSingleExtension("ovner loevi", "abna levina", 8, 3, matchedSegments));
+		System.out.println(hs.hsSearchVerificationMultiExtension("ovner loevi", "abna levina", 7, 3, matchedSegments));
 //		System.out.println(hs.getUnmatchedSegments("ovner loevi", matchedSegments));
 ////		int[] orders = {3,5,6};
 ////		System.out.println(hs.getUnmatchedSegments("abna levina", orders, matchedSegments));
@@ -255,6 +255,7 @@ public class HSAlgorithms {
 //			if (editDistance(hsTree.getStrings().get(matchStringIndex), query) <= maxDistance) {
 //			if (isLessThanDistance(hsTree.getStrings().get(matchStringIndex), query, maxDistance)) {
 			if (hsSearchVerificationSingleExtension(query, hsTree.getStrings().get(matchStringIndex), maxDistance, level, matchedSegments)) {
+//			if (hsSearchVerificationMultiExtension(query, hsTree.getStrings().get(matchStringIndex), maxDistance, level, matchedSegments)) {
 				return true;
 			}
 		}
@@ -264,9 +265,9 @@ public class HSAlgorithms {
 	private boolean hsSearchVerificationSingleExtension(String query, String candidate, int maxDistance, int level, List<Pair<String,Integer>> matchedSegments) {
 		int count = matchedSegments.size();
 		int minSegmentsMinusDistance = (int)(Math.pow(2, level) - maxDistance);
-		if (count < minSegmentsMinusDistance)
+		if (count < minSegmentsMinusDistance) {
 			return false;
-		else if (CombinatoricsUtils.binomialCoefficient(count, minSegmentsMinusDistance) >= candidate.length()) {
+		} else if (CombinatoricsUtils.binomialCoefficient(count, minSegmentsMinusDistance) >= candidate.length()) {
 			if (isLessThanDistance(candidate, query, maxDistance))
 				return true;
 			else
@@ -287,19 +288,22 @@ public class HSAlgorithms {
 		}
 	}
 	
-	//TODO there's some bug, returning incorrect answer for hsSearchVerificationSingleExtension("ovner loevi", "abna levina", 6, 3, matchedSegments)
+	//TODO there's some bug, returning incorrect answer for hsSearchVerificationSingleExtension("ovner loevi", "abna levina", 7, 3, matchedSegments)
 	private boolean hsSearchVerificationMultiExtension(String query, String candidate, int maxDistance, int level, List<Pair<String,Integer>> matchedSegments) {
 		int count = matchedSegments.size();
 		
 		int minSegmentsMinusDistance = (int)(Math.pow(2, level) - maxDistance);
 		if (count < minSegmentsMinusDistance) {
+			System.out.println("1");
 			return false;
 		} else if (CombinatoricsUtils.binomialCoefficient(count, minSegmentsMinusDistance) >= candidate.length()) {
+			System.out.println("2");
 			if (isLessThanDistance(candidate, query, maxDistance))
 				return true;
 			else
 				return false;
 		} else {
+			System.out.println("3");
 			// Get segments of candidate at current level
 			List<String> candidateSegments = new ArrayList<String>();
 			candidateSegments.add(candidate);
@@ -343,11 +347,12 @@ public class HSAlgorithms {
 			}
 			
 			for (int i = 0; i < thresholds.length; i++) {
-				System.out.print(thresholds[i]+ " ");
+				System.out.print(thresholds[i]);
 			}
 			System.out.println();
 			
 			for (int i=0; i <= count; i++) {
+				System.out.println(candidateUnmatchedSegments.get(i)+","+queryUnmatchedSegments.get(i)+","+thresholds[i]);
 				if (!isLessThanDistance(candidateUnmatchedSegments.get(i), queryUnmatchedSegments.get(i), thresholds[i]))
 					return false;
 			}
