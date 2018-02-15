@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.commons.math3.util.CombinatoricsUtils;
+
 import castor.utils.MyMath;
 import castor.utils.Pair;
 
@@ -19,20 +21,31 @@ public class HSAlgorithms {
 	public static void main(String[] args) {
 		HSAlgorithms hs = new HSAlgorithms();
 		List<String> l = new ArrayList<String>();
-//		l.add("brother");
-//		l.add("brothel");
-//		l.add("broathe");
-//		l.add("bro");
-//		l.add("vankatesh");
-//		l.add("acompany");
+		l.add("brother");
+		l.add("brothel");
+		l.add("broathe");
+		l.add("bro");
+		l.add("vankatesh");
+		l.add("acompany");
 		l.add("are accommodate to");
 		HSTree hsTree = hs.buildHSTree(l);
 //		System.out.println(hsTree.getInvertedIndex().toString());
-		System.out.println(hs.hsSearch(hsTree, "asdw acomofortable", 12));
+		
+//		System.out.println(hs.hsSearch(hsTree, "bro", 1));
+		
 //		System.out.println(hs.generateSubstrings("ssi", hsTree, 11, 2, 1, 0));
-		System.out.println(hs.editDistance("kaushuk chadhui", "caushik chakrabar"));
-//		System.out.println(hs.editDistance2("kaushuk chadhui", "caushik chakrabar", 8));
-//		System.out.println(hs.isLessThanDistance("kaushuk chadhui", "caushik chakrabar", 3));
+		System.out.println(hs.editDistance("ovner loevi", "abna levina"));
+//		System.out.println(hs.isLessThanDistance("kaushuk chadhui", "caushik chakrabar", 10));
+		
+		
+		List<Pair<String,Integer>> matchedSegments = new ArrayList<Pair<String,Integer>>();
+		matchedSegments.add(new Pair<String,Integer>("n",0));
+		matchedSegments.add(new Pair<String,Integer>("l",0));
+		matchedSegments.add(new Pair<String,Integer>("ev",0));
+		System.out.println(hs.hsSearchVerificationSingleExtension("ovner loevi", "abna levina", 8, 3, matchedSegments));
+//		System.out.println(hs.getUnmatchedSegments("ovner loevi", matchedSegments));
+////		int[] orders = {3,5,6};
+////		System.out.println(hs.getUnmatchedSegments("abna levina", orders, matchedSegments));
 	}
 
 	/*
@@ -212,7 +225,7 @@ public class HSAlgorithms {
 					
 					// If count of matched segments >= minSegments, it is a candidate
 					if (count >= minSegments) {
-						if (hsSearchFilter(hsTree, query, maxDistance, matchStringIndex, matchedSegmentsForString.get(matchStringIndex), minSegments)) {
+						if (hsSearchFilter(hsTree, query, maxDistance, maxLevel, matchStringIndex, matchedSegmentsForString.get(matchStringIndex), minSegments)) {
 //						if (editDistance(hsTree.getStrings().get(matchStringIndex), query) <= maxDistance) {
 							matchingStrings.add(hsTree.getStrings().get(matchStringIndex));
 						}
@@ -228,7 +241,7 @@ public class HSAlgorithms {
 	 * Remove invalid matchings because of conflicts. 
 	 * Returns true if string passes filter and has edit distance <= maxDistance; false otherwise.
 	 */
-	private boolean hsSearchFilter(HSTree hsTree, String query, int maxDistance, Integer matchStringIndex,  List<Pair<String,Integer>> matchedSegments, int minSegments) {
+	private boolean hsSearchFilter(HSTree hsTree, String query, int maxDistance, int level, Integer matchStringIndex,  List<Pair<String,Integer>> matchedSegments, int minSegments) {
 		int[] matchedSegmentsWithoutConflict = new int[matchedSegments.size()];
 		matchedSegmentsWithoutConflict[0] = 1;
 		for (int j = 1; j < matchedSegments.size(); j++) {
@@ -239,12 +252,125 @@ public class HSAlgorithms {
 			matchedSegmentsWithoutConflict[j] = max + 1;
 		}
 		if (matchedSegmentsWithoutConflict[matchedSegments.size() - 1] >= minSegments)  {
-			if (editDistance(hsTree.getStrings().get(matchStringIndex), query) <= maxDistance) {
+//			if (editDistance(hsTree.getStrings().get(matchStringIndex), query) <= maxDistance) {
+//			if (isLessThanDistance(hsTree.getStrings().get(matchStringIndex), query, maxDistance)) {
+			if (hsSearchVerificationSingleExtension(query, hsTree.getStrings().get(matchStringIndex), maxDistance, level, matchedSegments)) {
 				return true;
 			}
 		}
 		return false;
+	}
+	
+	private boolean hsSearchVerificationSingleExtension(String query, String candidate, int maxDistance, int level, List<Pair<String,Integer>> matchedSegments) {
+		int count = matchedSegments.size();
+		int minSegmentsMinusDistance = (int)(Math.pow(2, level) - maxDistance);
+		if (count < minSegmentsMinusDistance)
+			return false;
+		else if (CombinatoricsUtils.binomialCoefficient(count, minSegmentsMinusDistance) >= candidate.length()) {
+			if (isLessThanDistance(candidate, query, maxDistance))
+				return true;
+			else
+				return false;
+		} else {
+			// Get unmatched segments
+			List<String> candidateUnmatchedSegments = getUnmatchedSegments(candidate, matchedSegments);
+			List<String> queryUnmatchedSegments = getUnmatchedSegments(query, matchedSegments);
+			
+			int totalDistance = 0;
+			for (int i=0; i<candidateUnmatchedSegments.size(); i++) {
+				totalDistance += editDistance(candidateUnmatchedSegments.get(i), queryUnmatchedSegments.get(i));
+			}
+			
+			if (totalDistance <= maxDistance)
+				return true;
+			return false;
+		}
+	}
+	
+	//TODO there's some bug, returning incorrect answer for hsSearchVerificationSingleExtension("ovner loevi", "abna levina", 6, 3, matchedSegments)
+	private boolean hsSearchVerificationMultiExtension(String query, String candidate, int maxDistance, int level, List<Pair<String,Integer>> matchedSegments) {
+		int count = matchedSegments.size();
 		
+		int minSegmentsMinusDistance = (int)(Math.pow(2, level) - maxDistance);
+		if (count < minSegmentsMinusDistance) {
+			return false;
+		} else if (CombinatoricsUtils.binomialCoefficient(count, minSegmentsMinusDistance) >= candidate.length()) {
+			if (isLessThanDistance(candidate, query, maxDistance))
+				return true;
+			else
+				return false;
+		} else {
+			// Get segments of candidate at current level
+			List<String> candidateSegments = new ArrayList<String>();
+			candidateSegments.add(candidate);
+			for (int i=1; i<=level; i++) {
+				List<String> newCandidateSegments = new ArrayList<String>();
+				for (int j=0; j<candidateSegments.size(); j++) {
+					Pair<String,String> partitioned = partitionString(candidateSegments.get(j), (int)(candidateSegments.get(j).length()/2));
+					newCandidateSegments.add(partitioned.getFirst());
+					newCandidateSegments.add(partitioned.getSecond());
+				}
+				candidateSegments = newCandidateSegments;
+			}
+			
+			// Get unmatched segments
+			List<String> candidateUnmatchedSegments = getUnmatchedSegments(candidate, matchedSegments);
+			List<String> queryUnmatchedSegments = getUnmatchedSegments(query, matchedSegments);
+			
+			System.out.println(candidateUnmatchedSegments.toString());
+			System.out.println(queryUnmatchedSegments.toString());
+			
+			// Calculate orders (orders[i] = the order of matchedSegments[i] among candidateSegments)
+			int[] orders = new int[count];
+			int candidateSegmentIndex = 0;
+			for (int i=0; i < orders.length; i++) {
+				while (candidateSegmentIndex < candidateSegments.size()) {
+					if (matchedSegments.get(i).getFirst().equals(candidateSegments.get(candidateSegmentIndex))) {
+						orders[i] = candidateSegmentIndex+1;// adding 1 to be the same as in paper
+						candidateSegmentIndex++;
+						break;
+					}
+					candidateSegmentIndex++;
+				}
+			}
+			
+			// Calculate thresholds
+			int[] thresholds = new int[count+1];
+			thresholds[0] = orders[0] - 1;
+			thresholds[count] = (int)Math.pow(2, level) - orders[count-1];
+			for (int i=1; i<count; i++) {
+				thresholds[i] = orders[i] - orders[i-1] - 1;
+			}
+			
+			for (int i = 0; i < thresholds.length; i++) {
+				System.out.print(thresholds[i]+ " ");
+			}
+			System.out.println();
+			
+			for (int i=0; i <= count; i++) {
+				if (!isLessThanDistance(candidateUnmatchedSegments.get(i), queryUnmatchedSegments.get(i), thresholds[i]))
+					return false;
+			}
+			
+			return true;
+		}
+	}
+	
+	private List<String> getUnmatchedSegments(String string, List<Pair<String,Integer>> matchedSegments) {
+		List<String> unmatchedSegments = new ArrayList<String>();
+		
+		int stringIndex = 0;
+		int currentMatchedSegmentIndex = 0;
+		while (stringIndex < string.length() && currentMatchedSegmentIndex < matchedSegments.size()) {
+			int matchedSegmentIndex = string.indexOf(matchedSegments.get(currentMatchedSegmentIndex).getFirst(), stringIndex);
+			unmatchedSegments.add(string.substring(stringIndex, matchedSegmentIndex));
+			
+			stringIndex = matchedSegmentIndex + matchedSegments.get(currentMatchedSegmentIndex).getFirst().length();
+			currentMatchedSegmentIndex++;
+		}
+		unmatchedSegments.add(string.substring(stringIndex, string.length()));
+		
+		return unmatchedSegments;
 	}
 	
 	/*
@@ -335,7 +461,8 @@ public class HSAlgorithms {
 	}
 	
 	/* 
-	 * Compute edit distance of two strings using length-aware method.
+	 * Compute edit distance of two strings. 
+	 * Improvement 2: length-aware verification pruning and early termination using expected edit distance.
 	 * Returns true if edit distance <= maxDistance.
 	 */
 	private boolean isLessThanDistance(String string1, String string2, int maxDistance) {
@@ -345,130 +472,42 @@ public class HSAlgorithms {
 			string2 = string1;
 			string1 = temp;
 		}
-		
-		int len1 = string1.length();
-		int len2 = string2.length();
-		int lengthDifference = len2 - len1;
-		
-		System.out.println(string1);
-		System.out.println(string2);
-		
-		// len1+1, len2+1, because finally return dp[len1][len2]
-		int[][] dp = new int[len1 + 1][len2 + 1];
-		int[][] expectedEditDistance = new int[len1 + 1][len2 + 1];
-		for (int i = 0; i <= len1; i++) {
-			dp[i][0] = i;
-		}
-		for (int j = 0; j <= len2; j++) {
-			dp[0][j] = j;
-		}
-		
-		int lowSubstract = (int)Math.floor(Math.abs(maxDistance - lengthDifference) / 2);
-		int highAdd = (int)Math.floor((maxDistance + lengthDifference) / 2);
-		
-		// Iterate through, and check last char
-		for (int i = 0; i < len1; i++) {
-			char c1 = string1.charAt(i);
-			
-			int low = Math.max(0, i - lowSubstract);
-			int high = Math.min(len2 - 1, i + highAdd);
-			
-			System.out.println(i+": "+low+","+high);
-			
-			boolean earlyTermination = true;
-			for (int j = low; j <= high; j++) {
-//				System.out.println("i:"+i+", j:"+j);
-				
-				char c2 = string2.charAt(j);
-				// If last two chars equal
-				if (c1 == c2) {
-					// Update dp value for +1 length
-					dp[i + 1][j + 1] = dp[i][j];
-				} else {
-					int replace = dp[i][j] + 1;
-					int insert = dp[i][j + 1] + 1;
-					int delete = dp[i + 1][j] + 1;
-					int min = replace > insert ? insert : replace;
-					min = delete > min ? min : delete;
-					dp[i + 1][j + 1] = min;
-				}
-				
-				expectedEditDistance[i + 1][j + 1] = dp[i + 1][j + 1] + Math.abs((len2 - (j+1)) - (len1 - (i+1)));
-				
-				if (earlyTermination && expectedEditDistance[i + 1][j + 1] <= maxDistance) {
-					earlyTermination = false;
-				}
-			}
-			if (earlyTermination) {
-				System.out.println("early");
-				return false;
-			}
-			
-//			for (int j = 0; j < len2; j++) {
-//				System.out.print(j+",");
-//			}
-//			System.out.println();
-			for (int j = 0; j < len2; j++) {
-				System.out.print(dp[i][j]+",");
-			}
-			System.out.println();
-			System.out.println("--");
-		}
-		
-		return true;
-	}
-	public int editDistance2(String string1, String string2, int maxDistance) {
-		// Make string2 hold the longer string
-		String temp = string2;
-		if (string1.length() > string2.length()) {
-			string2 = string1;
-			string1 = temp;
-		}
 		int lengthDifference = string2.length() - string1.length();
-		
-		if (lengthDifference > maxDistance)
-			return -1;
 		
 		int dp[][] = new int[string1.length() + 1][string2.length() + 1];
 		int expectedEditDistance[][] = new int[string1.length() + 1][string2.length() + 1];
 
-		for (int i = 0; i < dp[0].length; i++) {
-			dp[0][i] = i;
-		}
-
-		for (int i = 0; i < dp.length; i++) {
+		for (int i = 0; i <= Math.min(string1.length()-1, maxDistance); i++) {
 			dp[i][0] = i;
 		}
-		
-		int lowSubstract = (int)(Math.abs(maxDistance - lengthDifference) / 2);
-		int highAdd = (int)((maxDistance + lengthDifference) / 2);
-		System.out.println(lowSubstract);
-		System.out.println(highAdd);
-		
-		for (int j = 0; j < string2.length(); j++) {
-			System.out.print(dp[0][j]+",");
+		for (int j = 0; j <= Math.min(string2.length()-1, maxDistance); j++) {
+			dp[0][j] = j;
 		}
-		System.out.println();
-		System.out.println("--");
+		
+		int lowSubstract = (int)Math.floor(Math.abs(maxDistance - lengthDifference) / 2) + 1;
+		int highAdd = (int)Math.floor((maxDistance + lengthDifference) / 2);
 
 		for (int i = 1; i <= string1.length(); i++) {
 			char c1 = string1.charAt(i - 1);
+			boolean earlyTermination = true;
 			
 			int low = Math.max(1, i - lowSubstract);
 			int high = Math.min(string2.length(), i + highAdd);
 			
-			System.out.println(i+":"+low+","+high);
-			
-			boolean earlyTermination = true;
-//			for (int j = 1; j <= string2.length(); j++) {
 			for (int j = low; j <= high; j++) {
-				
 				char c2 = string2.charAt(j - 1);
 				if (c1 == c2) {
 					dp[i][j] = dp[i - 1][j - 1];
 				} else {
-					dp[i][j] = 1 + Math.min(dp[i - 1][j - 1], Math.min(dp[i - 1][j], dp[i][j - 1]));
-//					dp[i][j] = 1 + dp[i - 1][j - 1];
+//					dp[i][j] = 1 + Math.min(dp[i - 1][j - 1], Math.min(dp[i - 1][j], dp[i][j - 1]));
+					int insertDeleteOp = 0;
+					if (i == j)
+						insertDeleteOp = Math.min(dp[i - 1][j], dp[i][j - 1]);
+					else if (i < j)
+						insertDeleteOp = dp[i][j-1];
+					else
+						insertDeleteOp = dp[i-1][j];
+					dp[i][j] = 1 + Math.min(dp[i - 1][j - 1], insertDeleteOp);
 				}
 				
 				expectedEditDistance[i][j] = dp[i][j] + Math.abs((string2.length() - j) - (string1.length() - i));
@@ -478,33 +517,72 @@ public class HSAlgorithms {
 			}
 			
 			if (earlyTermination) {
-				return -1;
+				return false;
 			}
-			
-			for (int j = 0; j < string2.length(); j++) {
-				System.out.print(dp[i][j]+",");
-			}
-			System.out.println();
-			System.out.println("--");
 		}
-		return dp[string1.length()][string2.length()];
+		return true;
 	}
 	
-	
-	
 	/* 
-	 * Compute edit distance of two strings.
-	 * Length-aware method.
+	 * Compute edit distance of two strings. 
+	 * Improvement 1: length pruning and early termination using with prefix pruning.
+	 * Returns incorrect result.
 	 */
-	public int editDistance(String string1, String string2) {
+	/*private boolean isLessThanDistance2(String string1, String string2, int maxDistance) {
 		int dp[][] = new int[string1.length() + 1][string2.length() + 1];
 
-		for (int i = 0; i < dp[0].length; i++) {
-			dp[0][i] = i;
+		for (int i = 0; i <= maxDistance; i++) {
+			dp[i][0] = i;
 		}
+		for (int j = 0; j <= maxDistance; j++) {
+			dp[0][j] = j;
+		}
+
+		for (int i = 1; i <= string1.length(); i++) {
+			char c1 = string1.charAt(i - 1);
+			boolean earlyTermination = true;
+			int low = Math.max(1, i-maxDistance);
+			int high = Math.min(string2.length(), Math.abs(i+maxDistance));
+			for (int j = low; j <= high; j++) {
+				char c2 = string2.charAt(j - 1);
+				if (c1 == c2) {
+					dp[i][j] = dp[i - 1][j - 1];
+				} else {
+//					dp[i][j] = 1 + Math.min(dp[i - 1][j - 1], Math.min(dp[i - 1][j], dp[i][j - 1]));
+					int insertDeleteOp = 0;
+					if (i == j)
+						insertDeleteOp = Math.min(dp[i - 1][j], dp[i][j - 1]);
+					else if (i < j)
+						insertDeleteOp = dp[i][j-1];
+					else
+						insertDeleteOp = dp[i-1][j];
+					dp[i][j] = 1 + Math.min(dp[i - 1][j - 1], insertDeleteOp);
+				}
+				
+				if (earlyTermination && dp[i][j] <= maxDistance) {
+					earlyTermination = false;
+				}
+			}
+			
+			if (earlyTermination) {
+				return false;
+			}
+		}
+		return true;
+	}*/
+	
+	/* 
+	 * Compute edit distance of two strings. 
+	 * Original dynamic programming algorithm: no improvements and no early termination.
+	 */
+	private int editDistance(String string1, String string2) {
+		int dp[][] = new int[string1.length() + 1][string2.length() + 1];
 
 		for (int i = 0; i < dp.length; i++) {
 			dp[i][0] = i;
+		}
+		for (int j = 0; j < dp[0].length; j++) {
+			dp[0][j] = j;
 		}
 
 		for (int i = 1; i <= string1.length(); i++) {
@@ -520,56 +598,6 @@ public class HSAlgorithms {
 		}
 		return dp[string1.length()][string2.length()];
 	}
-
-	/* 
-	 * Compute edit distance of two strings.
-	 * Length-aware method.
-	 */
-	/*private int editDistance(String string1, String string2) {
-		int len1 = string1.length();
-		int len2 = string2.length();
-		
-		// len1+1, len2+1, because finally return dp[len1][len2]
-		int[][] dp = new int[len1 + 1][len2 + 1];
-		for (int i = 0; i <= len1; i++) {
-			dp[i][0] = i;
-		}
-		for (int j = 0; j <= len2; j++) {
-			dp[0][j] = j;
-		}
-		
-		// Iterate through, and check last char
-		for (int i = 0; i < len1; i++) {
-			char c1 = string1.charAt(i);
-			for (int j = 0; j < len2; j++) {
-				char c2 = string2.charAt(j);
-				// If last two chars equal
-				if (c1 == c2) {
-					// Update dp value for +1 length
-					dp[i + 1][j + 1] = dp[i][j];
-				} else {
-					int replace = dp[i][j] + 1;
-					int insert = dp[i][j + 1] + 1;
-					int delete = dp[i + 1][j] + 1;
-					int min = replace > insert ? insert : replace;
-					min = delete > min ? min : delete;
-					dp[i + 1][j + 1] = min;
-				}
-			}
-			
-			for (int j = 0; j < len2; j++) {
-				System.out.print(j+",");
-			}
-			System.out.println();
-			for (int j = 0; j < len2; j++) {
-				System.out.print(dp[i][j]+",");
-			}
-			System.out.println();
-			System.out.println("--");
-		}
-		
-		return dp[len1][len2];
-	}*/
 	
 	/*
 	 * Partition string at position and return parts
