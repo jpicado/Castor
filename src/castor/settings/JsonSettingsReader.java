@@ -1,15 +1,22 @@
 package castor.settings;
 
-import castor.language.InclusionDependency;
-import castor.language.Mode;
-import castor.language.Relation;
-import castor.language.Schema;
-import castor.utils.Constants;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import java.util.*;
+import castor.language.InclusionDependency;
+import castor.language.MatchingDependency;
+import castor.language.Mode;
+import castor.language.Relation;
+import castor.language.Schema;
+import castor.utils.Constants;
+import castor.utils.Pair;
 
 public class JsonSettingsReader {
 
@@ -257,9 +264,9 @@ public class JsonSettingsReader {
 	/*
 	 * Read JSON object for INDs and convert to object
 	 */
-	public static Map<String, List<InclusionDependency>> readINDs(JsonObject indsJson)  {
+	public static Map<String, List<InclusionDependency>> readINDs(JsonObject dependenciesJson)  {
 		Map<String, List<InclusionDependency>> inds = new HashMap<String, List<InclusionDependency>>();
-		JsonArray indsArray = indsJson.get("inds").getAsJsonArray();
+		JsonArray indsArray = dependenciesJson.get("inds").getAsJsonArray();
 		for (int i = 0; i < indsArray.size(); i++) {
 			JsonObject indObject = indsArray.get(i).getAsJsonObject();
 			String leftRelation = indObject.get("leftRelation").getAsString();
@@ -276,6 +283,32 @@ public class JsonSettingsReader {
 		}
 		
 		return inds;
+	}
+	
+	/*
+	 * Read JSON object for MDs and convert to object
+	 */
+	public static Map<Pair<String,Integer>, List<MatchingDependency>> readMDs(JsonObject dependenciesJson)  {
+		Map<Pair<String,Integer>, List<MatchingDependency>> mds = new HashMap<Pair<String,Integer>, List<MatchingDependency>>();
+		JsonArray mdsArray = dependenciesJson.get("mds").getAsJsonArray();
+		for (int i = 0; i < mdsArray.size(); i++) {
+			JsonObject mdObject = mdsArray.get(i).getAsJsonObject();
+			String leftRelation = mdObject.get("leftRelation").getAsString();
+			int leftAttributeNumber = mdObject.get("leftAttributeNumber").getAsInt();
+			String rightRelation = mdObject.get("rightRelation").getAsString();
+			int rightAttributeNumber = mdObject.get("rightAttributeNumber").getAsInt();
+			int maxDistance = mdObject.get("maxDistance").getAsInt();
+			MatchingDependency md = new MatchingDependency(leftRelation, leftAttributeNumber, rightRelation, rightAttributeNumber, maxDistance);
+			
+			// Add ms to list of mds (grouped by <left relation name , left attribute number>)
+			Pair<String,Integer> key = new Pair<String,Integer>(leftRelation, leftAttributeNumber);
+			if (!mds.containsKey(key)) {
+				mds.put(key, new LinkedList<MatchingDependency>());
+			}
+			mds.get(key).add(md);
+		}
+		
+		return mds;
 	}
 	
 	/*
