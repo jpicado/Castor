@@ -12,6 +12,7 @@ import org.apache.commons.math3.util.CombinatoricsUtils;
 
 import castor.utils.MyMath;
 import castor.utils.Pair;
+import castor.utils.RandomSet;
 
 /*
  * Implementation of algorithms in paper "Two Birds With One Stone: An Efficient Hierarchical Framework for Top-k and Threshold-based String Similarity Search".
@@ -28,22 +29,27 @@ public class HSAlgorithms {
 		l.add("vankatesh");
 		l.add("acompany");
 		l.add("are accommodate to");
+		l.add("ovner loevi");
 		HSTree hsTree = hs.buildHSTree(l);
 //		System.out.println(hsTree.getInvertedIndex().toString());
 		
-//		System.out.println(hs.hsSearch(hsTree, "bro", 7));
+		System.out.println(hs.hsSearch(hsTree, "abna levina", 11));
 		
-//		System.out.println(hs.generateSubstrings("ssi", hsTree, 11, 2, 1, 0));
-		System.out.println(hs.editDistance("ovner loevi", "abna levina"));
-//		System.out.println(hs.isLessThanDistance("kaushuk chadhui", "caushik chakrabar", 10));
+//		System.out.println(hs.generateSubstrings("abna levina", hsTree, 7, 2, 1, 9));
+//		System.out.println(hs.editDistance("ovner loevi", "abna levina"));
+//		System.out.println(hs.editDistance("abna levina", "vankatesh"));
+//		System.out.println(hs.isLessThanDistance("ovner loevi", "abna levina", 7));
+//		System.out.println(hs.isLessThanDistance("bro", "brother", 3));
+//		System.out.println(hs.isLessThanDistance2("bro", "brother", 3));
 		
 		
-		List<Pair<String,Integer>> matchedSegments = new ArrayList<Pair<String,Integer>>();
-		matchedSegments.add(new Pair<String,Integer>("n",0));
-		matchedSegments.add(new Pair<String,Integer>("l",0));
-		matchedSegments.add(new Pair<String,Integer>("ev",0));
-		System.out.println(hs.hsSearchVerificationMultiExtension("ovner loevi", "abna levina", 7, 3, matchedSegments));
-//		System.out.println(hs.getUnmatchedSegments("ovner loevi", matchedSegments));
+		RandomSet<Pair<String,Integer>> matchedSegments = new RandomSet<Pair<String,Integer>>();
+		matchedSegments.add(new Pair<String,Integer>("a",0));
+		matchedSegments.add(new Pair<String,Integer>("a",3));
+		matchedSegments.add(new Pair<String,Integer>("a",10));
+		matchedSegments.add(new Pair<String,Integer>("n",9));
+//		System.out.println(hs.hsSearchVerificationMultiExtension("ovner loevi", "abna levina", 8, 3, matchedSegments));
+//		System.out.println(hs.getUnmatchedSegments("acompany", matchedSegments));
 ////		int[] orders = {3,5,6};
 ////		System.out.println(hs.getUnmatchedSegments("abna levina", orders, matchedSegments));
 	}
@@ -172,10 +178,7 @@ public class HSAlgorithms {
 		}
 		
 		Map<Integer, Integer> matchedSegmentsCountForString = new HashMap<Integer, Integer>();
-		Map<Integer, List<Pair<String,Integer>>> matchedSegmentsForString = new HashMap<Integer, List<Pair<String,Integer>>>();
-		
-		int maxLevel = (int)Math.ceil(MyMath.log2(maxDistance+1));
-		int minSegments = (int)(Math.pow(2, maxLevel) - maxDistance);
+		Map<Integer, RandomSet<Pair<String,Integer>>> matchedSegmentsForString = new HashMap<Integer, RandomSet<Pair<String,Integer>>>();
 		
 		// Use length filter
 		for (int l = Math.max(0, query.length()-maxDistance); l <= query.length()+maxDistance; l++) {
@@ -183,15 +186,17 @@ public class HSAlgorithms {
 			if (!hsTree.getInvertedIndex().containsKey(l))
 				continue;
 			
-			// If maxLevel is greater than max level on tree, add all strings, as with the given edit distance, all strings are similar
-			if (maxLevel > getMaxLevelOfLengthInHSTree(hsTree, l)) {
-				matchingStrings.addAll(getAllStringsOfLengthInHSTree(hsTree, l));
-				continue;
+			int maxLevelInTree = Integer.MIN_VALUE;
+			for (Integer level : hsTree.getInvertedIndex().get(l).keySet()) {
+				maxLevelInTree = Math.max(maxLevelInTree, level);
 			}
+			
+			int maxLevel = Math.min(maxLevelInTree, (int)Math.ceil(MyMath.log2(maxDistance+1)));
+			int minSegments = (int)(Math.pow(2, maxLevel) - maxDistance);
 			
 			if (hsTree.getInvertedIndex().containsKey(l) &&
 					hsTree.getInvertedIndex().get(l).containsKey(maxLevel)) {
-				
+				 
 				for (int j=1; j <= Math.pow(2, maxLevel); j++) {
 					if (hsTree.getInvertedIndex().get(l).get(maxLevel).containsKey(j)) {
 						// Generate substrings of query
@@ -209,7 +214,7 @@ public class HSAlgorithms {
 										matchedSegmentsForString.get(matchStringIndex).add(substringPositionPair);
 									} else {
 										matchedSegmentsCountForString.put(matchStringIndex, 1);
-										matchedSegmentsForString.put(matchStringIndex, new ArrayList<Pair<String,Integer>>());
+										matchedSegmentsForString.put(matchStringIndex, new RandomSet<Pair<String,Integer>>());
 										matchedSegmentsForString.get(matchStringIndex).add(substringPositionPair);
 									}
 								}
@@ -225,8 +230,8 @@ public class HSAlgorithms {
 					
 					// If count of matched segments >= minSegments, it is a candidate
 					if (count >= minSegments) {
-						if (hsSearchFilter(hsTree, query, maxDistance, maxLevel, matchStringIndex, matchedSegmentsForString.get(matchStringIndex), minSegments)) {
 //						if (editDistance(hsTree.getStrings().get(matchStringIndex), query) <= maxDistance) {
+						if (hsSearchFilter(hsTree, query, maxDistance, maxLevel, matchStringIndex, matchedSegmentsForString.get(matchStringIndex), minSegments)) {
 							matchingStrings.add(hsTree.getStrings().get(matchStringIndex));
 						}
 					}
@@ -241,7 +246,7 @@ public class HSAlgorithms {
 	 * Remove invalid matchings because of conflicts. 
 	 * Returns true if string passes filter and has edit distance <= maxDistance; false otherwise.
 	 */
-	private boolean hsSearchFilter(HSTree hsTree, String query, int maxDistance, int level, Integer matchStringIndex,  List<Pair<String,Integer>> matchedSegments, int minSegments) {
+	private boolean hsSearchFilter(HSTree hsTree, String query, int maxDistance, int level, Integer matchStringIndex,  RandomSet<Pair<String,Integer>> matchedSegments, int minSegments) {
 		int[] matchedSegmentsWithoutConflict = new int[matchedSegments.size()];
 		matchedSegmentsWithoutConflict[0] = 1;
 		for (int j = 1; j < matchedSegments.size(); j++) {
@@ -252,9 +257,10 @@ public class HSAlgorithms {
 			matchedSegmentsWithoutConflict[j] = max + 1;
 		}
 		if (matchedSegmentsWithoutConflict[matchedSegments.size() - 1] >= minSegments)  {
+			//TODO Currently using length-aware verification because other methods have bugs 
 //			if (editDistance(hsTree.getStrings().get(matchStringIndex), query) <= maxDistance) {
-//			if (isLessThanDistance(hsTree.getStrings().get(matchStringIndex), query, maxDistance)) {
-			if (hsSearchVerificationSingleExtension(query, hsTree.getStrings().get(matchStringIndex), maxDistance, level, matchedSegments)) {
+			if (isLessThanDistance(hsTree.getStrings().get(matchStringIndex), query, maxDistance)) {
+//			if (hsSearchVerificationSingleExtension(query, hsTree.getStrings().get(matchStringIndex), maxDistance, level, matchedSegments)) {
 //			if (hsSearchVerificationMultiExtension(query, hsTree.getStrings().get(matchStringIndex), maxDistance, level, matchedSegments)) {
 				return true;
 			}
@@ -262,7 +268,8 @@ public class HSAlgorithms {
 		return false;
 	}
 	
-	private boolean hsSearchVerificationSingleExtension(String query, String candidate, int maxDistance, int level, List<Pair<String,Integer>> matchedSegments) {
+	//TODO Must try different alignments.
+	private boolean hsSearchVerificationSingleExtension(String query, String candidate, int maxDistance, int level, RandomSet<Pair<String,Integer>> matchedSegments) {
 		int count = matchedSegments.size();
 		int minSegmentsMinusDistance = (int)(Math.pow(2, level) - maxDistance);
 		if (count < minSegmentsMinusDistance) {
@@ -288,22 +295,26 @@ public class HSAlgorithms {
 		}
 	}
 	
+	//TODO Must try different alignments.
 	//TODO there's some bug, returning incorrect answer for hsSearchVerificationSingleExtension("ovner loevi", "abna levina", 7, 3, matchedSegments)
-	private boolean hsSearchVerificationMultiExtension(String query, String candidate, int maxDistance, int level, List<Pair<String,Integer>> matchedSegments) {
+	private boolean hsSearchVerificationMultiExtension(String query, String candidate, int maxDistance, int level, RandomSet<Pair<String,Integer>> matchedSegments) {
 		int count = matchedSegments.size();
 		
 		int minSegmentsMinusDistance = (int)(Math.pow(2, level) - maxDistance);
 		if (count < minSegmentsMinusDistance) {
-			System.out.println("1");
 			return false;
-		} else if (CombinatoricsUtils.binomialCoefficient(count, minSegmentsMinusDistance) >= candidate.length()) {
-			System.out.println("2");
+		} else if (CombinatoricsUtils.binomialCoefficient(count, minSegmentsMinusDistance) >= candidate.length() ||
+				count > minSegmentsMinusDistance) {
+//			System.out.println("."+candidate+".");
+//			System.out.println("."+query+".");
+//			System.out.println(maxDistance);
+//			System.out.println(editDistance(query, candidate));
+//			System.out.println(isLessThanDistance(query, candidate, maxDistance));
 			if (isLessThanDistance(candidate, query, maxDistance))
 				return true;
 			else
 				return false;
 		} else {
-			System.out.println("3");
 			// Get segments of candidate at current level
 			List<String> candidateSegments = new ArrayList<String>();
 			candidateSegments.add(candidate);
@@ -320,9 +331,6 @@ public class HSAlgorithms {
 			// Get unmatched segments
 			List<String> candidateUnmatchedSegments = getUnmatchedSegments(candidate, matchedSegments);
 			List<String> queryUnmatchedSegments = getUnmatchedSegments(query, matchedSegments);
-			
-			System.out.println(candidateUnmatchedSegments.toString());
-			System.out.println(queryUnmatchedSegments.toString());
 			
 			// Calculate orders (orders[i] = the order of matchedSegments[i] among candidateSegments)
 			int[] orders = new int[count];
@@ -346,13 +354,12 @@ public class HSAlgorithms {
 				thresholds[i] = orders[i] - orders[i-1] - 1;
 			}
 			
-			for (int i = 0; i < thresholds.length; i++) {
-				System.out.print(thresholds[i]);
-			}
-			System.out.println();
+//			for (int i = 0; i < thresholds.length; i++) {
+//				System.out.print(thresholds[i]);
+//			}
+//			System.out.println();
 			
 			for (int i=0; i <= count; i++) {
-				System.out.println(candidateUnmatchedSegments.get(i)+","+queryUnmatchedSegments.get(i)+","+thresholds[i]);
 				if (!isLessThanDistance(candidateUnmatchedSegments.get(i), queryUnmatchedSegments.get(i), thresholds[i]))
 					return false;
 			}
@@ -361,7 +368,8 @@ public class HSAlgorithms {
 		}
 	}
 	
-	private List<String> getUnmatchedSegments(String string, List<Pair<String,Integer>> matchedSegments) {
+	//TODO Must try different alignments. Getting error for input: acompany, [< a , 0 > , < a , 3 > , < a , 10 > , < n , 9 > ]
+	private List<String> getUnmatchedSegments(String string, RandomSet<Pair<String,Integer>> matchedSegments) {
 		List<String> unmatchedSegments = new ArrayList<String>();
 		
 		int stringIndex = 0;
@@ -381,7 +389,7 @@ public class HSAlgorithms {
 	/*
 	 * Returns 1 if there are no conflicts between segments j and t in matchedSegments
 	 */
-	private int noConflict(List<Pair<String, Integer>> matchedSegments, int j, int t) {
+	private int noConflict(RandomSet<Pair<String, Integer>> matchedSegments, int j, int t) {
 		int start1 = matchedSegments.get(j).getSecond();
 		int end1 = matchedSegments.get(j).getSecond() + matchedSegments.get(j).getFirst().length()-1;
 		int start2 = matchedSegments.get(t).getSecond();
@@ -414,18 +422,6 @@ public class HSAlgorithms {
 	}
 	
 	/*
-	 * Get max level in tree, for the given length
-	 */
-	private int getMaxLevelOfLengthInHSTree(HSTree hsTree, int length) {
-		int maxLevel = Integer.MIN_VALUE;
-		for (Integer i : hsTree.getInvertedIndex().get(length).keySet()) {
-			if (i > maxLevel)
-				maxLevel = i;
-		}
-		return maxLevel;
-	}
-	
-	/*
 	 * Generate substrings of query based on input and using filters 
 	 */
 	private List<Pair<String,Integer>> generateSubstrings(String query, HSTree hsTree, int l, int i, int j, int maxDistance) {
@@ -438,25 +434,29 @@ public class HSAlgorithms {
 		int segmentStartPosition = someString.indexOf(someSegment, fromIndex);
 		int lengthDifference = Math.abs(query.length() - someString.length());
 		
+		//TODO currently using position-aware method because other methods have bugs
+		
 		// Shift-based method
 //		int lowerBound = Math.max(0, segmentStartPosition - maxDistance);
 //		int upperBound = Math.min(query.length() - segmentLength, segmentStartPosition + maxDistance);
 		
 		// Position-aware method
-//		int lowerBound = Math.max(0, segmentStartPosition - (int)Math.floor(Math.abs(maxDistance - lengthDifference) / 2));
-//		int upperBound = Math.min(query.length() - segmentLength, segmentStartPosition + (int)Math.floor(Math.abs(maxDistance + lengthDifference) / 2));
+		int lowerBound = Math.max(0, segmentStartPosition - (int)Math.floor(Math.abs(maxDistance - lengthDifference) / 2));
+		int upperBound = Math.min(query.length() - segmentLength, segmentStartPosition + (int)Math.floor(Math.abs(maxDistance + lengthDifference) / 2));
 		
 		// Multi-match-aware left-side perspective
 //		int lowerBound = Math.max(0, segmentStartPosition - (j - 1));
+//		int lowerBound = Math.max(0, segmentStartPosition - Math.abs(maxDistance - lengthDifference));
 //		int upperBound = Math.min(query.length() - segmentLength, segmentStartPosition + (j - 1));
+//		int upperBound = Math.min(query.length() - segmentLength, segmentStartPosition + maxDistance - lengthDifference);
 		
 		// Multi-match-aware right-side perspective
 //		int lowerBound = Math.max(0, segmentStartPosition + lengthDifference - (maxDistance + 1 - j));
 //		int upperBound = Math.min(query.length() - segmentLength, segmentStartPosition + lengthDifference + (maxDistance + 1 - j));
 		
 		// Multi-match-aware method
-		int lowerBound = Math.max(0, Math.max(segmentStartPosition - (j - 1), segmentStartPosition + lengthDifference - (maxDistance + 1 - j)));
-		int upperBound = Math.min(query.length() - segmentLength, Math.min(segmentStartPosition + (j - 1), segmentStartPosition + lengthDifference + (maxDistance + 1 - j)));
+//		int lowerBound = Math.max(0, Math.max(segmentStartPosition - (j - 1), segmentStartPosition + lengthDifference - (maxDistance + 1 - j)));
+//		int upperBound = Math.min(query.length() - segmentLength, Math.min(segmentStartPosition + (j - 1), segmentStartPosition + lengthDifference + (maxDistance + 1 - j)));
 		
 		for (int p = lowerBound; p <= upperBound && p + segmentLength <= query.length(); p++) {
 			substrings.add(new Pair<String,Integer>(query.substring(p, p + segmentLength), p));
@@ -491,6 +491,13 @@ public class HSAlgorithms {
 		
 		int lowSubstract = (int)Math.floor(Math.abs(maxDistance - lengthDifference) / 2) + 1;
 		int highAdd = (int)Math.floor((maxDistance + lengthDifference) / 2);
+		int threshold = Math.min(highAdd, lowSubstract);
+		
+//		System.out.print("0:\t");
+//		for (int j = 0; j < dp[0].length; j++) {
+//			System.out.print(dp[0][j]+"\t");
+//		}
+//		System.out.println();
 
 		for (int i = 1; i <= string1.length(); i++) {
 			char c1 = string1.charAt(i - 1);
@@ -506,7 +513,8 @@ public class HSAlgorithms {
 				} else {
 //					dp[i][j] = 1 + Math.min(dp[i - 1][j - 1], Math.min(dp[i - 1][j], dp[i][j - 1]));
 					int insertDeleteOp = 0;
-					if (i == j)
+//					if (i == j)
+					if (i > j-threshold && i < j+threshold)
 						insertDeleteOp = Math.min(dp[i - 1][j], dp[i][j - 1]);
 					else if (i < j)
 						insertDeleteOp = dp[i][j-1];
@@ -521,6 +529,12 @@ public class HSAlgorithms {
 				}
 			}
 			
+//			System.out.print(i+":\t");
+//			for (int j = 0; j < dp[i].length; j++) {
+//				System.out.print(dp[i][j]+"\t");
+//			}
+//			System.out.println();
+			
 			if (earlyTermination) {
 				return false;
 			}
@@ -531,23 +545,29 @@ public class HSAlgorithms {
 	/* 
 	 * Compute edit distance of two strings. 
 	 * Improvement 1: length pruning and early termination using with prefix pruning.
-	 * Returns incorrect result.
 	 */
-	/*private boolean isLessThanDistance2(String string1, String string2, int maxDistance) {
+	//TODO There's a bug. Returns true for input: bro, brother, 3
+	private boolean isLessThanDistance2(String string1, String string2, int maxDistance) {
 		int dp[][] = new int[string1.length() + 1][string2.length() + 1];
 
-		for (int i = 0; i <= maxDistance; i++) {
+		for (int i = 0; i <= Math.min(string1.length()-1, maxDistance); i++) {
 			dp[i][0] = i;
 		}
-		for (int j = 0; j <= maxDistance; j++) {
+		for (int j = 0; j <= Math.min(string2.length()-1, maxDistance); j++) {
 			dp[0][j] = j;
 		}
+		
+//		System.out.print("0:\t");
+//		for (int j = 0; j < dp[0].length; j++) {
+//			System.out.print(dp[0][j]+"\t");
+//		}
+//		System.out.println();
 
 		for (int i = 1; i <= string1.length(); i++) {
 			char c1 = string1.charAt(i - 1);
 			boolean earlyTermination = true;
 			int low = Math.max(1, i-maxDistance);
-			int high = Math.min(string2.length(), Math.abs(i+maxDistance));
+			int high = Math.min(string2.length(), i+maxDistance);
 			for (int j = low; j <= high; j++) {
 				char c2 = string2.charAt(j - 1);
 				if (c1 == c2) {
@@ -556,6 +576,7 @@ public class HSAlgorithms {
 //					dp[i][j] = 1 + Math.min(dp[i - 1][j - 1], Math.min(dp[i - 1][j], dp[i][j - 1]));
 					int insertDeleteOp = 0;
 					if (i == j)
+//					if (i > j-maxDistance && i < j+maxDistance)
 						insertDeleteOp = Math.min(dp[i - 1][j], dp[i][j - 1]);
 					else if (i < j)
 						insertDeleteOp = dp[i][j-1];
@@ -569,12 +590,18 @@ public class HSAlgorithms {
 				}
 			}
 			
+//			System.out.print(i+":\t");
+//			for (int j = 0; j < dp[i].length; j++) {
+//				System.out.print(dp[i][j]+"\t");
+//			}
+//			System.out.println();
+			
 			if (earlyTermination) {
 				return false;
 			}
 		}
 		return true;
-	}*/
+	}
 	
 	/* 
 	 * Compute edit distance of two strings. 
@@ -590,6 +617,12 @@ public class HSAlgorithms {
 			dp[0][j] = j;
 		}
 
+//		System.out.print("0:\t");
+//		for (int j = 0; j < dp[0].length; j++) {
+//			System.out.print(dp[0][j]+"\t");
+//		}
+//		System.out.println();
+		
 		for (int i = 1; i <= string1.length(); i++) {
 			char c1 = string1.charAt(i - 1);
 			for (int j = 1; j <= string2.length(); j++) {
@@ -600,6 +633,12 @@ public class HSAlgorithms {
 					dp[i][j] = 1 + Math.min(dp[i - 1][j - 1], Math.min(dp[i - 1][j], dp[i][j - 1]));
 				}
 			}
+			
+//			System.out.print(i+":\t");
+//			for (int j = 0; j < dp[i].length; j++) {
+//				System.out.print(dp[i][j]+"\t");
+//			}
+//			System.out.println();
 		}
 		return dp[string1.length()][string2.length()];
 	}
