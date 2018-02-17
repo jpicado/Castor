@@ -29,94 +29,133 @@ import castor.language.Tuple;
 import castor.mappings.MyClauseToIDAClause;
 import castor.settings.DataModel;
 import castor.settings.Parameters;
+import castor.similarity.HSTree;
+import castor.similarity.HSTreeCreator;
 import castor.utils.Commons;
 import castor.utils.RandomSet;
 
-public abstract class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomClauseGenerator {
+public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomClauseGenerator {
 
-	protected static final String SELECTIN_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s";
+	private static final String SELECTIN_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s";
+	private static final String PROJET_SELECT_SQL_STATEMENT = "SELECT DISTINCT(%s) FROM %s";
 
-	protected int varCounter;
+	private int varCounter;
 	private boolean sample;
 	private Random randomGenerator;
-	private Map<Pair<String,Integer>, List<MatchingDependency>> mds;
+	private Map<Pair<String, Integer>, List<MatchingDependency>> mds;
+	private Map<Pair<String, Integer>, HSTree> hsTrees;
 
-	public BottomClauseGeneratorNaiveSamplingWithSimilarity(boolean sample, int seed, Map<Pair<String,Integer>, List<MatchingDependency>> mds) {
-		varCounter = 0;
+	public BottomClauseGeneratorNaiveSamplingWithSimilarity(GenericDAO genericDAO, Schema schema,
+			Map<Pair<String, Integer>, List<MatchingDependency>> mds, boolean sample, int seed) {
+		this.varCounter = 0;
 		this.sample = sample;
 		this.randomGenerator = new Random(seed);
 		this.mds = mds;
-		
-		//TODO create indexes for relation.attributes in right sides of mds
+		createIndexes(genericDAO, schema, mds);
+	}
+
+	/*
+	 * Create an HSTree for each relation-attribute pair in right side of all
+	 * matching dependencies
+	 */
+	private void createIndexes(GenericDAO genericDAO, Schema schema,
+			Map<Pair<String, Integer>, List<MatchingDependency>> mds) {
+		for (List<MatchingDependency> searchAttributeMDs : mds.values()) {
+			for (MatchingDependency md : searchAttributeMDs) {
+				String relation = md.getRightPredicateName();
+				String attribute = schema.getRelations().get(relation.toUpperCase()).getAttributeNames()
+						.get(md.getRightAttributeNumber());
+				int attributePosition = md.getRightAttributeNumber();
+
+				Pair<String, Integer> key = new Pair<String, Integer>(relation, attributePosition);
+				if (!hsTrees.containsKey(key)) {
+					List<String> values = projectSelectIn(genericDAO, relation, attribute);
+					HSTree hsTree = HSTreeCreator.buildHSTree(values);
+					hsTrees.put(key, hsTree);
+				}
+			}
+		}
 	}
 
 	/*
 	 * Generate bottom clause for one example
 	 */
 	@Override
-	public MyClause generateBottomClause(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, 
+	public MyClause generateBottomClause(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO,
 			Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters) {
 		Map<String, String> hashConstantToVariable = new HashMap<String, String>();
 		Map<String, String> hashVariableToConstant = new HashMap<String, String>();
 		return this.generateBottomClauseOneQueryPerRelationAttribute(genericDAO, hashConstantToVariable,
-				hashVariableToConstant, exampleTuple, schema, dataModel.getModeH(), dataModel.getModesB(), parameters.getIterations(), parameters.getRecall(), parameters.isUseInds(), parameters.getMaxterms(), false, parameters.isRandomizeRecall());
+				hashVariableToConstant, exampleTuple, schema, dataModel.getModeH(), dataModel.getModesB(),
+				parameters.getIterations(), parameters.getRecall(), parameters.isUseInds(), parameters.getMaxterms(),
+				false, parameters.isRandomizeRecall());
 	}
-	
+
 	/*
 	 * Generate bottom clause for each input example in examples list Reuses hash
 	 * function to keep consistency between variable associations
 	 */
-	public List<MyClause> generateBottomClauses(GenericDAO genericDAO, List<Tuple> examples, Schema schema, DataModel dataModel, Parameters parameters) {
+	public List<MyClause> generateBottomClauses(GenericDAO genericDAO, List<Tuple> examples, Schema schema,
+			DataModel dataModel, Parameters parameters) {
 		List<MyClause> bottomClauses = new LinkedList<MyClause>();
 		Map<String, String> hashConstantToVariable = new HashMap<String, String>();
 		Map<String, String> hashVariableToConstant = new HashMap<String, String>();
 		for (Tuple example : examples) {
 			bottomClauses.add(this.generateBottomClauseOneQueryPerRelationAttribute(genericDAO, hashConstantToVariable,
-					hashVariableToConstant, example, schema, dataModel.getModeH(), dataModel.getModesB(), parameters.getIterations(), parameters.getRecall(), parameters.isUseInds(), parameters.getMaxterms(), false, parameters.isRandomizeRecall()));
+					hashVariableToConstant, example, schema, dataModel.getModeH(), dataModel.getModesB(),
+					parameters.getIterations(), parameters.getRecall(), parameters.isUseInds(),
+					parameters.getMaxterms(), false, parameters.isRandomizeRecall()));
 		}
 		return bottomClauses;
 	}
-	
+
 	/*
 	 * Generate ground bottom clause for one example
 	 */
 	@Override
-	public MyClause generateGroundBottomClause(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, 
-			Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters) {
+	public MyClause generateGroundBottomClause(GenericDAO genericDAO,
+			BottomClauseConstructionDAO bottomClauseConstructionDAO, Tuple exampleTuple, Schema schema,
+			DataModel dataModel, Parameters parameters) {
 		Map<String, String> hashConstantToVariable = new HashMap<String, String>();
 		Map<String, String> hashVariableToConstant = new HashMap<String, String>();
 		return this.generateBottomClauseOneQueryPerRelationAttribute(genericDAO, hashConstantToVariable,
-				hashVariableToConstant, exampleTuple, schema, dataModel.getModeH(), dataModel.getModesB(), parameters.getIterations(), parameters.getGroundRecall(), parameters.isUseInds(), parameters.getMaxterms(), true, parameters.isRandomizeRecall());
+				hashVariableToConstant, exampleTuple, schema, dataModel.getModeH(), dataModel.getModesB(),
+				parameters.getIterations(), parameters.getGroundRecall(), parameters.isUseInds(),
+				parameters.getMaxterms(), true, parameters.isRandomizeRecall());
 	}
-	
+
 	/*
 	 * Generate ground bottom clause for one example in string format
 	 */
 	@Override
-	public String generateGroundBottomClauseString(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, 
-			Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters) {
-		MyClause clause = generateGroundBottomClause(genericDAO, bottomClauseConstructionDAO, exampleTuple, schema, dataModel, parameters);
+	public String generateGroundBottomClauseString(GenericDAO genericDAO,
+			BottomClauseConstructionDAO bottomClauseConstructionDAO, Tuple exampleTuple, Schema schema,
+			DataModel dataModel, Parameters parameters) {
+		MyClause clause = generateGroundBottomClause(genericDAO, bottomClauseConstructionDAO, exampleTuple, schema,
+				dataModel, parameters);
 		return clause.toString2(MyClauseToIDAClause.POSITIVE_SYMBOL, MyClauseToIDAClause.NEGATE_SYMBOL);
 	}
 
 	/*
-	 * Bottom clause generation as described in original algorithm.
-	 * Queries database only once per relation-input_attribute.
+	 * Bottom clause generation as described in original algorithm. Queries database
+	 * only once per relation-input_attribute.
 	 */
 	private MyClause generateBottomClauseOneQueryPerRelationAttribute(GenericDAO genericDAO,
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant, Tuple exampleTuple,
-			Schema schema, Mode modeH, List<Mode> modesB, int iterations, int recall, boolean applyInds, int maxTerms, boolean ground, boolean shuffleTuples) {
+			Schema schema, Mode modeH, List<Mode> modesB, int iterations, int recall, boolean applyInds, int maxTerms,
+			boolean ground, boolean shuffleTuples) {
 
 		// Check that arities of example and modeH match
 		if (modeH.getArguments().size() != exampleTuple.getValues().size()) {
 			throw new IllegalArgumentException("Example arity does not match modeH arity.");
 		}
-		
+
 		MyClause clause = new MyClause();
-		
+
 		// Known terms for a data type
 		Map<String, Set<String>> inTerms = new HashMap<String, Set<String>>();
-		Map<Pair<String,Integer>, Set<String>> inTermsForMDs = new HashMap<Pair<String,Integer>, Set<String>>();
+		Map<Pair<String, Integer>, Set<String>> inTermsForMDs = new HashMap<Pair<String, Integer>, Set<String>>();
+		Map<Pair<String, Integer>, Integer> maxDistanceForMDs = new HashMap<Pair<String, Integer>, Integer>();
 
 		// Create head literal
 		varCounter = 0;
@@ -124,7 +163,7 @@ public abstract class BottomClauseGeneratorNaiveSamplingWithSimilarity implement
 			modeH = modeH.toGroundMode();
 		}
 		Predicate headLiteral = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, exampleTuple,
-				modeH, true, inTerms, inTermsForMDs, mds);
+				modeH, true, inTerms, inTermsForMDs, maxDistanceForMDs, mds);
 		clause.addPositiveLiteral(headLiteral);
 
 		// Group modes by relation name - input attribute position
@@ -145,12 +184,12 @@ public abstract class BottomClauseGeneratorNaiveSamplingWithSimilarity implement
 			}
 			groupedModes.get(key).add(mode);
 		}
-		
+
 		// Create body literals
 		for (int j = 0; j < iterations; j++) {
 			// Create new inTerms to hold terms for this iteration
 			Map<String, Set<String>> newInTerms = new HashMap<String, Set<String>>();
-			Map<Pair<String,Integer>, Set<String>> newInTermsForMDs = new HashMap<Pair<String,Integer>, Set<String>>();
+			Map<Pair<String, Integer>, Set<String>> newInTermsForMDs = new HashMap<Pair<String, Integer>, Set<String>>();
 
 			Iterator<Entry<Pair<String, Integer>, List<Mode>>> groupedModesIterator = groupedModes.entrySet()
 					.iterator();
@@ -162,20 +201,19 @@ public abstract class BottomClauseGeneratorNaiveSamplingWithSimilarity implement
 
 				// Get input attribute name
 				String attributeName = schema.getRelations().get(relationName.toUpperCase()).getAttributeNames()
-						.get(inputVarPosition);				
+						.get(inputVarPosition);
 
 				// Generate new literals for grouped modes
 				List<Predicate> newLiterals = operationForGroupedModes(genericDAO, schema, clause,
-						hashConstantToVariable, hashVariableToConstant, inTerms, newInTerms, 
-						inTermsForMDs, newInTermsForMDs, mds,
-						relationName, attributeName, inputVarPosition,
+						hashConstantToVariable, hashVariableToConstant, inTerms, newInTerms, inTermsForMDs,
+						newInTermsForMDs, maxDistanceForMDs, mds, relationName, attributeName, inputVarPosition,
 						relationAttributeModes, groupedModes, recall, ground, shuffleTuples);
 
 				for (Predicate literal : newLiterals) {
 					clause.addNegativeLiteral(literal);
 				}
 			}
-			
+
 			// Add new terms to inTerms
 			inTerms.clear();
 			inTerms.putAll(newInTerms);
@@ -183,26 +221,29 @@ public abstract class BottomClauseGeneratorNaiveSamplingWithSimilarity implement
 
 		return clause;
 	}
-	
+
 	/*
-	 * Performs mode operation for set of modes with same relation name and input attribute.
-	 * Returns a list of new literals to be added to clause.
+	 * Performs mode operation for set of modes with same relation name and input
+	 * attribute. Returns a list of new literals to be added to clause.
 	 */
 	public List<Predicate> operationForGroupedModes(GenericDAO genericDAO, Schema schema, MyClause clause,
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> inTerms, Map<String, Set<String>> newInTerms,
-			Map<Pair<String,Integer>, Set<String>> inTermsForMDs, Map<Pair<String,Integer>, Set<String>> newInTermsForMDs, 
-			Map<Pair<String,Integer>, List<MatchingDependency>> mds,
-			String relationName, String attributeName, int inputAttributePosition,
-			List<Mode> relationAttributeModes, Map<Pair<String, Integer>, List<Mode>> groupedModes,
-			int recall, boolean ground, boolean randomizeRecall) {
+			Map<Pair<String, Integer>, Set<String>> inTermsForMDs,
+			Map<Pair<String, Integer>, Set<String>> newInTermsForMDs,
+			Map<Pair<String, Integer>, Integer> maxDistanceForMDs,
+			Map<Pair<String, Integer>, List<MatchingDependency>> mds, String relationName, String attributeName,
+			int inputAttributePosition, List<Mode> relationAttributeModes,
+			Map<Pair<String, Integer>, List<Mode>> groupedModes, int recall, boolean ground, boolean randomizeRecall) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
-		
+
 		// If sampling is turned off, set recall to max value
 		if (!this.sample) {
 			recall = Integer.MAX_VALUE;
 		}
-		
+
+		// EXACT SEARCH
+
 		// Get all attribute types for input attribute
 		Set<String> attributeTypes = new HashSet<String>();
 		for (Mode mode : relationAttributeModes) {
@@ -218,92 +259,143 @@ public abstract class BottomClauseGeneratorNaiveSamplingWithSimilarity implement
 		}
 		// If there is no list of known terms for attributeType, skip mode
 		if (!knownTermsSet.isEmpty()) {
-			String knownTerms = toListString(knownTermsSet);
-	
+			String knownTerms = setToString(knownTermsSet);
+
 			// Create query and run
 			String query = String.format(SELECTIN_SQL_STATEMENT, relationName, attributeName, knownTerms);
 			GenericTableObject result = genericDAO.executeQuery(query);
-			
+
+			List<Pair<Tuple, String>> tuplesWithSourceValue = new ArrayList<Pair<Tuple, String>>();
 			if (result != null) {
-				if (!randomizeRecall || result.getTable().size() <= recall) {
-					// Get first tuples from result
-					int solutionsCounter = 0;
+				for (Tuple tuple : result.getTable()) {
+					tuplesWithSourceValue.add(new Pair<Tuple, String>(tuple, ""));
+				}
+			}
+			applyModesForTuples(tuplesWithSourceValue, newLiterals, clause, hashConstantToVariable,
+					hashVariableToConstant, newInTerms, newInTermsForMDs, maxDistanceForMDs, mds,
+					relationAttributeModes, recall, ground, randomizeRecall, false, -1);
+		}
+
+		// SIMILARITY SEARCH
+		Pair<String, Integer> key = new Pair<String, Integer>(relationName, inputAttributePosition);
+		if (inTermsForMDs.containsKey(key) && hsTrees.containsKey(key)) {
+			List<Pair<Tuple, String>> tuplesWithSourceValue = new ArrayList<Pair<Tuple, String>>();
+			for (String value : inTermsForMDs.get(key)) {
+				Set<String> similarValues = hsTrees.get(key).hsSearch(value, maxDistanceForMDs.get(key));
+				String knownTerms = setToString(similarValues);
+
+				// Create query and run
+				String query = String.format(SELECTIN_SQL_STATEMENT, relationName, attributeName, knownTerms);
+				GenericTableObject result = genericDAO.executeQuery(query);
+				if (result != null) {
 					for (Tuple tuple : result.getTable()) {
-						if (solutionsCounter >= recall)
-							break;
-						
-						modeOperationsForTuple(tuple, newLiterals, clause, hashConstantToVariable, hashVariableToConstant, newInTerms, newInTermsForMDs, mds, 
-								relationAttributeModes, ground);
-						solutionsCounter++;
-					}
-				} else {
-					// Get random tuples from result (without replacement)
-					Set<Integer> usedIndexes = new HashSet<Integer>();
-					int solutionsCounter = 0;
-					while (solutionsCounter < recall) {
-						int randomIndex = randomGenerator.nextInt(result.getTable().size());
-						if (!usedIndexes.contains(randomIndex)) {
-							Tuple tuple = result.getTable().get(randomIndex);
-							usedIndexes.add(randomIndex);
-							
-							modeOperationsForTuple(tuple, newLiterals, clause, hashConstantToVariable, hashVariableToConstant, newInTerms, newInTermsForMDs, mds, 
-									relationAttributeModes, ground);
-							solutionsCounter++;
-						}
+						tuplesWithSourceValue.add(new Pair<Tuple, String>(tuple, value));
 					}
 				}
 			}
+			applyModesForTuples(tuplesWithSourceValue, newLiterals, clause, hashConstantToVariable,
+					hashVariableToConstant, newInTerms, newInTermsForMDs, maxDistanceForMDs, mds,
+					relationAttributeModes, recall, ground, randomizeRecall, true, inputAttributePosition);
 		}
-		
-		Pair<String,Integer> key = new Pair<String,Integer>(relationName,inputAttributePosition);
-		if (inTermsForMDs.containsKey(key)) {
-			//TODO
-			// for each known value
-			// 		R = similarity search on relationName.attributeName, looking for values in inTermsForMDs[<md.getRightRelation,md.getRightAttribute>]
-			//		for each tuple in R
-			// 			createLiteralFromTupleWithSimilarity(tuple,value,inputAttributePosition)
-			//			//createLiteralFromTupleWithSimilarity should create literal for tuple and literal for similarity sim(value,tuple[inputAttributePosition])
-			//			//should also save values as in createLiteralFromTuple
-			//		
-			
 
-			// On createLiteral and createLiteralSim when saving values
-			// If matchingDependencies.containsLeft(<relationName,attributeName>)
-			// 		inTermsForMDs.put(<md.getRightRelation,md.getRightAttribute>, new values)
-			////
-		}
-		
-		
-
-		
-		
 		return newLiterals;
 	}
-	
-	private void modeOperationsForTuple(Tuple tuple, List<Predicate> newLiterals, MyClause clause, 
+
+	private void applyModesForTuples(List<Pair<Tuple, String>> tuplesWithSourceValue, List<Predicate> newLiterals,
+			MyClause clause, Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
+			Map<String, Set<String>> newInTerms, Map<Pair<String, Integer>, Set<String>> newInTermsForMDs,
+			Map<Pair<String, Integer>, Integer> maxDistanceForMDs,
+			Map<Pair<String, Integer>, List<MatchingDependency>> mds, List<Mode> relationAttributeModes, int recall,
+			boolean ground, boolean randomizeRecall, boolean createSimilarityPredicate,
+			int similarAttributeInTuplePosition) {
+		// Create literals from candidateTuples
+		if (!randomizeRecall || tuplesWithSourceValue.size() <= recall) {
+			// Get first tuples from result
+			int solutionsCounter = 0;
+			for (Pair<Tuple, String> tupleValuePair : tuplesWithSourceValue) {
+				if (solutionsCounter >= recall)
+					break;
+
+				Tuple tuple = tupleValuePair.getFirst();
+				String sourceValue = tupleValuePair.getSecond();
+
+				modeOperationsForTuple(tuple, newLiterals, clause, hashConstantToVariable, hashVariableToConstant,
+						newInTerms, newInTermsForMDs, maxDistanceForMDs, mds, relationAttributeModes, ground,
+						createSimilarityPredicate, sourceValue, similarAttributeInTuplePosition);
+				solutionsCounter++;
+			}
+		} else {
+			// Get random tuples from result (without replacement)
+			Set<Integer> usedIndexes = new HashSet<Integer>();
+			int solutionsCounter = 0;
+			while (solutionsCounter < recall) {
+				int randomIndex = randomGenerator.nextInt(tuplesWithSourceValue.size());
+				if (!usedIndexes.contains(randomIndex)) {
+					Pair<Tuple, String> tupleValuePair = tuplesWithSourceValue.get(randomIndex);
+					Tuple tuple = tupleValuePair.getFirst();
+					String sourceValue = tupleValuePair.getSecond();
+					usedIndexes.add(randomIndex);
+
+					modeOperationsForTuple(tuple, newLiterals, clause, hashConstantToVariable, hashVariableToConstant,
+							newInTerms, newInTermsForMDs, maxDistanceForMDs, mds, relationAttributeModes, ground,
+							createSimilarityPredicate, sourceValue, similarAttributeInTuplePosition);
+					solutionsCounter++;
+				}
+			}
+		}
+	}
+
+	private void modeOperationsForTuple(Tuple tuple, List<Predicate> newLiterals, MyClause clause,
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
-			Map<String, Set<String>> newInTerms,
-			Map<Pair<String,Integer>, Set<String>> newInTermsForMDs,
-			Map<Pair<String,Integer>, List<MatchingDependency>> mds,
-			List<Mode> relationAttributeModes, boolean ground) {
+			Map<String, Set<String>> newInTerms, Map<Pair<String, Integer>, Set<String>> newInTermsForMDs,
+			Map<Pair<String, Integer>, Integer> maxDistanceForMDs,
+			Map<Pair<String, Integer>, List<MatchingDependency>> mds, List<Mode> relationAttributeModes, boolean ground,
+			boolean createSimilarityPredicate, String similarValue, int similarAttributeInTuplePosition) {
 		Set<String> usedModes = new HashSet<String>();
 		for (Mode mode : relationAttributeModes) {
 			if (ground) {
 				if (usedModes.contains(mode.toGroundModeString())) {
 					continue;
-				}
-				else {
+				} else {
 					mode = mode.toGroundMode();
 					usedModes.add(mode.toGroundModeString());
 				}
 			}
-			
-			Predicate literal = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, tuple,
-					mode, false, newInTerms, newInTermsForMDs, mds);
-			
+
+			Predicate literal = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, tuple, mode,
+					false, newInTerms, newInTermsForMDs, maxDistanceForMDs, mds);
+
 			// Do not add literal if it's exactly the same as head literal
 			if (!literal.equals(clause.getPositiveLiterals().get(0).getAtomicSentence())) {
 				addNotRepeated(newLiterals, literal);
+
+				if (createSimilarityPredicate) {
+					Term similarValueTerm;
+					Term valueInTupleTerm;
+					String valueInTupleString = tuple.getValues().get(similarAttributeInTuplePosition).toString();
+
+					// Create similarity predicate containing constants or variables
+					if (mode.getArguments().get(similarAttributeInTuplePosition).getIdentifierType()
+							.equals(IdentifierType.CONSTANT)) {
+						similarValueTerm = new Constant("\"" + similarValue + "\"");
+						valueInTupleTerm = new Constant("\"" + valueInTupleString + "\"");
+					} else {
+						similarValueTerm = new Variable(hashConstantToVariable.get(similarValue));
+						valueInTupleTerm = new Variable(hashConstantToVariable.get(valueInTupleString));
+					}
+
+					// Order of terms depends on lexicographic order
+					List<Term> terms = new ArrayList<Term>();
+					if (similarValue.compareTo(valueInTupleString) <= 0) {
+						terms.add(similarValueTerm);
+						terms.add(valueInTupleTerm);
+					} else {
+						terms.add(valueInTupleTerm);
+						terms.add(similarValueTerm);
+					}
+					Predicate similarityLiteral = new Predicate("sim", terms);
+					addNotRepeated(newLiterals, similarityLiteral);
+				}
 			}
 		}
 	}
@@ -311,10 +403,11 @@ public abstract class BottomClauseGeneratorNaiveSamplingWithSimilarity implement
 	/*
 	 * Creates a literal from a tuple and a mode.
 	 */
-	protected Predicate createLiteralFromTuple(Map<String, String> hashConstantToVariable,
-			Map<String, String> hashVariableToConstant, Tuple tuple, Mode mode, boolean headMode, 
-			Map<String, Set<String>> inTerms, Map<Pair<String,Integer>, Set<String>> inTermsForMDs,
-			Map<Pair<String,Integer>, List<MatchingDependency>> mds) {
+	private Predicate createLiteralFromTuple(Map<String, String> hashConstantToVariable,
+			Map<String, String> hashVariableToConstant, Tuple tuple, Mode mode, boolean headMode,
+			Map<String, Set<String>> inTerms, Map<Pair<String, Integer>, Set<String>> inTermsForMDs,
+			Map<Pair<String, Integer>, Integer> maxDistanceForMDs,
+			Map<Pair<String, Integer>, List<MatchingDependency>> mds) {
 		List<Term> terms = new ArrayList<Term>();
 		for (int i = 0; i < mode.getArguments().size(); i++) {
 			String value = tuple.getValues().get(i).toString();
@@ -333,57 +426,64 @@ public abstract class BottomClauseGeneratorNaiveSamplingWithSimilarity implement
 				terms.add(new Variable(hashConstantToVariable.get(value)));
 			}
 			// Add constants to inTerms
-			if (headMode ||
-					mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.OUTPUT) ||
-					mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
+			if (headMode || mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.OUTPUT)
+					|| mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
 				String variableType = mode.getArguments().get(i).getType();
 				if (!inTerms.containsKey(variableType)) {
 					inTerms.put(variableType, new HashSet<String>());
 				}
 				inTerms.get(variableType).add(value);
-				
+
 				// Add constants that can be used in similarity search
-				Pair<String,Integer> leftKey = new Pair<String,Integer>(mode.getPredicateName(),i);
+				Pair<String, Integer> leftKey = new Pair<String, Integer>(mode.getPredicateName(), i);
 				if (mds.containsKey(leftKey)) {
 					for (MatchingDependency md : mds.get(leftKey)) {
-						Pair<String,Integer> rightKey = new Pair<String,Integer>(md.getRightPredicateName(),md.getRightAttributeNumber());
+						Pair<String, Integer> rightKey = new Pair<String, Integer>(md.getRightPredicateName(),
+								md.getRightAttributeNumber());
 						if (!inTermsForMDs.containsKey(rightKey)) {
 							inTermsForMDs.put(rightKey, new HashSet<String>());
 						}
 						inTermsForMDs.get(rightKey).add(value);
+
+						int maxDistance = md.getMaxDistance();
+						if (maxDistanceForMDs.containsKey(rightKey)) {
+							maxDistance = Math.max(maxDistanceForMDs.get(rightKey), maxDistance);
+						}
+						maxDistanceForMDs.put(rightKey, maxDistance);
 					}
 				}
 			}
 		}
-		
+
 		Predicate literal = new Predicate(mode.getPredicateName(), terms);
 		return literal;
 	}
-	
-	/*
-	 * Add non-repeated newLiterals to literals
-	 */
-	protected void addNotRepeated(List<Predicate> literals, List<Predicate> newLiterals) {
-		for (Predicate newLiteral : newLiterals) {
-			if (!literals.contains(newLiteral)) {
-				literals.add(newLiteral);
+
+	private List<String> projectSelectIn(GenericDAO genericDAO, String relationName, String projectAttributeName) {
+		List<String> values = new ArrayList<String>();
+		String query = String.format(PROJET_SELECT_SQL_STATEMENT, projectAttributeName, relationName);
+		GenericTableObject result = genericDAO.executeQuery(query);
+		if (result != null) {
+			for (Tuple tuple : result.getTable()) {
+				values.add(tuple.getStringValues().get(0));
 			}
 		}
+		return values;
 	}
 
 	/*
 	 * Add non-repeated newLiteral to literals
 	 */
-	protected void addNotRepeated(List<Predicate> literals, Predicate newLiteral) {
+	private void addNotRepeated(List<Predicate> literals, Predicate newLiteral) {
 		if (!literals.contains(newLiteral)) {
 			literals.add(newLiteral);
 		}
 	}
-	
+
 	/*
 	 * Convert set to string "('item1','item2',...)"
 	 */
-	protected String toListString(Set<String> terms) {
+	private String setToString(Set<String> terms) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("(");
 		int counter = 0;
