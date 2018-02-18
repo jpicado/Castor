@@ -25,6 +25,14 @@ public class HSTree {
 		this.invertedIndex = invertedIndex;
 	}
 	
+	public List<String> getStrings() {
+		return strings;
+	}
+
+	public Map<Integer, Map<Integer, Map<Integer, Map<String, List<Integer>>>>> getInvertedIndex() {
+		return invertedIndex;
+	}
+	
 	/*
 	 * HSSearch algorithm.
 	 */

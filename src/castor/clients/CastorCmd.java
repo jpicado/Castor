@@ -24,6 +24,7 @@ import castor.algorithms.ProGolem;
 import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
 import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSampling;
+import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSamplingWithSimilarity;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesOlkenSampling;
@@ -40,6 +41,7 @@ import castor.db.QueryGenerator;
 import castor.ddlindextract.DDLIndMain;
 import castor.hypotheses.ClauseInfo;
 import castor.language.InclusionDependency;
+import castor.language.MatchingDependency;
 import castor.language.Mode;
 import castor.language.Relation;
 import castor.language.Schema;
@@ -53,6 +55,7 @@ import castor.settings.SamplingMethods;
 import castor.utils.FileUtils;
 import castor.utils.Formatter;
 import castor.utils.NumbersKeeper;
+import castor.utils.Pair;
 import castor.utils.TimeWatch;
 
 public class CastorCmd {
@@ -210,6 +213,7 @@ public class CastorCmd {
 			if (indsFilePath != null || ddlFilePath != null) {
 				JsonObject indsJson = FileUtils.convertFileToJSON(indsFile);
 				this.readINDsFromJson(indsJson);
+				this.readMDsFromJson(indsJson);
 			}
 
 			// Get data model from file
@@ -278,21 +282,32 @@ public class CastorCmd {
 			if (parameters.isUseStoredProcedure()) {
 				saturator = new BottomClauseGeneratorInsideSP();
 			} else {
-				//TODO Note that BottomClauseGeneratorWithGrouped does not use inclusion dependencies; not schema independent
-				if (parameters.getSamplingMethod().equals(SamplingMethods.OLKEN))  {
-					logger.info("Use Olken sampling. Extracting statistics from database instance...");
-					StatisticsOlkenSampling statistics = StatisticsExtractor.extractStatisticsForOlkenSampling(genericDAO, schema);
-//					saturator = new BottomClauseGeneratorOlkenSampling(parameters.getRandomSeed(), statistics);
-					saturator = new BottomClauseGeneratorWithGroupedModesOlkenSampling(parameters.getRandomSeed(), statistics);
-				} else if (parameters.getSamplingMethod().equals(SamplingMethods.STREAM)) {
-					logger.info("Use Stream sampling. Extracting statistics from database instance...");
-					StatisticsStreamSampling statistics = StatisticsExtractor.extractStatisticsForStreamSampling(genericDAO, schema);
-					saturator = new BottomClauseGeneratorStreamSampling(parameters.getRandomSeed(), statistics);
-				} else if (parameters.getSamplingMethod().equals(SamplingMethods.STRATIFIED)) {
-					saturator = new BottomClauseGeneratorStratifiedSampling(parameters.getRandomSeed());
+				if (parameters.isAllowSimilarity()) {
+					//TODO implement other sampling methods
+					if (parameters.getSamplingMethod().equals(SamplingMethods.OLKEN) ||
+							parameters.getSamplingMethod().equals(SamplingMethods.STREAM) ||
+							parameters.getSamplingMethod().equals(SamplingMethods.STRATIFIED))  {
+						throw new UnsupportedOperationException("Sampling method not supported when allowing similarity.");
+					} else {
+						saturator = new BottomClauseGeneratorNaiveSamplingWithSimilarity(genericDAO, schema, true, parameters.getRandomSeed());
+					}
 				} else {
-					saturator = new BottomClauseGeneratorNaiveSampling(true, parameters.getRandomSeed());
-//					saturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(true);
+					//TODO Note that BottomClauseGeneratorWithGrouped does not use inclusion dependencies; not schema independent
+					if (parameters.getSamplingMethod().equals(SamplingMethods.OLKEN))  {
+						logger.info("Use Olken sampling. Extracting statistics from database instance...");
+						StatisticsOlkenSampling statistics = StatisticsExtractor.extractStatisticsForOlkenSampling(genericDAO, schema);
+	//					saturator = new BottomClauseGeneratorOlkenSampling(parameters.getRandomSeed(), statistics);
+						saturator = new BottomClauseGeneratorWithGroupedModesOlkenSampling(parameters.getRandomSeed(), statistics);
+					} else if (parameters.getSamplingMethod().equals(SamplingMethods.STREAM)) {
+						logger.info("Use Stream sampling. Extracting statistics from database instance...");
+						StatisticsStreamSampling statistics = StatisticsExtractor.extractStatisticsForStreamSampling(genericDAO, schema);
+						saturator = new BottomClauseGeneratorStreamSampling(parameters.getRandomSeed(), statistics);
+					} else if (parameters.getSamplingMethod().equals(SamplingMethods.STRATIFIED)) {
+						saturator = new BottomClauseGeneratorStratifiedSampling(parameters.getRandomSeed());
+					} else {
+						saturator = new BottomClauseGeneratorNaiveSampling(true, parameters.getRandomSeed());
+	//					saturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(true);
+					}
 				}
 			}
 			NumbersKeeper.extractingStatisticsTime = tw.time();
@@ -301,7 +316,11 @@ public class CastorCmd {
 			if (parameters.isSampleGroundBottomClauses()) {
 				coverageEngineSaturator = saturator;
 			} else {
-				coverageEngineSaturator = new BottomClauseGeneratorNaiveSampling(false, parameters.getRandomSeed());
+				if (parameters.isAllowSimilarity()) {
+					coverageEngineSaturator = new BottomClauseGeneratorNaiveSamplingWithSimilarity(genericDAO, schema, false, parameters.getRandomSeed());
+				} else {
+					coverageEngineSaturator = new BottomClauseGeneratorNaiveSampling(false, parameters.getRandomSeed());
+				}
 			}
 			
 			// Create CoverageEngine
@@ -545,12 +564,26 @@ public class CastorCmd {
 	/*
 	 * Read INDs from JSON object
 	 */
-	private void readINDsFromJson(JsonObject indsJson) {
+	private void readINDsFromJson(JsonObject dependenciesJson) {
 		try {
 			logger.info("Reading inclusion dependencies...");
-			Map<String, List<InclusionDependency>> inds = JsonSettingsReader.readINDs(indsJson);
+			Map<String, List<InclusionDependency>> inds = JsonSettingsReader.readINDs(dependenciesJson);
 			schema.setInclusionDependencies(inds);
 		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+	
+	/*
+	 * Read MDs from JSON object
+	 */
+	private void readMDsFromJson(JsonObject dependenciesJson) {
+		try {
+			logger.info("Reading inclusion dependencies...");
+			Map<Pair<String,Integer>, List<MatchingDependency>> mds = JsonSettingsReader.readMDs(dependenciesJson);
+			schema.setMatchingDependencies(mds);
+		} catch (Exception e) {
+			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
 	}

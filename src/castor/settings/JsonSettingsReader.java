@@ -98,6 +98,9 @@ public class JsonSettingsReader {
 		if (parametersJson.get("randomizeRecall") != null) {
 			parameters.setRandomizeRecall(parametersJson.get("randomizeRecall").getAsBoolean());
 		}
+		if (parametersJson.get("allowSimilarity") != null) {
+			parameters.setAllowSimilarity(parametersJson.get("allowSimilarity").getAsBoolean());
+		}
 		
 		return parameters;
 	}

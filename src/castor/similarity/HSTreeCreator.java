@@ -18,18 +18,20 @@ public class HSTreeCreator {
 	
 	public static void main(String[] args) {
 		List<String> l = new ArrayList<String>();
-		l.add("brother");
-		l.add("brothel");
-		l.add("broathe");
-		l.add("bro");
-		l.add("vankatesh");
-		l.add("acompany");
-		l.add("are accommodate to");
-		l.add("ovner loevi");
+//		l.add("brother");
+//		l.add("brothel");
+//		l.add("broathe");
+//		l.add("bro");
+//		l.add("vankatesh");
+//		l.add("acompany");
+//		l.add("are accommodate to");
+//		l.add("ovner loevi");
+		l.add("scorsese");
+		l.add("sandler");
 		HSTree hsTree = HSTreeCreator.buildHSTree(l);
 //		System.out.println(hsTree.getInvertedIndex().toString());
 		
-		System.out.println(hsTree.hsSearch("abna levina", 7));
+		System.out.println(hsTree.hsSearch("scorsese", 0));
 		
 //		System.out.println(hs.generateSubstrings("abna levina", hsTree, 7, 2, 1, 9));
 //		System.out.println(hs.editDistance("ovner loevi", "abna levina"));
@@ -39,11 +41,11 @@ public class HSTreeCreator {
 //		System.out.println(hs.isLessThanDistance2("bro", "brother", 3));
 		
 		
-		RandomSet<Pair<String,Integer>> matchedSegments = new RandomSet<Pair<String,Integer>>();
-		matchedSegments.add(new Pair<String,Integer>("a",0));
-		matchedSegments.add(new Pair<String,Integer>("a",3));
-		matchedSegments.add(new Pair<String,Integer>("a",10));
-		matchedSegments.add(new Pair<String,Integer>("n",9));
+//		RandomSet<Pair<String,Integer>> matchedSegments = new RandomSet<Pair<String,Integer>>();
+//		matchedSegments.add(new Pair<String,Integer>("a",0));
+//		matchedSegments.add(new Pair<String,Integer>("a",3));
+//		matchedSegments.add(new Pair<String,Integer>("a",10));
+//		matchedSegments.add(new Pair<String,Integer>("n",9));
 //		System.out.println(hs.hsSearchVerificationMultiExtension("ovner loevi", "abna levina", 8, 3, matchedSegments));
 //		System.out.println(hs.getUnmatchedSegments("acompany", matchedSegments));
 ////		int[] orders = {3,5,6};

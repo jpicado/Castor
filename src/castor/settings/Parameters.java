@@ -29,6 +29,7 @@ public class Parameters {
 	private boolean sampleGroundBottomClauses = false;
 	private boolean shuffleExamples = false;
 	private boolean randomizeRecall = false;
+	private boolean allowSimilarity = false;
 	
 	public boolean isCreateStoredProcedure() {
 		return createStoredProcedure;
@@ -192,6 +193,12 @@ public class Parameters {
 	public void setRandomizeRecall(boolean randomizeRecall) {
 		this.randomizeRecall = randomizeRecall;
 	}
+	public boolean isAllowSimilarity() {
+		return allowSimilarity;
+	}
+	public void setAllowSimilarity(boolean allowSimilarity) {
+		this.allowSimilarity = allowSimilarity;
+	}
 	@Override
 	public String toString() {
 		return "Parameters [createStoredProcedure=" + createStoredProcedure + ", useStoredProcedure="
@@ -202,6 +209,6 @@ public class Parameters {
 				+ maxterms + ", useInds=" + useInds + ", dbURL=" + dbURL + ", port=" + port + ", randomSeed="
 				+ randomSeed + ", samplingMethod=" + samplingMethod + ", sampleInTesting=" + sampleInTesting
 				+ ", sampleGroundBottomClauses=" + sampleGroundBottomClauses + ", shuffleExamples=" + shuffleExamples
-				+ ", randomizeRecall=" + randomizeRecall + "]";
+				+ ", randomizeRecall=" + randomizeRecall + ", allowSimilarity=" + allowSimilarity + "]";
 	}
 }
