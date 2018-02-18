@@ -579,11 +579,10 @@ public class CastorCmd {
 	 */
 	private void readMDsFromJson(JsonObject dependenciesJson) {
 		try {
-			logger.info("Reading inclusion dependencies...");
+			logger.info("Reading matching dependencies...");
 			Map<Pair<String,Integer>, List<MatchingDependency>> mds = JsonSettingsReader.readMDs(dependenciesJson);
 			schema.setMatchingDependencies(mds);
 		} catch (Exception e) {
-			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
 	}
