@@ -30,6 +30,7 @@ import castor.settings.DataModel;
 import castor.settings.Parameters;
 import castor.similarity.HSTree;
 import castor.similarity.HSTreeCreator;
+import castor.similarity.SimilarityUtils;
 import castor.utils.Commons;
 import castor.utils.Pair;
 import castor.utils.RandomSet;
@@ -273,7 +274,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 			}
 			applyModesForTuples(tuplesWithSourceValue, newLiterals, clause, hashConstantToVariable,
 					hashVariableToConstant, newInTerms, newInTermsForMDs, maxDistanceForMDs, 
-					relationAttributeModes, recall, ground, randomizeRecall, false, -1);
+					relationAttributeModes, recall, ground, randomizeRecall, false, inputAttributePosition);
 		}
 
 		// SIMILARITY SEARCH
@@ -370,38 +371,47 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 
 			// Do not add literal if it's exactly the same as head literal
 			if (!literal.equals(clause.getPositiveLiterals().get(0).getAtomicSentence())) {
-				addNotRepeated(newLiterals, literal);
-
+				// Add new literal
+				addNotRepeated(newLiterals, literal, hashConstantToVariable, hashVariableToConstant, mode);
+				//addNotRepeated(newLiterals, literal);
+				
+				// Create similarity predicate
 				if (createSimilarityPredicate) {
 					String valueInTupleString = tuple.getValues().get(similarAttributeInTuplePosition).toString();
-					
-					Term similarValueTerm;
-					Term valueInTupleTerm;
-					
-					// Create similarity predicate containing constants or variables
-					if (mode.getArguments().get(similarAttributeInTuplePosition).getIdentifierType()
-							.equals(IdentifierType.CONSTANT)) {
-						similarValueTerm = new Constant("\"" + similarValue + "\"");
-						valueInTupleTerm = new Constant("\"" + valueInTupleString + "\"");
-					} else {
-						similarValueTerm = new Variable(hashConstantToVariable.get(similarValue));
-						valueInTupleTerm = new Variable(hashConstantToVariable.get(valueInTupleString));
-					}
-
-					// Order of terms depends on lexicographic order
-					List<Term> terms = new ArrayList<Term>();
-					if (similarValue.compareTo(valueInTupleString) <= 0) {
-						terms.add(similarValueTerm);
-						terms.add(valueInTupleTerm);
-					} else {
-						terms.add(valueInTupleTerm);
-						terms.add(similarValueTerm);
-					}
-					Predicate similarityLiteral = new Predicate("sim", terms);
-					addNotRepeated(newLiterals, similarityLiteral);
+					Predicate similarityLiteral = createSimilarityPredicate(mode, hashConstantToVariable, similarValue, similarAttributeInTuplePosition, valueInTupleString);
+					addNotRepeated(newLiterals, similarityLiteral, hashConstantToVariable, hashVariableToConstant, mode);
+					//addNotRepeated(newLiterals, similarityLiteral);
 				}
 			}
 		}
+	}
+	
+	private Predicate createSimilarityPredicate(Mode mode, Map<String, String> hashConstantToVariable, 
+			String similarValue, int similarAttributeInTuplePosition, String valueInTupleString) {
+		Term similarValueTerm;
+		Term valueInTupleTerm;
+		
+		// Create similarity predicate containing constants or variables
+		if (mode.getArguments().get(similarAttributeInTuplePosition).getIdentifierType()
+				.equals(IdentifierType.CONSTANT)) {
+			similarValueTerm = new Constant("\"" + similarValue + "\"");
+			valueInTupleTerm = new Constant("\"" + valueInTupleString + "\"");
+		} else {
+			similarValueTerm = new Variable(hashConstantToVariable.get(similarValue));
+			valueInTupleTerm = new Variable(hashConstantToVariable.get(valueInTupleString));
+		}
+
+		// Order of terms depends on lexicographic order
+		List<Term> terms = new ArrayList<Term>();
+		if (similarValue.compareTo(valueInTupleString) <= 0) {
+			terms.add(similarValueTerm);
+			terms.add(valueInTupleTerm);
+		} else {
+			terms.add(valueInTupleTerm);
+			terms.add(similarValueTerm);
+		}
+		Predicate similarityLiteral = new Predicate("sim", terms);
+		return similarityLiteral;
 	}
 
 	/*
@@ -480,6 +490,68 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 	private void addNotRepeated(List<Predicate> literals, Predicate newLiteral) {
 		if (!literals.contains(newLiteral)) {
 			literals.add(newLiteral);
+		}
+	}
+	/*
+	 * Add newLiteral to literals, as well as similarity literals 
+	 * Join inside iteration
+	 */
+	private void addNotRepeated(List<Predicate> literals, Predicate newLiteral,
+			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant, Mode mode) {
+		List<Predicate> newLiterals = new ArrayList<Predicate>();
+		
+		// Check every attribute in newLiteral
+		for (int attributePosition = 0 ; attributePosition < newLiteral.getArgs().size(); attributePosition++) {
+			// Get string value of attribute in newLiteral
+			String valueInNewLiteral;
+			if (Commons.isVariable(newLiteral.getTerms().get(attributePosition))) {
+				valueInNewLiteral = hashVariableToConstant.get(newLiteral.getTerms().get(attributePosition).getSymbolicName());
+			} else {
+				valueInNewLiteral = newLiteral.getTerms().get(attributePosition).getSymbolicName().replaceAll("\"(.+)\"", "$1");
+			}
+			
+			Pair<String,Integer> key = new Pair<String,Integer>(mode.getPredicateName(),attributePosition);
+			
+			// Compare against all other existing literals
+			for (Predicate literal : literals) {
+				// For each MD where left relation is newLiteral, check if need to add similarity predicate for attributes in this literal and newLiteral
+				if (mds.containsKey(key)) {
+					for (MatchingDependency md : mds.get(key)) {
+						if (literal.getPredicateName().equals(md.getRightPredicateName())) {
+							// Get string value of attribute in literal
+							String valueInLiteral;
+							if (Commons.isVariable(literal.getTerms().get(md.getRightAttributeNumber()))) {
+								valueInLiteral = hashVariableToConstant.get(literal.getTerms().get(md.getRightAttributeNumber()).getSymbolicName());
+							} else {
+								valueInLiteral = literal.getTerms().get(md.getRightAttributeNumber()).getSymbolicName().replaceAll("\"(.+)\"", "$1");;
+							}
+							
+							// Add similarity predicate if distance is less than max distance in MD
+							if (SimilarityUtils.isLessThanDistance(valueInNewLiteral, valueInLiteral, md.getMaxDistance())) {
+								Predicate similarityLiteral = createSimilarityPredicate(mode, hashConstantToVariable, valueInLiteral, attributePosition, valueInNewLiteral);
+								newLiterals.add(similarityLiteral);
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		// Add newLiteral
+		newLiterals.add(newLiteral);
+		
+		// Add all newLiterals to literals
+		addNotRepeated(literals, newLiterals);
+	}
+	
+	/*
+	 * Add non-repeated newLiterals to literals
+	 */
+	protected void addNotRepeated(List<Predicate> literals, List<Predicate> newLiterals) {
+		for (Predicate newLiteral : newLiterals) {
+			if (!literals.contains(newLiteral)) {
+				literals.add(newLiteral);
+			}
 		}
 	}
 
