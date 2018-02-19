@@ -12,6 +12,7 @@ import java.util.Map.Entry;
 import java.util.Random;
 import java.util.Set;
 
+import aima.core.logic.fol.kb.data.Literal;
 import aima.core.logic.fol.parsing.ast.Constant;
 import aima.core.logic.fol.parsing.ast.Predicate;
 import aima.core.logic.fol.parsing.ast.Term;
@@ -322,7 +323,6 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 
 				Tuple tuple = tupleValuePair.getFirst();
 				String sourceValue = tupleValuePair.getSecond();
-
 				modeOperationsForTuple(tuple, newLiterals, clause, hashConstantToVariable, hashVariableToConstant,
 						newInTerms, newInTermsForMDs, maxDistanceForMDs, relationAttributeModes, ground,
 						createSimilarityPredicate, sourceValue, similarAttributeInTuplePosition);
@@ -372,21 +372,28 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 			// Do not add literal if it's exactly the same as head literal
 			if (!literal.equals(clause.getPositiveLiterals().get(0).getAtomicSentence())) {
 				// Add new literal
-				addNotRepeated(newLiterals, literal, hashConstantToVariable, hashVariableToConstant, mode);
-				//addNotRepeated(newLiterals, literal);
+				addNotRepeated(newLiterals, literal);
+				
+				List<Predicate> currentLiterals = new ArrayList<Predicate>();
+				for (Literal lit : clause.getNegativeLiterals()) {
+					currentLiterals.add((Predicate)lit.getAtomicSentence());
+				}
+				currentLiterals.addAll(newLiterals);
+				List<Predicate> similarityLiterals = createSimilarityPredicatesForLiterals(currentLiterals, literal, hashConstantToVariable, hashVariableToConstant, mode);
+				addNotRepeated(newLiterals, similarityLiterals);
 				
 				// Create similarity predicate
 				if (createSimilarityPredicate) {
 					String valueInTupleString = tuple.getValues().get(similarAttributeInTuplePosition).toString();
-					Predicate similarityLiteral = createSimilarityPredicate(mode, hashConstantToVariable, similarValue, similarAttributeInTuplePosition, valueInTupleString);
-					addNotRepeated(newLiterals, similarityLiteral, hashConstantToVariable, hashVariableToConstant, mode);
+					Predicate similarityLiteral = createSimilarityPredicateForTuple(mode, hashConstantToVariable, similarValue, similarAttributeInTuplePosition, valueInTupleString);
+					addNotRepeated(newLiterals, similarityLiteral);
 					//addNotRepeated(newLiterals, similarityLiteral);
 				}
 			}
 		}
 	}
 	
-	private Predicate createSimilarityPredicate(Mode mode, Map<String, String> hashConstantToVariable, 
+	private Predicate createSimilarityPredicateForTuple(Mode mode, Map<String, String> hashConstantToVariable, 
 			String similarValue, int similarAttributeInTuplePosition, String valueInTupleString) {
 		Term similarValueTerm;
 		Term valueInTupleTerm;
@@ -485,20 +492,12 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 	}
 
 	/*
-	 * Add non-repeated newLiteral to literals
+	 * Given newLiteral and list of existing literals, create all similarity predicates between attributes in newLiteral and attributes in existing literals 
+	 * (join inside iteration)
 	 */
-	private void addNotRepeated(List<Predicate> literals, Predicate newLiteral) {
-		if (!literals.contains(newLiteral)) {
-			literals.add(newLiteral);
-		}
-	}
-	/*
-	 * Add newLiteral to literals, as well as similarity literals 
-	 * Join inside iteration
-	 */
-	private void addNotRepeated(List<Predicate> literals, Predicate newLiteral,
+	private List<Predicate> createSimilarityPredicatesForLiterals(List<Predicate> literals, Predicate newLiteral,
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant, Mode mode) {
-		List<Predicate> newLiterals = new ArrayList<Predicate>();
+		List<Predicate> similarityLiterals = new ArrayList<Predicate>();
 		
 		// Check every attribute in newLiteral
 		for (int attributePosition = 0 ; attributePosition < newLiteral.getArgs().size(); attributePosition++) {
@@ -528,8 +527,8 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 							
 							// Add similarity predicate if distance is less than max distance in MD
 							if (SimilarityUtils.isLessThanDistance(valueInNewLiteral, valueInLiteral, md.getMaxDistance())) {
-								Predicate similarityLiteral = createSimilarityPredicate(mode, hashConstantToVariable, valueInLiteral, attributePosition, valueInNewLiteral);
-								newLiterals.add(similarityLiteral);
+								Predicate similarityLiteral = createSimilarityPredicateForTuple(mode, hashConstantToVariable, valueInLiteral, attributePosition, valueInNewLiteral);
+								similarityLiterals.add(similarityLiteral);
 							}
 						}
 					}
@@ -537,11 +536,50 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 			}
 		}
 		
-		// Add newLiteral
-		newLiterals.add(newLiteral);
+		// Also check reverse direction of MDs: check every attribute in all existing literals
+		for (Predicate literal : literals) {
+			for (int attributePositionInClauseLiteral = 0; attributePositionInClauseLiteral < literal.getArgs().size(); attributePositionInClauseLiteral++) {
+				Pair<String,Integer> key = new Pair<String,Integer>(literal.getPredicateName(), attributePositionInClauseLiteral);
+				if (mds.containsKey(key)) {
+					for (MatchingDependency md : mds.get(key)) {
+						if (newLiteral.getPredicateName().equals(md.getRightPredicateName())) {
+							// Get string value of attribute in literal
+							String valueInLiteral;
+							if (Commons.isVariable(literal.getTerms().get(attributePositionInClauseLiteral))) {
+								valueInLiteral = hashVariableToConstant.get(literal.getTerms().get(attributePositionInClauseLiteral).getSymbolicName());
+							} else {
+								valueInLiteral = literal.getTerms().get(attributePositionInClauseLiteral).getSymbolicName().replaceAll("\"(.+)\"", "$1");;
+							}
+							
+							// Get string value of attribute in newLiteral
+							String valueInNewLiteral;
+							if (Commons.isVariable(newLiteral.getTerms().get(md.getRightAttributeNumber()))) {
+								valueInNewLiteral = hashVariableToConstant.get(newLiteral.getTerms().get(md.getRightAttributeNumber()).getSymbolicName());
+							} else {
+								valueInNewLiteral = newLiteral.getTerms().get(md.getRightAttributeNumber()).getSymbolicName().replaceAll("\"(.+)\"", "$1");
+							}
+							
+							// Add similarity predicate if distance is less than max distance in MD
+							if (SimilarityUtils.isLessThanDistance(valueInNewLiteral, valueInLiteral, md.getMaxDistance())) {
+								Predicate similarityLiteral = createSimilarityPredicateForTuple(mode, hashConstantToVariable, valueInLiteral, md.getRightAttributeNumber(), valueInNewLiteral);
+								similarityLiterals.add(similarityLiteral);
+							}
+						}
+					}
+				}
+			}
+		}
 		
-		// Add all newLiterals to literals
-		addNotRepeated(literals, newLiterals);
+		return similarityLiterals;
+	}
+	
+	/*
+	 * Add non-repeated newLiteral to literals
+	 */
+	private void addNotRepeated(List<Predicate> literals, Predicate newLiteral) {
+		if (!literals.contains(newLiteral)) {
+			literals.add(newLiteral);
+		}
 	}
 	
 	/*

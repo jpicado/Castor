@@ -310,7 +310,7 @@ public class CastorCmd {
 					}
 				}
 			}
-			NumbersKeeper.extractingStatisticsTime = tw.time();
+			NumbersKeeper.preprocessingTime = tw.time();
 			
 			BottomClauseGenerator coverageEngineSaturator;
 			if (parameters.isSampleGroundBottomClauses()) {
@@ -465,7 +465,7 @@ public class CastorCmd {
 				logger.info("Reduction time: " + NumbersKeeper.reducerTime);
 				logger.info("LGG time: " + NumbersKeeper.lggTime);
 				logger.info("LearnClause time: " + NumbersKeeper.learnClauseTime);
-				logger.info("Extracting statistics time (not included in total time): " + NumbersKeeper.extractingStatisticsTime);
+				logger.info("Preprocessing time (extracting statistics, creating indexes, etc) (not included in total time): " + NumbersKeeper.preprocessingTime);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

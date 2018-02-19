@@ -6,7 +6,7 @@ public class NumbersKeeper {
 	public static long learningTime = 0;
 	
 	public static long creatingCoverageTime = 0;
-	public static long extractingStatisticsTime = 0;
+	public static long preprocessingTime = 0;
 	
 	public static long coverageTime = 0;
 	public static int coverageCalls = 0;
