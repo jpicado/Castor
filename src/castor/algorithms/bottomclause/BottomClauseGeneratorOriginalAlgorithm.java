@@ -33,12 +33,16 @@ import castor.utils.RandomSet;
 
 public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomClauseGenerator {
 
+	private static final String NULL_PREFIX = "null";
+	
 	protected static final String SELECTIN_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s";
 
 	protected int varCounter;
+	private int nullCounter;
 
 	public BottomClauseGeneratorOriginalAlgorithm() {
 		varCounter = 0;
+		nullCounter = 0;
 	}
 
 	/*
@@ -113,6 +117,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 
 		// Create head literal
 		varCounter = 0;
+		nullCounter = 0;
 		if (ground) {
 			modeH = modeH.toGroundMode();
 		}
@@ -229,7 +234,15 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 			Map<String, String> hashVariableToConstant, Tuple tuple, Mode mode, boolean headMode, Map<String, Set<String>> inTerms, Set<String> distinctTerms) {
 		List<Term> terms = new ArrayList<Term>();
 		for (int i = 0; i < mode.getArguments().size(); i++) {
-			String value = tuple.getValues().get(i).toString();
+			//TODO default value for nulls? distinct value?
+			String value;
+			if (tuple.getValues().get(i) != null) {
+				value = tuple.getValues().get(i).toString();
+			}
+			else {
+				value = NULL_PREFIX+nullCounter;
+				nullCounter++;
+			}
 
 			if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
 				terms.add(new Constant("\"" + value + "\""));

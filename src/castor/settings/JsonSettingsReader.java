@@ -269,22 +269,27 @@ public class JsonSettingsReader {
 	 */
 	public static Map<String, List<InclusionDependency>> readINDs(JsonObject dependenciesJson)  {
 		Map<String, List<InclusionDependency>> inds = new HashMap<String, List<InclusionDependency>>();
-		if (dependenciesJson.get("inds") != null) {
-			JsonArray indsArray = dependenciesJson.get("inds").getAsJsonArray();
-			for (int i = 0; i < indsArray.size(); i++) {
-				JsonObject indObject = indsArray.get(i).getAsJsonObject();
-				String leftRelation = indObject.get("leftRelation").getAsString();
-				int leftAttributeNumber = indObject.get("leftAttributeNumber").getAsInt();
-				String rightRelation = indObject.get("rightRelation").getAsString();
-				int rightAttributeNumber = indObject.get("rightAttributeNumber").getAsInt();
-				InclusionDependency ind = new InclusionDependency(leftRelation, leftAttributeNumber, rightRelation, rightAttributeNumber);
-				
-				// Add ind to list of inds (grouped by left relation name)
-				if (!inds.containsKey(leftRelation)) {
-					inds.put(leftRelation, new LinkedList<InclusionDependency>());
+		
+		try {
+			if (dependenciesJson.get("inds") != null) {
+				JsonArray indsArray = dependenciesJson.get("inds").getAsJsonArray();
+				for (int i = 0; i < indsArray.size(); i++) {
+					JsonObject indObject = indsArray.get(i).getAsJsonObject();
+					String leftRelation = indObject.get("leftRelation").getAsString();
+					int leftAttributeNumber = indObject.get("leftAttributeNumber").getAsInt();
+					String rightRelation = indObject.get("rightRelation").getAsString();
+					int rightAttributeNumber = indObject.get("rightAttributeNumber").getAsInt();
+					InclusionDependency ind = new InclusionDependency(leftRelation, leftAttributeNumber, rightRelation, rightAttributeNumber);
+					
+					// Add ind to list of inds (grouped by left relation name)
+					if (!inds.containsKey(leftRelation)) {
+						inds.put(leftRelation, new LinkedList<InclusionDependency>());
+					}
+					inds.get(leftRelation).add(ind);
 				}
-				inds.get(leftRelation).add(ind);
 			}
+		} catch (Exception ex) {
+			throw new RuntimeException("Error while reading inclusion dependencies: " + ex.getMessage());
 		}
 		
 		return inds;
@@ -295,24 +300,29 @@ public class JsonSettingsReader {
 	 */
 	public static Map<Pair<String,Integer>, List<MatchingDependency>> readMDs(JsonObject dependenciesJson)  {
 		Map<Pair<String,Integer>, List<MatchingDependency>> mds = new HashMap<Pair<String,Integer>, List<MatchingDependency>>();
-		if (dependenciesJson.get("mds") != null) {
-			JsonArray mdsArray = dependenciesJson.get("mds").getAsJsonArray();
-			for (int i = 0; i < mdsArray.size(); i++) {
-				JsonObject mdObject = mdsArray.get(i).getAsJsonObject();
-				String leftRelation = mdObject.get("leftRelation").getAsString();
-				int leftAttributeNumber = mdObject.get("leftAttributeNumber").getAsInt();
-				String rightRelation = mdObject.get("rightRelation").getAsString();
-				int rightAttributeNumber = mdObject.get("rightAttributeNumber").getAsInt();
-				int maxDistance = mdObject.get("maxDistance").getAsInt();
-				MatchingDependency md = new MatchingDependency(leftRelation, leftAttributeNumber, rightRelation, rightAttributeNumber, maxDistance);
-				
-				// Add ms to list of mds (grouped by <left relation name , left attribute number>)
-				Pair<String,Integer> key = new Pair<String,Integer>(leftRelation, leftAttributeNumber);
-				if (!mds.containsKey(key)) {
-					mds.put(key, new LinkedList<MatchingDependency>());
+		
+		try {
+			if (dependenciesJson.get("mds") != null) {
+				JsonArray mdsArray = dependenciesJson.get("mds").getAsJsonArray();
+				for (int i = 0; i < mdsArray.size(); i++) {
+					JsonObject mdObject = mdsArray.get(i).getAsJsonObject();
+					String leftRelation = mdObject.get("leftRelation").getAsString();
+					int leftAttributeNumber = mdObject.get("leftAttributeNumber").getAsInt();
+					String rightRelation = mdObject.get("rightRelation").getAsString();
+					int rightAttributeNumber = mdObject.get("rightAttributeNumber").getAsInt();
+					int maxDistance = mdObject.get("maxDistance").getAsInt();
+					MatchingDependency md = new MatchingDependency(leftRelation, leftAttributeNumber, rightRelation, rightAttributeNumber, maxDistance);
+					
+					// Add ms to list of mds (grouped by <left relation name , left attribute number>)
+					Pair<String,Integer> key = new Pair<String,Integer>(leftRelation, leftAttributeNumber);
+					if (!mds.containsKey(key)) {
+						mds.put(key, new LinkedList<MatchingDependency>());
+					}
+					mds.get(key).add(md);
 				}
-				mds.get(key).add(md);
 			}
+		} catch (Exception ex) {
+			throw new RuntimeException("Error while reading matching dependencies: " + ex.getMessage());
 		}
 		
 		return mds;

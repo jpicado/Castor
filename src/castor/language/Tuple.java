@@ -21,7 +21,10 @@ public class Tuple {
 		List<String> stringValues = new LinkedList<String>();
 		
 		for (Object val : values) {
-			stringValues.add(val.toString());
+			if (val == null)
+				stringValues.add(null);
+			else
+				stringValues.add(val.toString());
 		}
 		
 		return stringValues;
