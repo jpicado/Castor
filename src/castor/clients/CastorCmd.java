@@ -332,26 +332,32 @@ public class CastorCmd {
 					examplesSource, posTrainExamplesFile, negTrainExamplesFile);
 //			CoverageEngine coverageEngine = new CoverageByDBJoiningAllSingleExample(genericDAO, posTrain, negTrain, parameters);
 			NumbersKeeper.creatingCoverageTime = tw.time();
-
-			BottomClauseUtil.ALGORITHMS bottomClauseAlgorithm;
-			if (parameters.isUseStoredProcedure()) {
-				bottomClauseAlgorithm = BottomClauseUtil.ALGORITHMS.INSIDE_STORED_PROCEDURE;
-			}
-			else {
-				bottomClauseAlgorithm = BottomClauseUtil.ALGORITHMS.ORIGINAL;
-			}
-			if (saturation) {
-				// BOTTOM CLAUSE
-				BottomClauseUtil.generateBottomClauseForExample(bottomClauseAlgorithm,
-						genericDAO, bottomClauseConstructionDAO, saturator,
-						coverageEngine.getAllPosExamples().get(this.exampleForSaturation), this.schema,
-						this.dataModel, this.parameters);
-			} else if (groundSaturation) {
-				// GROUND BOTTOM CLAUSE
-				BottomClauseUtil.generateGroundBottomClauseForExample(
-						bottomClauseAlgorithm, genericDAO, bottomClauseConstructionDAO, saturator,
-						coverageEngine.getAllPosExamples().get(this.exampleForSaturation), this.schema,
-						this.dataModel, this.parameters);
+			
+			if (saturation || groundSaturation) {
+				if (this.exampleForSaturation >= coverageEngine.getAllPosExamples().size() || this.exampleForSaturation < 0) {
+					throw new IllegalArgumentException("Illegal index of positive example to saturate (greater than maximum index of positive examples or less than 0).");
+				}
+				
+				BottomClauseUtil.ALGORITHMS bottomClauseAlgorithm;
+				if (parameters.isUseStoredProcedure()) {
+					bottomClauseAlgorithm = BottomClauseUtil.ALGORITHMS.INSIDE_STORED_PROCEDURE;
+				}
+				else {
+					bottomClauseAlgorithm = BottomClauseUtil.ALGORITHMS.ORIGINAL;
+				}
+				if (saturation) {
+					// BOTTOM CLAUSE
+					BottomClauseUtil.generateBottomClauseForExample(bottomClauseAlgorithm,
+							genericDAO, bottomClauseConstructionDAO, saturator,
+							coverageEngine.getAllPosExamples().get(this.exampleForSaturation), this.schema,
+							this.dataModel, this.parameters);
+				} else if (groundSaturation) {
+					// GROUND BOTTOM CLAUSE
+					BottomClauseUtil.generateGroundBottomClauseForExample(
+							bottomClauseAlgorithm, genericDAO, bottomClauseConstructionDAO, saturator,
+							coverageEngine.getAllPosExamples().get(this.exampleForSaturation), this.schema,
+							this.dataModel, this.parameters);
+				} 
 			} else {
 				// LEARN
 				logger.info("Learning...");

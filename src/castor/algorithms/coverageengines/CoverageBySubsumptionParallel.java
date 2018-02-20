@@ -86,9 +86,11 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 			throw new IllegalArgumentException("Unsupported example source.");
 		}
 		
-		Random randomGenerator = new Random(parameters.getRandomSeed());
-		Collections.shuffle(this.allPosExamples, randomGenerator);
-		Collections.shuffle(this.allNegExamples, randomGenerator);
+		if (parameters.isShuffleExamples()) {
+			Random randomGenerator = new Random(parameters.getRandomSeed());
+			Collections.shuffle(this.allPosExamples, randomGenerator);
+			Collections.shuffle(this.allNegExamples, randomGenerator);
+		}
 	}
 
 	private void initWithMatchings(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, BottomClauseGenerator saturator,
