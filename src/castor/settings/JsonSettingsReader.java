@@ -92,6 +92,9 @@ public class JsonSettingsReader {
 		if (parametersJson.get("sampleGroundBottomClauses") != null) {
 			parameters.setSampleGroundBottomClauses(parametersJson.get("sampleGroundBottomClauses").getAsBoolean());
 		}
+		if (parametersJson.get("sampleInCoveringApproach") != null) {
+			parameters.setSampleInCoveringApproach(parametersJson.get("sampleInCoveringApproach").getAsBoolean());
+		}
 		if (parametersJson.get("shuffleExamples") != null) {
 			parameters.setShuffleExamples(parametersJson.get("shuffleExamples").getAsBoolean());
 		}

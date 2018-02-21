@@ -46,7 +46,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 	private int varCounter;
 	private int nullCounter;
 	private boolean sample;
-	private Random randomGenerator;
+	private int seed;
 	private Map<Pair<String, Integer>, List<MatchingDependency>> mds;
 	private Map<Pair<String, Integer>, HSTree> hsTrees;
 	
@@ -54,7 +54,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 		this.varCounter = 0;
 		this.nullCounter = 0;
 		this.sample = sample;
-		this.randomGenerator = new Random(seed);
+		this.seed = seed;
 		this.mds = schema.getMatchingDependencies();
 		this.hsTrees = new HashMap<Pair<String, Integer>, HSTree>();
 		createIndexes(genericDAO, schema);
@@ -156,6 +156,8 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 		}
 
 		MyClause clause = new MyClause();
+		
+		Random randomGenerator = new Random(seed);
 
 		// Known terms for a data type
 		Map<String, Set<String>> inTerms = new HashMap<String, Set<String>>();
@@ -213,7 +215,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 				List<Predicate> newLiterals = operationForGroupedModes(genericDAO, schema, clause,
 						hashConstantToVariable, hashVariableToConstant, inTerms, newInTerms, inTermsForMDs,
 						newInTermsForMDs, maxDistanceForMDs, relationName, attributeName, inputVarPosition,
-						relationAttributeModes, groupedModes, recall, ground, shuffleTuples);
+						relationAttributeModes, groupedModes, recall, ground, shuffleTuples, randomGenerator);
 
 				for (Predicate literal : newLiterals) {
 					clause.addNegativeLiteral(literal);
@@ -241,7 +243,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 			Map<Pair<String, Integer>, Set<String>> newInTermsForMDs,
 			Map<Pair<String, Integer>, Integer> maxDistanceForMDs, String relationName, String attributeName,
 			int inputAttributePosition, List<Mode> relationAttributeModes,
-			Map<Pair<String, Integer>, List<Mode>> groupedModes, int recall, boolean ground, boolean randomizeRecall) {
+			Map<Pair<String, Integer>, List<Mode>> groupedModes, int recall, boolean ground, boolean randomizeRecall, Random randomGenerator) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 
 		// If sampling is turned off, set recall to max value
@@ -280,7 +282,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 			}
 			applyModesForTuples(tuplesWithSourceValue, newLiterals, clause, hashConstantToVariable,
 					hashVariableToConstant, newInTerms, newInTermsForMDs, maxDistanceForMDs, 
-					relationAttributeModes, recall, ground, randomizeRecall, false, inputAttributePosition);
+					relationAttributeModes, recall, ground, randomizeRecall, randomGenerator, false, inputAttributePosition);
 		}
 
 		// SIMILARITY SEARCH
@@ -306,7 +308,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 			}
 			applyModesForTuples(tuplesWithSourceValue, newLiterals, clause, hashConstantToVariable,
 					hashVariableToConstant, newInTerms, newInTermsForMDs, maxDistanceForMDs, 
-					relationAttributeModes, recall, ground, randomizeRecall, true, inputAttributePosition);
+					relationAttributeModes, recall, ground, randomizeRecall, randomGenerator, true, inputAttributePosition);
 		}
 
 		return newLiterals;
@@ -316,7 +318,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 			MyClause clause, Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> newInTerms, Map<Pair<String, Integer>, Set<String>> newInTermsForMDs,
 			Map<Pair<String, Integer>, Integer> maxDistanceForMDs, List<Mode> relationAttributeModes, int recall,
-			boolean ground, boolean randomizeRecall, boolean createSimilarityPredicate,
+			boolean ground, boolean randomizeRecall, Random randomGenerator, boolean createSimilarityPredicate,
 			int similarAttributeInTuplePosition) {
 		// Create literals from candidateTuples
 		if (!randomizeRecall || tuplesWithSourceValue.size() <= recall) {

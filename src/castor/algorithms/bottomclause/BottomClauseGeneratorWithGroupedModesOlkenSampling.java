@@ -24,12 +24,10 @@ public class BottomClauseGeneratorWithGroupedModesOlkenSampling extends BottomCl
 	private static final String SELECT_SQL_STATEMENT = "SELECT * FROM %s WHERE %s = %s";
 	private static final String COUNT_DISTINCT_TUPLES_SQL_STATEMENT = "SELECT COUNT(DISTINCT *) FROM %s WHERE %s = %s;";
 
-	private Random randomGenerator;
 	private StatisticsOlkenSampling statistics;
 
 	public BottomClauseGeneratorWithGroupedModesOlkenSampling(int seed, StatisticsOlkenSampling statistics) {
-		super();
-		this.randomGenerator = new Random(seed);
+		super(seed);
 		this.statistics = statistics;
 	}
 
@@ -41,7 +39,7 @@ public class BottomClauseGeneratorWithGroupedModesOlkenSampling extends BottomCl
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> inTerms, Map<String, Set<String>> newInTerms, Map<String, Set<String>> previousIterationsInTerms,
 			Set<String> distinctTerms,
-			String relationName, List<Mode> relationModes, int recall, boolean ground, boolean shuffleTuples) {
+			String relationName, List<Mode> relationModes, int recall, boolean ground, boolean shuffleTuples, Random randomGenerator) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 		
 		// COUNT query: Count the number of potential tuples

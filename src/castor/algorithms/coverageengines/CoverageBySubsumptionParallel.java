@@ -289,7 +289,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 			coveredExamples = clauseInfo.getNegExamplesCovered();
 			evaluatedExamples = clauseInfo.getNegExamplesEvaluated();
 		}
-
+		
 		// Check if it has been evaluated
 		if (evaluatedExamples[index]) {
 			if (coveredExamples[index]) {
@@ -311,7 +311,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 			}
 			evaluatedExamples[index] = true;
 		}
-
+		
 		// Update undecided examples in clauseInfo
 		if (isPositiveRelation) {
 			clauseInfo.setPosExamplesCovered(coveredExamples);

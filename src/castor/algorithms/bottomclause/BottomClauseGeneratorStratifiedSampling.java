@@ -40,11 +40,12 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 	private static final String SELECTDISTINCT_IN_SQL_STATEMENT = "SELECT DISTINCT(%s) FROM %s WHERE %s IN %s";
 	
 	private int varCounter;
-	private Random randomGenerator;
+	private int seed;
 
 	public BottomClauseGeneratorStratifiedSampling(int seed) {
 		this.varCounter = 0;
-		this.randomGenerator = new Random(seed);
+//		this.randomGenerator = new Random(seed);
+		this.seed = seed;
 	}
 	
 	@Override
@@ -70,6 +71,8 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 	
 	public MyClause generateBottomClause(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, 
 			Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters, boolean ground) {
+		Random randomGenerator = new Random(seed);
+		
 		Map<Pair<String, Integer>, List<Mode>> groupedModes = new LinkedHashMap<Pair<String, Integer>, List<Mode>>();
 		Map<String, List<Pair<String, Integer>>> groupedRelationsByAttributeType = new LinkedHashMap<String, List<Pair<String, Integer>>>();
 		for (Mode mode : dataModel.getModesB()) {
@@ -115,7 +118,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 			modeH = modeH.toGroundMode();
 		}
 		Predicate headLiteral = createLiteralFromTuple(hashConstantToVariable, exampleTuple,
-				dataModel.getModeH(), true);
+				modeH, true);
 		clause.addPositiveLiteral(headLiteral);
 		
 		// For each attribute, get relations that have attributes with same type, and call stratifiedSamplingRecursive
@@ -129,7 +132,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 				String relationName = relationInputAttributePair.getFirst();
 				int inputAttributePosition = relationInputAttributePair.getSecond();
 				
-				stratifiedSamplingRecursive(genericDAO, schema, groupedModes, groupedRelationsByAttributeType, hashConstantToVariable, relationName, inputAttributePosition, attributeType, values, parameters.getIterations(), 1, sampleSize, clause);
+				stratifiedSamplingRecursive(genericDAO, schema, groupedModes, groupedRelationsByAttributeType, hashConstantToVariable, relationName, inputAttributePosition, attributeType, values, parameters.getIterations(), 1, sampleSize, ground, clause, randomGenerator);
 			}
 		}
 
@@ -143,7 +146,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 			Map<Pair<String, Integer>, List<Mode>> groupedModes, Map<String, List<Pair<String, Integer>>> groupedRelationsByAttributeType,
 			Map<String, String> hashConstantToVariable, 
 			String relationName, int inputAttributePosition, String inputAttributeType, List<String> inputAttributeValues, 
-			int iterations, int currentIteration, int sampleSize, MyClause clause) {
+			int iterations, int currentIteration, int sampleSize, boolean ground, MyClause clause, Random randomGenerator) {
 		List<Tuple> sample = new LinkedList<Tuple>();
 		
 		// If  do not have known values for input attribute, return empty set of tuples
@@ -161,7 +164,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 			
 			// Random sample
 			for (List<Tuple> stratum : strata) {
-				sample.addAll(randomSampleFromList(stratum, sampleSize, false));
+				sample.addAll(randomSampleFromList(stratum, sampleSize, false, randomGenerator));
 			}
 			
 			// Sample by order
@@ -203,7 +206,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 							seenJoinModesInputAttribute.add(key);
 							
 							// Recursive call
-							List<Tuple> returnedTuples = stratifiedSamplingRecursive(genericDAO, schema, groupedModes, groupedRelationsByAttributeType, hashConstantToVariable, joinRelationName, joinAttributePosition, joinAttributeType, localValues, iterations, currentIteration + 1, sampleSize, clause);
+							List<Tuple> returnedTuples = stratifiedSamplingRecursive(genericDAO, schema, groupedModes, groupedRelationsByAttributeType, hashConstantToVariable, joinRelationName, joinAttributePosition, joinAttributeType, localValues, iterations, currentIteration + 1, sampleSize, ground, clause, randomGenerator);
 							
 							// Get tuples in relation that join with returnTuples
 							List<String> joinAttributeValues = projectFromTuples(returnedTuples, joinAttributePosition);
@@ -223,14 +226,25 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 			// Check if sample includes tuples in each stratum. If not, add tuples from stratum to sample.
 			for (List<Tuple> stratum : strata) {
 				if (!isIntersect(sample, stratum)) {
-					sample.addAll(randomSampleFromList(stratum, sampleSize, false));
+					sample.addAll(randomSampleFromList(stratum, sampleSize, false, randomGenerator));
 				}
 			}
 		}
 		
 		// Create literals for tuples in sample and add to clause
 		for (Tuple tuple : sample) {
+			Set<String> usedModes = new HashSet<String>();
 			for (Mode mode : relationAttributeModes) {
+				if (ground) {
+					if (usedModes.contains(mode.toGroundModeString())) {
+						continue;
+					}
+					else {
+						mode = mode.toGroundMode();
+						usedModes.add(mode.toGroundModeString());
+					}
+				}
+				
 				Predicate newLiteral = createLiteralFromTuple(hashConstantToVariable, tuple, mode, false);
 				clause.addNegativeLiteral(newLiteral);
 			}
@@ -255,7 +269,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 	/*
 	 * Get a random sample from list, without replacement.
 	 */
-	private List<Tuple> randomSampleFromList(List<Tuple> list, int sampleSize, boolean withReplacement) {
+	private List<Tuple> randomSampleFromList(List<Tuple> list, int sampleSize, boolean withReplacement, Random randomGenerator) {
 		List<Tuple> sample = new LinkedList<Tuple>();
 		
 		if (list.size() <= sampleSize) {

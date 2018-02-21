@@ -55,16 +55,18 @@ public class CastorLearner implements Learner {
 	private GenericDAO genericDAO;
 	private BottomClauseConstructionDAO bottomClauseConstructionDAO;
 	private CoverageEngine coverageEngine;
+	private CoverageEngine coverageEngineForCoveringApproach;
 	private Random randomGenerator;
 	private ClauseEvaluator evaluator;
 	private BottomClauseGenerator saturator;
 
 	public CastorLearner(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseContructionDAO, BottomClauseGenerator saturator,
-			CoverageEngine coverageEngine, Parameters parameters, Schema schema) {
+			CoverageEngine coverageEngine, CoverageEngine coverageEngineForCoveringApproach, Parameters parameters, Schema schema) {
 		this.parameters = parameters;
 		this.genericDAO = genericDAO;
 		this.bottomClauseConstructionDAO = bottomClauseContructionDAO;
 		this.coverageEngine = coverageEngine;
+		this.coverageEngineForCoveringApproach = coverageEngineForCoveringApproach;
 		this.randomGenerator = new Random(parameters.getRandomSeed());
 		this.evaluator = new BottomUpEvaluator();
 		this.saturator = saturator;
@@ -325,8 +327,10 @@ public class CastorLearner implements Learner {
 
 					// Remove covered positive examples
 					if (!globalDefinition) {
-						List<Tuple> coveredExamples = this.coverageEngine.coveredExamplesTuplesFromList(genericDAO,
-								schema, clauseInfo, uncoveredPosExamples, posExamplesRelation, true);
+						ClauseInfo cleanClauseInfo = new ClauseInfo(clauseInfo.getClause(), this.coverageEngineForCoveringApproach.getAllPosExamples().size(),
+								this.coverageEngineForCoveringApproach.getAllNegExamples().size());
+						List<Tuple> coveredExamples = this.coverageEngineForCoveringApproach.coveredExamplesTuplesFromList(genericDAO,
+								schema, cleanClauseInfo, uncoveredPosExamples, posExamplesRelation, true);
 						remainingPosExamples.removeAll(coveredExamples);
 						uncoveredPosExamples.removeAll(coveredExamples);
 					}
@@ -409,7 +413,7 @@ public class CastorLearner implements Learner {
 		List<ClauseInfo> bestARMGs = new LinkedList<ClauseInfo>();
 		bestARMGs.add(new ClauseInfo(bottomClause, this.coverageEngine.getAllPosExamples().size(),
 				this.coverageEngine.getAllNegExamples().size()));
-
+		
 		boolean createdNewARMGS = true;
 		int iters = 0;
 		// Add 1 to scores to count seed example, which is not in remainingPosExamples

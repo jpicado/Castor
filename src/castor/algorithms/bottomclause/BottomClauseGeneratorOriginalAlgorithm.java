@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -39,10 +40,12 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 
 	protected int varCounter;
 	private int nullCounter;
+	protected int seed;
 
-	public BottomClauseGeneratorOriginalAlgorithm() {
+	public BottomClauseGeneratorOriginalAlgorithm(int seed) {
 		varCounter = 0;
 		nullCounter = 0;
+		this.seed = seed;
 	}
 
 	/*
@@ -108,6 +111,8 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 		}
 		
 		MyClause clause = new MyClause();
+		
+		Random randomGenerator = new Random(seed);
 		
 		// Known terms for a data type
 		Map<String, Set<String>> inTerms = new HashMap<String, Set<String>>();
@@ -182,13 +187,13 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 				// Generate new literals for grouped modes
 				List<Predicate> newLiterals = operationForGroupedModes(genericDAO, schema, clause,
 						hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, relationName, attributeName,
-						relationAttributeModes, groupedModes, knownTermsSet, recall, ground, shuffleTuples);
+						relationAttributeModes, groupedModes, knownTermsSet, recall, ground, shuffleTuples, randomGenerator);
 
 				// Apply INDs
 				if (applyInds) {
 					followIndChain(genericDAO, schema, clause, newLiterals, hashConstantToVariable,
 							hashVariableToConstant, newInTerms, distinctTerms, groupedModes, recall, relationName,
-							new HashSet<String>(), ground, shuffleTuples);
+							new HashSet<String>(), ground, shuffleTuples, randomGenerator);
 				}
 				for (Predicate literal : newLiterals) {
 					clause.addNegativeLiteral(literal);
@@ -225,7 +230,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> newInTerms, Set<String> distinctTerms, String relationName, String attributeName,
 			List<Mode> relationAttributeModes, Map<Pair<String, Integer>, List<Mode>> groupedModes, RandomSet<String> knownTermsSet,
-			int recall, boolean ground, boolean shuffleTuples);
+			int recall, boolean ground, boolean shuffleTuples, Random randomGenerator);
 
 	/*
 	 * Creates a literal from a tuple and a mode.
@@ -283,7 +288,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 			List<Predicate> newLiteralsForGroupedModes, Map<String, String> hashConstantToVariable,
 			Map<String, String> hashVariableToConstant, Map<String, Set<String>> newInTerms, Set<String> distinctTerms,
 			Map<Pair<String, Integer>, List<Mode>> groupedModes, int recall, String currentPredicate,
-			Set<String> seenPredicates, boolean ground, boolean shuffleTuples) {
+			Set<String> seenPredicates, boolean ground, boolean shuffleTuples, Random randomGenerator) {
 
 		if (!seenPredicates.contains(currentPredicate)
 				&& schema.getInclusionDependencies().containsKey(currentPredicate)) {
@@ -293,7 +298,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 					// Apply IND
 					List<Predicate> literalsFromInd = applyInclusionDependency(genericDAO, schema, clause,
 							newLiteralsForGroupedModes, hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, ind,
-							groupedModes, recall, ground, shuffleTuples);
+							groupedModes, recall, ground, shuffleTuples, randomGenerator);
 					addNotRepeated(newLiteralsForGroupedModes, literalsFromInd);
 
 					// Add current predicate to seen list
@@ -302,7 +307,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 					// Follow chain
 					followIndChain(genericDAO, schema, clause, newLiteralsForGroupedModes, hashConstantToVariable,
 							hashVariableToConstant, newInTerms, distinctTerms, groupedModes, recall, ind.getRightPredicateName(),
-							seenPredicates, ground, shuffleTuples);
+							seenPredicates, ground, shuffleTuples, randomGenerator);
 				}
 			}
 		}
@@ -314,7 +319,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 	private List<Predicate> applyInclusionDependency(GenericDAO genericDAO, Schema schema, MyClause clause,
 			List<Predicate> newLiteralsForGroupedModes, Map<String, String> hashConstantToVariable,
 			Map<String, String> hashVariableToConstant, Map<String, Set<String>> newInTerms, Set<String> distinctTerms, InclusionDependency ind,
-			Map<Pair<String, Integer>, List<Mode>> groupedModes, int recall, boolean ground, boolean shuffleTuples) {
+			Map<Pair<String, Integer>, List<Mode>> groupedModes, int recall, boolean ground, boolean shuffleTuples, Random randomGenerator) {
 
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 
@@ -367,7 +372,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 					// Generate new literals
 					List<Predicate> modeBLiterals = operationForGroupedModes(genericDAO, schema, clause,
 							hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, relationName, attributeName,
-							relationAttributeModes, groupedModes, termsSet, recall, ground, shuffleTuples);
+							relationAttributeModes, groupedModes, termsSet, recall, ground, shuffleTuples, randomGenerator);
 					addNotRepeated(newLiterals, modeBLiterals);
 				}
 			}

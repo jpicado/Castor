@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -33,9 +34,11 @@ public abstract class BottomClauseGeneratorWithGroupedModes implements BottomCla
 	protected static final String SELECTIN_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s";
 
 	protected int varCounter;
+	protected int seed;
 
-	public BottomClauseGeneratorWithGroupedModes() {
+	public BottomClauseGeneratorWithGroupedModes(int seed) {
 		varCounter = 0;
+		this.seed = seed;
 	}
 
 	/*
@@ -102,6 +105,8 @@ public abstract class BottomClauseGeneratorWithGroupedModes implements BottomCla
 		
 		MyClause clause = new MyClause();
 		
+		Random randomGenerator = new Random(seed);
+		
 		// Known terms for a data type
 		Map<String, Set<String>> inTerms = new HashMap<String, Set<String>>();
 		Map<String, Set<String>> previousIterationsInTerms = new HashMap<String, Set<String>>();
@@ -145,7 +150,7 @@ public abstract class BottomClauseGeneratorWithGroupedModes implements BottomCla
 				Map.Entry<String, List<Mode>> pair = (Map.Entry<String, List<Mode>>) groupedModesIterator.next();
 				String relation = pair.getKey();
 				List<Mode> relationModes = pair.getValue();
-				List<Predicate> newLiterals = this.operationForGroupedModes(genericDAO, schema, clause, hashConstantToVariable, hashVariableToConstant, inTerms, newInTerms, previousIterationsInTerms, distinctTerms, relation, relationModes, recall, ground, shuffleTuples);
+				List<Predicate> newLiterals = this.operationForGroupedModes(genericDAO, schema, clause, hashConstantToVariable, hashVariableToConstant, inTerms, newInTerms, previousIterationsInTerms, distinctTerms, relation, relationModes, recall, ground, shuffleTuples, randomGenerator);
 				
 				// Apply INDs
 //				if (applyInds) {
@@ -187,7 +192,7 @@ public abstract class BottomClauseGeneratorWithGroupedModes implements BottomCla
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> inTerms, Map<String, Set<String>> newInTerms, Map<String, Set<String>> previousIterationsInTerms,
 			Set<String> distinctTerms,
-			String relationName, List<Mode> relationModes, int recall, boolean ground, boolean shuffleTuples);
+			String relationName, List<Mode> relationModes, int recall, boolean ground, boolean shuffleTuples, Random randomGenerator);
 
 	/*
 	 * Creates a literal from a tuple and a mode.

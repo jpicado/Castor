@@ -27,7 +27,7 @@ public class BottomClauseUtil {
 	/*
 	 * Generate bottom clause for a specific example
 	 */
-	public static MyClause generateBottomClauseForExample(BottomClauseUtil.ALGORITHMS bottomClauseAlgorithm, GenericDAO genericDAO, 
+	public static MyClause generateBottomClauseForExample(GenericDAO genericDAO, 
 			BottomClauseConstructionDAO bottomClauseConstructionDAO, BottomClauseGenerator saturator,
 			Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters) {
 		MyClause clause = null;
@@ -47,8 +47,7 @@ public class BottomClauseUtil {
 	/*
 	 * Generate ground bottom clause for a specific example
 	 */
-	public static String generateGroundBottomClauseForExample(BottomClauseUtil.ALGORITHMS bottomClauseAlgorithm, 
-			GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, BottomClauseGenerator saturator, 
+	public static String generateGroundBottomClauseForExample(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, BottomClauseGenerator saturator, 
 			Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters) {
 		String clause = "";
 		TimeWatch watch;

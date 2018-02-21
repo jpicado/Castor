@@ -22,13 +22,12 @@ public class BottomClauseGeneratorOlkenSampling extends BottomClauseGeneratorOri
 
 	private static final String SELECT_SQL_STATEMENT = "SELECT * FROM %s WHERE %s = %s;";
 	private static final String COUNT_DISTINCT_TUPLES_SQL_STATEMENT = "SELECT COUNT(DISTINCT *) FROM %s WHERE %s = %s;";
-
-	private Random randomGenerator;
+	
 	private StatisticsOlkenSampling statistics;
 
 	public BottomClauseGeneratorOlkenSampling(int seed, StatisticsOlkenSampling statistics) {
-		super();
-		this.randomGenerator = new Random(seed);
+		super(seed);
+		this.seed = seed;
 		this.statistics = statistics;
 	}
 
@@ -39,7 +38,7 @@ public class BottomClauseGeneratorOlkenSampling extends BottomClauseGeneratorOri
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> newInTerms, Set<String> distinctTerms, String relationName, String attributeName,
 			List<Mode> relationAttributeModes, Map<Pair<String, Integer>, List<Mode>> groupedModes, RandomSet<String> knownTermsSet,
-			int recall, boolean ground, boolean shuffleTuples) {
+			int recall, boolean ground, boolean shuffleTuples, Random randomGenerator) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 		
 		// RAJOIN algorithm (from Olken's thesis)

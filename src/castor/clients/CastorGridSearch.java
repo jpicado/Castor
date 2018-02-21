@@ -218,7 +218,7 @@ public class CastorGridSearch {
         	logger.info("Learning...");
         	Learner learner;
         	if (this.algorithm.equals(ALGORITHM_CASTOR)) {
-        		learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, saturator, coverageEngine, parameters, schema);
+        		learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, saturator, coverageEngine, coverageEngine, parameters, schema);
         	} else if (this.algorithm.equals(ALGORITHM_GOLEM)) {
         		learner = new Golem(genericDAO, bottomClauseConstructionDAO, saturator, coverageEngine, parameters);
         	} else if (this.algorithm.equals(ALGORITHM_PROGOLEM)) {

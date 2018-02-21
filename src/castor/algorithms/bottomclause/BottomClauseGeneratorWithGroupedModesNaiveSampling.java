@@ -19,12 +19,10 @@ import castor.language.Tuple;
 public class BottomClauseGeneratorWithGroupedModesNaiveSampling extends BottomClauseGeneratorWithGroupedModes {
 
 	private boolean sample;
-	private Random randomGenerator;
 	
 	public BottomClauseGeneratorWithGroupedModesNaiveSampling(boolean sample, int seed) {
-		super();
+		super(seed);
 		this.sample = sample;
-		this.randomGenerator = new Random(seed);
 	}
 	
 	@Override
@@ -32,7 +30,7 @@ public class BottomClauseGeneratorWithGroupedModesNaiveSampling extends BottomCl
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> inTerms, Map<String, Set<String>> newInTerms, Map<String, Set<String>> previousIterationsInTerms,
 			Set<String> distinctTerms,
-			String relationName, List<Mode> relationModes, int recall, boolean ground, boolean randomizeRecall) {
+			String relationName, List<Mode> relationModes, int recall, boolean ground, boolean randomizeRecall, Random randomGenerator) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 		
 		// If sampling is turned off, set recall to max value

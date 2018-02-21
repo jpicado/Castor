@@ -20,12 +20,10 @@ import castor.utils.RandomSet;
 public class BottomClauseGeneratorNaiveSampling extends BottomClauseGeneratorOriginalAlgorithm {
 
 	private boolean sample;
-	private Random randomGenerator;
 	
 	public BottomClauseGeneratorNaiveSampling(boolean sample, int seed) {
-		super();
+		super(seed);
 		this.sample = sample;
-		this.randomGenerator = new Random(seed);
 	}
 	
 	@Override
@@ -33,7 +31,7 @@ public class BottomClauseGeneratorNaiveSampling extends BottomClauseGeneratorOri
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> newInTerms, Set<String> distinctTerms, String relationName, String attributeName,
 			List<Mode> relationAttributeModes, Map<Pair<String, Integer>, List<Mode>> groupedModes, RandomSet<String> knownTermsSet,
-			int recall, boolean ground, boolean randomizeRecall) {
+			int recall, boolean ground, boolean randomizeRecall, Random randomGenerator) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 		
 		// If sampling is turned off, set recall to max value

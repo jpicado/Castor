@@ -40,6 +40,7 @@ import castor.db.DBCommons;
 import castor.db.QueryGenerator;
 import castor.ddlindextract.DDLIndMain;
 import castor.hypotheses.ClauseInfo;
+import castor.hypotheses.MyClause;
 import castor.language.InclusionDependency;
 import castor.language.MatchingDependency;
 import castor.language.Mode;
@@ -278,9 +279,18 @@ public class CastorCmd {
 			
 			// Create saturator
 			BottomClauseGenerator saturator;
+			BottomClauseGenerator coverageEngineSaturator;
 			tw.reset();
 			if (parameters.isUseStoredProcedure()) {
-				saturator = new BottomClauseGeneratorInsideSP();
+				if (parameters.isAllowSimilarity() ||
+						parameters.getSamplingMethod().equals(SamplingMethods.OLKEN) ||
+						parameters.getSamplingMethod().equals(SamplingMethods.STREAM) ||
+						parameters.getSamplingMethod().equals(SamplingMethods.STRATIFIED)) {
+					throw new UnsupportedOperationException("Sampling method or simliarity not supported inside stored procedure.");
+				} else {
+					saturator = new BottomClauseGeneratorInsideSP();
+					coverageEngineSaturator = new BottomClauseGeneratorInsideSP();
+				}
 			} else {
 				if (parameters.isAllowSimilarity()) {
 					//TODO implement other sampling methods
@@ -290,38 +300,34 @@ public class CastorCmd {
 						throw new UnsupportedOperationException("Sampling method not supported when allowing similarity.");
 					} else {
 						saturator = new BottomClauseGeneratorNaiveSamplingWithSimilarity(genericDAO, schema, true, parameters.getRandomSeed());
+						coverageEngineSaturator = new BottomClauseGeneratorNaiveSamplingWithSimilarity(genericDAO, schema, parameters.isSampleGroundBottomClauses(), parameters.getRandomSeed());
 					}
 				} else {
 					//TODO Note that BottomClauseGeneratorWithGrouped does not use inclusion dependencies; not schema independent
-					if (parameters.getSamplingMethod().equals(SamplingMethods.OLKEN))  {
-						logger.info("Use Olken sampling. Extracting statistics from database instance...");
-						StatisticsOlkenSampling statistics = StatisticsExtractor.extractStatisticsForOlkenSampling(genericDAO, schema);
-	//					saturator = new BottomClauseGeneratorOlkenSampling(parameters.getRandomSeed(), statistics);
-						saturator = new BottomClauseGeneratorWithGroupedModesOlkenSampling(parameters.getRandomSeed(), statistics);
-					} else if (parameters.getSamplingMethod().equals(SamplingMethods.STREAM)) {
-						logger.info("Use Stream sampling. Extracting statistics from database instance...");
-						StatisticsStreamSampling statistics = StatisticsExtractor.extractStatisticsForStreamSampling(genericDAO, schema);
-						saturator = new BottomClauseGeneratorStreamSampling(parameters.getRandomSeed(), statistics);
-					} else if (parameters.getSamplingMethod().equals(SamplingMethods.STRATIFIED)) {
-						saturator = new BottomClauseGeneratorStratifiedSampling(parameters.getRandomSeed());
+					saturator = getNewCoverageEngine(genericDAO);
+//					if (parameters.getSamplingMethod().equals(SamplingMethods.OLKEN))  {
+//						logger.info("Use Olken sampling. Extracting statistics from database instance...");
+//						StatisticsOlkenSampling statistics = StatisticsExtractor.extractStatisticsForOlkenSampling(genericDAO, schema);
+//						saturator = new BottomClauseGeneratorWithGroupedModesOlkenSampling(parameters.getRandomSeed(), statistics);
+//					} else if (parameters.getSamplingMethod().equals(SamplingMethods.STREAM)) {
+//						logger.info("Use Stream sampling. Extracting statistics from database instance...");
+//						StatisticsStreamSampling statistics = StatisticsExtractor.extractStatisticsForStreamSampling(genericDAO, schema);
+//						saturator = new BottomClauseGeneratorStreamSampling(parameters.getRandomSeed(), statistics);
+//					} else if (parameters.getSamplingMethod().equals(SamplingMethods.STRATIFIED)) {
+//						saturator = new BottomClauseGeneratorStratifiedSampling(parameters.getRandomSeed());
+//					} else {
+//						saturator = new BottomClauseGeneratorNaiveSampling(true, parameters.getRandomSeed());
+//	//					saturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(true);
+//					}
+					
+					if (parameters.isSampleGroundBottomClauses()) {
+						coverageEngineSaturator = getNewCoverageEngine(genericDAO);
 					} else {
-						saturator = new BottomClauseGeneratorNaiveSampling(true, parameters.getRandomSeed());
-	//					saturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(true);
+						coverageEngineSaturator = new BottomClauseGeneratorNaiveSampling(false, parameters.getRandomSeed());
 					}
 				}
 			}
 			NumbersKeeper.preprocessingTime = tw.time();
-			
-			BottomClauseGenerator coverageEngineSaturator;
-			if (parameters.isSampleGroundBottomClauses()) {
-				coverageEngineSaturator = saturator;
-			} else {
-				if (parameters.isAllowSimilarity()) {
-					coverageEngineSaturator = new BottomClauseGeneratorNaiveSamplingWithSimilarity(genericDAO, schema, false, parameters.getRandomSeed());
-				} else {
-					coverageEngineSaturator = new BottomClauseGeneratorNaiveSampling(false, parameters.getRandomSeed());
-				}
-			}
 			
 			// Create CoverageEngine
 			tw.reset();
@@ -331,6 +337,21 @@ public class CastorCmd {
 					posTrain, negTrain, this.schema, this.dataModel, this.parameters, createFullCoverageEngine,
 					examplesSource, posTrainExamplesFile, negTrainExamplesFile);
 //			CoverageEngine coverageEngine = new CoverageByDBJoiningAllSingleExample(genericDAO, posTrain, negTrain, parameters);
+			
+			CoverageEngine coverageEngineForCoveringApproach;
+			if (parameters.isSampleInCoveringApproach() == parameters.isSampleGroundBottomClauses()) {
+				coverageEngineForCoveringApproach = coverageEngine;
+			} else {
+				BottomClauseGenerator coverageEngineSaturatorForCoveringApproach;
+				if (parameters.isAllowSimilarity()) {
+					coverageEngineSaturatorForCoveringApproach = new BottomClauseGeneratorNaiveSamplingWithSimilarity(genericDAO, schema, parameters.isSampleInCoveringApproach(), parameters.getRandomSeed());
+				} else {
+					coverageEngineSaturatorForCoveringApproach = new BottomClauseGeneratorNaiveSampling(parameters.isSampleInCoveringApproach(), parameters.getRandomSeed());
+				}
+				coverageEngineForCoveringApproach = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, coverageEngineSaturatorForCoveringApproach,
+						posTrain, negTrain, this.schema, this.dataModel, this.parameters, createFullCoverageEngine,
+						examplesSource, posTrainExamplesFile, negTrainExamplesFile);
+			}
 			NumbersKeeper.creatingCoverageTime = tw.time();
 			
 			if (saturation || groundSaturation) {
@@ -338,23 +359,14 @@ public class CastorCmd {
 					throw new IllegalArgumentException("Illegal index of positive example to saturate (greater than maximum index of positive examples or less than 0).");
 				}
 				
-				BottomClauseUtil.ALGORITHMS bottomClauseAlgorithm;
-				if (parameters.isUseStoredProcedure()) {
-					bottomClauseAlgorithm = BottomClauseUtil.ALGORITHMS.INSIDE_STORED_PROCEDURE;
-				}
-				else {
-					bottomClauseAlgorithm = BottomClauseUtil.ALGORITHMS.ORIGINAL;
-				}
 				if (saturation) {
 					// BOTTOM CLAUSE
-					BottomClauseUtil.generateBottomClauseForExample(bottomClauseAlgorithm,
-							genericDAO, bottomClauseConstructionDAO, saturator,
+					BottomClauseUtil.generateBottomClauseForExample(genericDAO, bottomClauseConstructionDAO, saturator,
 							coverageEngine.getAllPosExamples().get(this.exampleForSaturation), this.schema,
 							this.dataModel, this.parameters);
 				} else if (groundSaturation) {
 					// GROUND BOTTOM CLAUSE
-					BottomClauseUtil.generateGroundBottomClauseForExample(
-							bottomClauseAlgorithm, genericDAO, bottomClauseConstructionDAO, saturator,
+					BottomClauseUtil.generateGroundBottomClauseForExample(genericDAO, bottomClauseConstructionDAO, saturator,
 							coverageEngine.getAllPosExamples().get(this.exampleForSaturation), this.schema,
 							this.dataModel, this.parameters);
 				} 
@@ -363,7 +375,7 @@ public class CastorCmd {
 				logger.info("Learning...");
 				Learner learner;
 				if (this.algorithm.equals(ALGORITHM_CASTOR)) {
-					learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, saturator, coverageEngine, parameters, schema);
+					learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, saturator, coverageEngine, coverageEngineForCoveringApproach, parameters, schema);
 				} else if (this.algorithm.equals(ALGORITHM_GOLEM)) {
 					learner = new Golem(genericDAO, bottomClauseConstructionDAO, saturator, coverageEngine, parameters);
 				} else if (this.algorithm.equals(ALGORITHM_PROGOLEM)) {
@@ -479,6 +491,25 @@ public class CastorCmd {
 			// Close connection to DBMS
 			daoFactory.closeConnection();
 		}
+	}
+	
+	private BottomClauseGenerator getNewCoverageEngine(GenericDAO genericDAO) {
+		BottomClauseGenerator saturator;
+		if (parameters.getSamplingMethod().equals(SamplingMethods.OLKEN))  {
+			logger.info("Use Olken sampling. Extracting statistics from database instance...");
+			StatisticsOlkenSampling statistics = StatisticsExtractor.extractStatisticsForOlkenSampling(genericDAO, schema);
+			saturator = new BottomClauseGeneratorWithGroupedModesOlkenSampling(parameters.getRandomSeed(), statistics);
+		} else if (parameters.getSamplingMethod().equals(SamplingMethods.STREAM)) {
+			logger.info("Use Stream sampling. Extracting statistics from database instance...");
+			StatisticsStreamSampling statistics = StatisticsExtractor.extractStatisticsForStreamSampling(genericDAO, schema);
+			saturator = new BottomClauseGeneratorStreamSampling(parameters.getRandomSeed(), statistics);
+		} else if (parameters.getSamplingMethod().equals(SamplingMethods.STRATIFIED)) {
+			saturator = new BottomClauseGeneratorStratifiedSampling(parameters.getRandomSeed());
+		} else {
+			saturator = new BottomClauseGeneratorNaiveSampling(true, parameters.getRandomSeed());
+//					saturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(true);
+		}
+		return saturator;
 	}
 
 	/*

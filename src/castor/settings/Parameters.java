@@ -27,6 +27,7 @@ public class Parameters {
 	private String samplingMethod = SamplingMethods.NAIVE;
 	private boolean sampleInTesting = false;
 	private boolean sampleGroundBottomClauses = false;
+	private boolean sampleInCoveringApproach = false;
 	private boolean shuffleExamples = false;
 	private boolean randomizeRecall = false;
 	private boolean allowSimilarity = false;
@@ -181,6 +182,12 @@ public class Parameters {
 	public void setSampleGroundBottomClauses(boolean sampleGroundBottomClauses) {
 		this.sampleGroundBottomClauses = sampleGroundBottomClauses;
 	}
+	public boolean isSampleInCoveringApproach() {
+		return sampleInCoveringApproach;
+	}
+	public void setSampleInCoveringApproach(boolean sampleInCoveringApproach) {
+		this.sampleInCoveringApproach = sampleInCoveringApproach;
+	}
 	public boolean isShuffleExamples() {
 		return shuffleExamples;
 	}
@@ -208,7 +215,8 @@ public class Parameters {
 				+ ", iterations=" + iterations + ", recall=" + recall + ", groundRecall=" + groundRecall + ", maxterms="
 				+ maxterms + ", useInds=" + useInds + ", dbURL=" + dbURL + ", port=" + port + ", randomSeed="
 				+ randomSeed + ", samplingMethod=" + samplingMethod + ", sampleInTesting=" + sampleInTesting
-				+ ", sampleGroundBottomClauses=" + sampleGroundBottomClauses + ", shuffleExamples=" + shuffleExamples
-				+ ", randomizeRecall=" + randomizeRecall + ", allowSimilarity=" + allowSimilarity + "]";
+				+ ", sampleGroundBottomClauses=" + sampleGroundBottomClauses + ", sampleInCoveringApproach="
+				+ sampleInCoveringApproach + ", shuffleExamples=" + shuffleExamples + ", randomizeRecall="
+				+ randomizeRecall + ", allowSimilarity=" + allowSimilarity + "]";
 	}
 }
