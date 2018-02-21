@@ -381,6 +381,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 				// Add new literal
 				addNotRepeated(newLiterals, literal);
 				
+				// Create similarity predicates between new literal and existing literals
 				List<Predicate> currentLiterals = new ArrayList<Predicate>();
 				for (Literal lit : clause.getNegativeLiterals()) {
 					currentLiterals.add((Predicate)lit.getAtomicSentence());
@@ -389,12 +390,11 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 				List<Predicate> similarityLiterals = createSimilarityPredicatesForLiterals(currentLiterals, literal, hashConstantToVariable, hashVariableToConstant, mode);
 				addNotRepeated(newLiterals, similarityLiterals);
 				
-				// Create similarity predicate
+				// Create similarity predicate between source value and value in new literal
 				if (createSimilarityPredicate && !similarValue.startsWith(NULL_PREFIX)) {
 					String valueInTupleString = tuple.getValues().get(similarAttributeInTuplePosition).toString();
 					Predicate similarityLiteral = createSimilarityPredicateForTuple(mode, hashConstantToVariable, similarValue, similarAttributeInTuplePosition, valueInTupleString);
 					addNotRepeated(newLiterals, similarityLiteral);
-					//addNotRepeated(newLiterals, similarityLiteral);
 				}
 			}
 		}

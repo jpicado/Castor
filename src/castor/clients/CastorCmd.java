@@ -40,7 +40,6 @@ import castor.db.DBCommons;
 import castor.db.QueryGenerator;
 import castor.ddlindextract.DDLIndMain;
 import castor.hypotheses.ClauseInfo;
-import castor.hypotheses.MyClause;
 import castor.language.InclusionDependency;
 import castor.language.MatchingDependency;
 import castor.language.Mode;
@@ -493,6 +492,9 @@ public class CastorCmd {
 		}
 	}
 	
+	/*
+	 * Create a new coverage engine based on parameters
+	 */
 	private BottomClauseGenerator getNewCoverageEngine(GenericDAO genericDAO) {
 		BottomClauseGenerator saturator;
 		if (parameters.getSamplingMethod().equals(SamplingMethods.OLKEN))  {

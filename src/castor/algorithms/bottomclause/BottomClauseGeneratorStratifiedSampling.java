@@ -44,7 +44,6 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 
 	public BottomClauseGeneratorStratifiedSampling(int seed) {
 		this.varCounter = 0;
-//		this.randomGenerator = new Random(seed);
 		this.seed = seed;
 	}
 	
