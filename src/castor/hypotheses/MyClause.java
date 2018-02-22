@@ -21,11 +21,6 @@ public class MyClause {
 	private final List<Literal> positiveLiterals = new ArrayList<Literal>();
 	private final List<Literal> negativeLiterals = new ArrayList<Literal>();
 	
-//	private String equalityIdentity = "";
-	private String stringRep = null;
-	private String stringRep2 = null;
-	private String bodyStringRep = null;
-	
 	public MyClause() {
 		// i.e. the empty MyClause
 	}
@@ -150,45 +145,35 @@ public class MyClause {
 	
 	@Override
 	public String toString() {
-		if (null == stringRep) {
-			List<Literal> sortedLiterals = new ArrayList<Literal>(literals);
-			Collections.sort(sortedLiterals, _literalSorter);
-
-			stringRep = sortedLiterals.toString();
-		}
-		return stringRep;
+		List<Literal> sortedLiterals = new ArrayList<Literal>(literals);
+		Collections.sort(sortedLiterals, _literalSorter);
+		return sortedLiterals.toString();
 	}
 	
 	public String toString2(String positiveSymbol, String negateSymbol) {
 		// This format is used by CoverageBySubsumption in Castor
-		if (null == stringRep2) {
-			StringBuilder sb = new StringBuilder();
-			for (int i = 0; i < positiveLiterals.size(); i++) {
-				sb.append(positiveSymbol+positiveLiterals.get(i).getAtomicSentence().toString()+",");
-			}
-			for (int i = 0; i < negativeLiterals.size(); i++) {
-				sb.append(negateSymbol+negativeLiterals.get(i).getAtomicSentence().toString());
-				if (i < negativeLiterals.size() - 1) {
-					sb.append(",");
-				}
-			}
-			stringRep2 = sb.toString();
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < positiveLiterals.size(); i++) {
+			sb.append(positiveSymbol+positiveLiterals.get(i).getAtomicSentence().toString()+",");
 		}
-		return stringRep2;
+		for (int i = 0; i < negativeLiterals.size(); i++) {
+			sb.append(negateSymbol+negativeLiterals.get(i).getAtomicSentence().toString());
+			if (i < negativeLiterals.size() - 1) {
+				sb.append(",");
+			}
+		}
+		return sb.toString();
 	}
 	
 	public String bodyToString() {
-		if (null == bodyStringRep) {
-			StringBuilder sb = new StringBuilder();
-			for (int i = 0; i < negativeLiterals.size(); i++) {
-				sb.append(negativeLiterals.get(i).getAtomicSentence().toString());
-				if (i < negativeLiterals.size() - 1) {
-					sb.append(",");
-				}
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < negativeLiterals.size(); i++) {
+			sb.append(negativeLiterals.get(i).getAtomicSentence().toString());
+			if (i < negativeLiterals.size() - 1) {
+				sb.append(",");
 			}
-			bodyStringRep = sb.toString();
 		}
-		return bodyStringRep;
+		return sb.toString();
 	}
 
 //	@Override
