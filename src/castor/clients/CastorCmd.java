@@ -26,6 +26,7 @@ import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
 import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSamplingWithSimilarity;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSampling;
+import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSamplingWithSimilarity;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesOlkenSampling;
 import castor.algorithms.bottomclause.BottomClauseUtil;
@@ -294,9 +295,11 @@ public class CastorCmd {
 				if (parameters.isAllowSimilarity()) {
 					//TODO implement other sampling methods
 					if (parameters.getSamplingMethod().equals(SamplingMethods.OLKEN) ||
-							parameters.getSamplingMethod().equals(SamplingMethods.STREAM) ||
-							parameters.getSamplingMethod().equals(SamplingMethods.STRATIFIED))  {
+							parameters.getSamplingMethod().equals(SamplingMethods.STREAM))  {
 						throw new UnsupportedOperationException("Sampling method not supported when allowing similarity.");
+					} else if (parameters.getSamplingMethod().equals(SamplingMethods.STRATIFIED)) {
+						saturator = new BottomClauseGeneratorStratifiedSamplingWithSimilarity(genericDAO, schema, parameters.getRandomSeed());
+						coverageEngineSaturator = new BottomClauseGeneratorStratifiedSamplingWithSimilarity(genericDAO, schema, parameters.getRandomSeed());
 					} else {
 						saturator = new BottomClauseGeneratorNaiveSamplingWithSimilarity(genericDAO, schema, true, parameters.getRandomSeed());
 						coverageEngineSaturator = new BottomClauseGeneratorNaiveSamplingWithSimilarity(genericDAO, schema, parameters.isSampleGroundBottomClauses(), parameters.getRandomSeed());
