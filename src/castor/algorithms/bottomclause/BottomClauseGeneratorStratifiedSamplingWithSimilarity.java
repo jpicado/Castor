@@ -251,7 +251,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 		
 		// Compute strata
 		List<List<Pair<Tuple, String>>> strata = computeStrata(genericDAO, schema, relationName, inputAttributeName,
-				inputAttributeValues, inputAttributeValuesFromSimilarity, groupedModesByRelation.get(relationName), Integer.MAX_VALUE);
+				inputAttributeValues, inputAttributeValuesFromSimilarity, inputAttributeKnownTermsAll, groupedModesByRelation.get(relationName), Integer.MAX_VALUE);
 		
 		// Check whether last iteration
 		if (iterations == currentIteration) {
@@ -554,7 +554,8 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 	}
 
 	private List<List<Pair<Tuple,String>>> computeStrata(GenericDAO genericDAO, Schema schema, String relationName,
-			String inputAttributeName, List<String> exactInputValues, List<Pair<String,String>> similarInputValues, List<Mode> relationModes, int sampleSize) {
+			String inputAttributeName, List<String> exactInputValues, List<Pair<String,String>> similarInputValues, 
+			String inputAttributeKnownTermsAll, List<Mode> relationModes, int sampleSize) {
 		List<List<Pair<Tuple,String>>> strata = new ArrayList<List<Pair<Tuple,String>>>();
 
 		if (relationModes == null) {
@@ -610,7 +611,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 			// Get regions
 			String constantAttributesString = String.join(",", constantAttributes);
 			String getRegionsQuery = String.format(SELECTDISTINCT_IN_SQL_STATEMENT, constantAttributesString,
-					relationName, inputAttributeName, inputAttributeKnownTerms);
+					relationName, inputAttributeName, inputAttributeKnownTermsAll);
 
 			GenericTableObject getRegionsResult = genericDAO.executeQuery(getRegionsQuery);
 			if (getRegionsResult != null) {

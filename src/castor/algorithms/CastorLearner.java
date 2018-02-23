@@ -319,6 +319,9 @@ public class CastorLearner implements Learner {
 
 				if (satisfiesConditions(truePositive, falsePositive, trueNegative, falseNegative, newPosCoveredCount,
 						precision, recall)) {
+					// Reorder so that it is more readable
+					clauseInfo.setMoreGeneralClause(ClauseTransformations.reorderClauseForHeadConnected(clauseInfo.getClause()));
+					
 					// Add clause to definition
 					definition.add(clauseInfo);
 					logger.info("New clause added to theory:\n" + Formatter.prettyPrint(clauseInfo));

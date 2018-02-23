@@ -49,6 +49,9 @@ public class CastorReducer {
 	public static MyClause negativeReduce(GenericDAO genericDAO, CoverageEngine coverageEngine, MyClause clause, Schema schema, List<Tuple> remainingPosExamples, Relation posExamplesRelation, Relation negExamplesRelation, CastorReducer.MEASURE measure, ClauseEvaluator evaluator) {
 		TimeWatch tw = TimeWatch.start();
 		
+		// Reorder so that it is head-connected from left to right. This way it won't remove literals that are needed to make other literals head-connected. 
+		clause = ClauseTransformations.reorderClauseForHeadConnected(clause);
+		
 		List<Term> headVariables = clause.getPositiveLiterals().get(0).getAtomicSentence().getArgs();
 		
 		List<List<Literal>> allChains = DataDependenciesUtils.findAllInclusionChains2(schema, clause);

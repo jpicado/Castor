@@ -15,6 +15,47 @@ public class ClauseTransformations {
 
     private static Unifier unifier = new Unifier();
     private static SubstVisitor substVisitor = new SubstVisitor();
+    
+    /*
+	 * Reorder clause so that all literals are head-connected from left to right
+	 */
+	public static MyClause reorderClauseForHeadConnected(MyClause clause) {
+		MyClause newClause = new MyClause();
+		Set<Term> seenTerms = new HashSet<Term>();
+		
+		// Add head literal
+		Literal head = clause.getPositiveLiterals().get(0);
+		newClause.addLiteral(head);
+		seenTerms.addAll(head.getAtomicSentence().getArgs());
+		
+		// Add body literals
+		List<Literal> notHeadConnectedLiterals = new ArrayList<Literal>(clause.getNegativeLiterals());
+		List<Literal> remainingLiterals = new ArrayList<Literal>(clause.getNegativeLiterals());
+		while (!notHeadConnectedLiterals.isEmpty()) {
+			remainingLiterals.clear();
+			remainingLiterals.addAll(notHeadConnectedLiterals);
+			notHeadConnectedLiterals.clear();
+			
+			for (Literal literal : remainingLiterals) {
+				boolean connected = false;
+				for (Term term : literal.getAtomicSentence().getArgs()) {
+					if (seenTerms.contains(term)) {
+						connected = true;
+						break;
+					}
+				}
+				
+				if (connected) {
+					newClause.addLiteral(literal);
+					seenTerms.addAll(literal.getAtomicSentence().getArgs());
+				} else {
+					notHeadConnectedLiterals.add(literal);
+				}
+			}
+		}
+		
+		return newClause;
+	}
 
     /*
      * Minimize clause using theta-subsumption (uses an approximation of clause-subsumption (homomorphism) test)
