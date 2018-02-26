@@ -280,6 +280,7 @@ public class CastorCmd {
 			// Create saturator
 			BottomClauseGenerator saturator;
 			BottomClauseGenerator coverageEngineSaturator;
+			logger.info("Preprocessing...");
 			tw.reset();
 			if (parameters.isUseStoredProcedure()) {
 				if (parameters.isAllowSimilarity() ||
