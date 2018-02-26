@@ -102,8 +102,9 @@ public class HSTree {
 					
 					// If count of matched segments >= minSegments, it is a candidate
 					if (count >= minSegments) {
-//						if (SimilarityUtils.editDistance(strings.get(matchStringIndex), query) <= maxDistance) {
-						if (hsSearchFilter(query, maxDistance, maxLevel, matchStringIndex, matchedSegmentsForString.get(matchStringIndex), minSegments)) {
+						if (SimilarityUtils.editDistance(strings.get(matchStringIndex), query) <= maxDistance) {
+//						if (SimilarityUtils.isLessThanDistance(strings.get(matchStringIndex), query, maxDistance)) {
+//						if (hsSearchFilter(query, maxDistance, maxLevel, matchStringIndex, matchedSegmentsForString.get(matchStringIndex), minSegments)) {
 							matchingStrings.add(strings.get(matchStringIndex));
 						}
 					}
