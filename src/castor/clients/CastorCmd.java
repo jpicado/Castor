@@ -341,6 +341,7 @@ public class CastorCmd {
 					examplesSource, posTrainExamplesFile, negTrainExamplesFile);
 //			CoverageEngine coverageEngine = new CoverageByDBJoiningAllSingleExample(genericDAO, posTrain, negTrain, parameters);
 			
+			logger.info("Creating coverage engine for covering approach...");
 			CoverageEngine coverageEngineForCoveringApproach;
 			if (parameters.isSampleInCoveringApproach() == parameters.isSampleGroundBottomClauses()) {
 				coverageEngineForCoveringApproach = coverageEngine;

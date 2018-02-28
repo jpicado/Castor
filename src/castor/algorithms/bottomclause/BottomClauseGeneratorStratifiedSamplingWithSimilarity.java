@@ -42,7 +42,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 	private static final String SELECT_SQL_STATEMENT = "SELECT * FROM %s WHERE %s = %s";
 	private static final String SELECTIN_TWOATTRIBUTES_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s AND %s IN %s";
 	private static final String PROJET_SELECTIN_SQL_STATEMENT = "SELECT DISTINCT(%s) FROM %s WHERE %s IN %s";
-	private static final String SELECTDISTINCT_IN_SQL_STATEMENT = "SELECT DISTINCT(%s) FROM %s WHERE %s IN %s";
+	private static final String SELECT_GROUPBY_SQL_STATEMENT = "SELECT %s FROM %s WHERE %s IN %s GROUP BY %s";
 
 	private int varCounter;
 	private int seed;
@@ -130,7 +130,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 		varCounter = 0;
 		MyClause clause = new MyClause();
 		Map<String, String> hashConstantToVariable = new HashMap<String, String>();
-		Map<Pair<String, Integer>, Integer> maxDistanceForMDs = new HashMap<Pair<String, Integer>, Integer>();
+		Map<Pair<String, Integer>, Double> maxDistanceForMDs = new HashMap<Pair<String, Integer>, Double>();
 
 		// Create head literal
 		Mode modeH = dataModel.getModeH();
@@ -175,7 +175,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 			String relationName, int inputAttributePosition,  
 			List<String> inputAttributeValues, int iterations, int currentIteration,
 			int sampleSize, boolean ground, MyClause clause, Random randomGenerator,
-			Map<Pair<String, Integer>, Integer> maxDistanceForMDs) {
+			Map<Pair<String, Integer>, Double> maxDistanceForMDs) {
 		List<Pair<Tuple, String>> sample = new ArrayList<Pair<Tuple, String>>();
 
 		// If do not have known values for input attribute, return empty set of tuples
@@ -208,7 +208,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 				if (md.getRightPredicateName().equals(relationName) && md.getRightAttributeNumber() == inputAttributePosition) {
 					applySimilaritySearch = true;
 					
-					int maxDistance = md.getMaxDistance();
+					double maxDistance = md.getMaxDistance();
 					if (maxDistanceForMDs.containsKey(keyForMDsSource)) {
 						maxDistance = Math.max(maxDistanceForMDs.get(keyForMDsSource), maxDistance);
 					}
@@ -221,7 +221,13 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 				if (hsTrees.containsKey(keyForTrees)) {
 					for (String value : inputAttributeValues) {
 						// Find similar values in relation
-						Set<String> similarValues = hsTrees.get(keyForTrees).hsSearch(value, maxDistanceForMDs.get(keyForMDsSource));
+						int distance;
+						if (maxDistanceForMDs.get(keyForMDsSource) < 1.0) {
+							distance = (int)Math.ceil(maxDistanceForMDs.get(keyForMDsSource) * value.length());
+						} else {
+							distance = maxDistanceForMDs.get(keyForMDsSource).intValue();
+						}
+						Set<String> similarValues = hsTrees.get(keyForTrees).hsSearch(value, distance);
 						
 						if (similarValues.isEmpty())
 							continue;
@@ -368,7 +374,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 			String joinRelationName, int joinAttributePosition,
 			List<String> localValues, int iterations, int currentIteration,
 			int sampleSize, boolean ground, MyClause clause, Random randomGenerator,
-			Map<Pair<String, Integer>, Integer> maxDistanceForMDs,
+			Map<Pair<String, Integer>, Double> maxDistanceForMDs,
 			Map<String,String> sourceForSimilarValue, String inputAttributeName, String joinAttributeName,
 			String inputAttributeKnownTermsAll) {
 		List<Pair<Tuple,String>> sample = new ArrayList<Pair<Tuple,String>>();
@@ -568,8 +574,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 		for (Mode mode : relationModes) {
 			for (int i = 0; i < mode.getArguments().size(); i++) {
 				if (mode.getArguments().get(i).getIdentifierType() == IdentifierType.CONSTANT) {
-					String attributeName = schema.getRelations().get(relationName.toUpperCase()).getAttributeNames()
-							.get(i);
+					String attributeName = schema.getRelations().get(relationName.toUpperCase()).getAttributeNames().get(i);
 					constantAttributes.add(attributeName);
 					constantAttributesPositions.add(i);
 				}
@@ -610,8 +615,8 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 		} else {
 			// Get regions
 			String constantAttributesString = String.join(",", constantAttributes);
-			String getRegionsQuery = String.format(SELECTDISTINCT_IN_SQL_STATEMENT, constantAttributesString,
-					relationName, inputAttributeName, inputAttributeKnownTermsAll);
+			String getRegionsQuery = String.format(SELECT_GROUPBY_SQL_STATEMENT, constantAttributesString,
+					relationName, inputAttributeName, inputAttributeKnownTermsAll, constantAttributesString);
 
 			GenericTableObject getRegionsResult = genericDAO.executeQuery(getRegionsQuery);
 			if (getRegionsResult != null) {

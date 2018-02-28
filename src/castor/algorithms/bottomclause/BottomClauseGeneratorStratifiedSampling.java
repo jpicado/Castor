@@ -37,7 +37,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 	private static final String SELECTIN_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s";
 	private static final String SELECTIN_TWOATTRIBUTES_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s AND %s IN %s";
 	private static final String PROJET_SELECTIN_SQL_STATEMENT = "SELECT DISTINCT(%s) FROM %s WHERE %s IN %s";
-	private static final String SELECTDISTINCT_IN_SQL_STATEMENT = "SELECT DISTINCT(%s) FROM %s WHERE %s IN %s";
+	private static final String SELECT_GROUPBY_SQL_STATEMENT = "SELECT %s FROM %s WHERE %s IN %s GROUP BY %s";
 
 	private int varCounter;
 	private int seed;
@@ -407,8 +407,8 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 		} else {
 			// Get regions
 			String constantAttributesString = String.join(",", constantAttributesNames);
-			String getRegionsQuery = String.format(SELECTDISTINCT_IN_SQL_STATEMENT, constantAttributesString,
-					relationName, inputAttributeName, inputAttributeKnownTerms);
+			String getRegionsQuery = String.format(SELECT_GROUPBY_SQL_STATEMENT, constantAttributesString,
+					relationName, inputAttributeName, inputAttributeKnownTerms, constantAttributesString);
 			GenericTableObject getRegionsResult = genericDAO.executeQuery(getRegionsQuery);
 			if (getRegionsResult != null) {
 				String query = String.format(SELECTIN_SQL_STATEMENT, relationName, inputAttributeName, inputAttributeKnownTerms);
@@ -471,8 +471,8 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 		} else {
 			// Get regions
 			String constantAttributesString = String.join(",", constantAttributes);
-			String getRegionsQuery = String.format(SELECTDISTINCT_IN_SQL_STATEMENT, constantAttributesString,
-					relationName, inputAttributeName, inputAttributeKnownTerms);
+			String getRegionsQuery = String.format(SELECT_GROUPBY_SQL_STATEMENT, constantAttributesString,
+					relationName, inputAttributeName, inputAttributeKnownTerms, constantAttributesString);
 
 			GenericTableObject getRegionsResult = genericDAO.executeQuery(getRegionsQuery);
 			if (getRegionsResult != null) {

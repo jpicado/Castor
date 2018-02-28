@@ -76,6 +76,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 				Pair<String, Integer> key = new Pair<String, Integer>(relation, attributePosition);
 				if (!hsTrees.containsKey(key)) {
 					List<String> values = projectSelectIn(genericDAO, relation, attribute);
+					
 					HSTree hsTree = HSTreeCreator.buildHSTree(values);
 					hsTrees.put(key, hsTree);
 				}
@@ -163,7 +164,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 		// Known terms for a data type
 		Map<String, Set<String>> inTerms = new HashMap<String, Set<String>>();
 		Map<Pair<String, Integer>, Set<String>> inTermsForMDs = new HashMap<Pair<String, Integer>, Set<String>>();
-		Map<Pair<String, Integer>, Integer> maxDistanceForMDs = new HashMap<Pair<String, Integer>, Integer>();
+		Map<Pair<String, Integer>, Double> maxDistanceForMDs = new HashMap<Pair<String, Integer>, Double>();
 
 		// Create head literal
 		varCounter = 0;
@@ -277,7 +278,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 			Map<String, Set<String>> inTerms, Map<String, Set<String>> newInTerms,
 			Map<Pair<String, Integer>, Set<String>> inTermsForMDs,
 			Map<Pair<String, Integer>, Set<String>> newInTermsForMDs,
-			Map<Pair<String, Integer>, Integer> maxDistanceForMDs, String relationName, String attributeName,
+			Map<Pair<String, Integer>, Double> maxDistanceForMDs, String relationName, String attributeName,
 			int inputAttributePosition, List<Mode> relationAttributeModes,
 			Map<Pair<String, Integer>, List<Mode>> groupedModes, int recall, boolean ground, boolean randomizeRecall, Random randomGenerator) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
@@ -328,7 +329,13 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 		if (inTermsForMDs.containsKey(key) && hsTrees.containsKey(key)) {
 //			List<Pair<Tuple, String>> tuplesWithSourceValue = new ArrayList<Pair<Tuple, String>>();
 			for (String value : inTermsForMDs.get(key)) {
-				Set<String> similarValues = hsTrees.get(key).hsSearch(value, maxDistanceForMDs.get(key));
+				int distance;
+				if (maxDistanceForMDs.get(key) < 1.0) {
+					distance = (int)Math.ceil(maxDistanceForMDs.get(key) * value.length());
+				} else {
+					distance = maxDistanceForMDs.get(key).intValue();
+				}
+				Set<String> similarValues = hsTrees.get(key).hsSearch(value, distance);
 				
 				if (similarValues.isEmpty())
 					continue;
@@ -359,7 +366,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 	private void applyModesForTuples(List<Pair<Tuple, String>> tuplesWithSourceValue, List<Predicate> newLiterals,
 			MyClause clause, Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> newInTerms, Map<Pair<String, Integer>, Set<String>> newInTermsForMDs,
-			Map<Pair<String, Integer>, Integer> maxDistanceForMDs, List<Mode> relationAttributeModes, int recall,
+			Map<Pair<String, Integer>, Double> maxDistanceForMDs, List<Mode> relationAttributeModes, int recall,
 			boolean ground, boolean randomizeRecall, Random randomGenerator,
 			int similarAttributeInTuplePosition) {
 		// Create literals from candidateTuples
@@ -403,7 +410,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 	private void modeOperationsForTuple(Tuple tuple, List<Predicate> newLiterals, MyClause clause,
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> newInTerms, Map<Pair<String, Integer>, Set<String>> newInTermsForMDs,
-			Map<Pair<String, Integer>, Integer> maxDistanceForMDs,
+			Map<Pair<String, Integer>, Double> maxDistanceForMDs,
 			List<Mode> relationAttributeModes, boolean ground,
 			boolean createSimilarityPredicate, String sourceValue, int similarAttributeInTuplePosition) {
 		Set<String> usedModes = new HashSet<String>();
@@ -450,7 +457,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 	private Predicate createLiteralFromTuple(Map<String, String> hashConstantToVariable,
 			Map<String, String> hashVariableToConstant, Tuple tuple, Mode mode, boolean headMode,
 			Map<String, Set<String>> inTerms, Map<Pair<String, Integer>, Set<String>> inTermsForMDs,
-			Map<Pair<String, Integer>, Integer> maxDistanceForMDs) {
+			Map<Pair<String, Integer>, Double> maxDistanceForMDs) {
 		List<Term> terms = new ArrayList<Term>();
 		for (int i = 0; i < mode.getArguments().size(); i++) {
 			//TODO default value for nulls? distinct value?
@@ -496,7 +503,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 						}
 						inTermsForMDs.get(rightKey).add(value);
 
-						int maxDistance = md.getMaxDistance();
+						double maxDistance = md.getMaxDistance();
 						if (maxDistanceForMDs.containsKey(rightKey)) {
 							maxDistance = Math.max(maxDistanceForMDs.get(rightKey), maxDistance);
 						}
@@ -589,7 +596,13 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 								}
 								
 								// Add similarity predicate if distance is less than max distance in MD
-								if (SimilarityUtils.isLessThanDistance(valueInNewLiteral, valueInLiteral, md.getMaxDistance())) {
+								int distance;
+								if (md.getMaxDistance() < 1.0) {
+									distance = (int)Math.ceil(md.getMaxDistance() * valueInNewLiteral.length());
+								} else {
+									distance = (int)md.getMaxDistance();
+								}
+								if (SimilarityUtils.isLessThanDistance(valueInNewLiteral, valueInLiteral, distance)) {
 									Predicate similarityLiteral = createSimilarityLiteralForTuple(mode, hashConstantToVariable, valueInLiteral, attributePosition, valueInNewLiteral);
 									similarityLiterals.add(similarityLiteral);
 								}
@@ -625,7 +638,13 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 								}
 								
 								// Add similarity predicate if distance is less than max distance in MD
-								if (SimilarityUtils.isLessThanDistance(valueInNewLiteral, valueInLiteral, md.getMaxDistance())) {
+								int distance;
+								if (md.getMaxDistance() < 1.0) {
+									distance = (int)Math.ceil(md.getMaxDistance() * valueInLiteral.length());
+								} else {
+									distance = (int)md.getMaxDistance();
+								}
+								if (SimilarityUtils.isLessThanDistance(valueInNewLiteral, valueInLiteral, distance)) {
 									Predicate similarityLiteral = createSimilarityLiteralForTuple(mode, hashConstantToVariable, valueInLiteral, md.getRightAttributeNumber(), valueInNewLiteral);
 									similarityLiterals.add(similarityLiteral);
 								}

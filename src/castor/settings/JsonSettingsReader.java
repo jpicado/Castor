@@ -313,10 +313,10 @@ public class JsonSettingsReader {
 					int leftAttributeNumber = mdObject.get("leftAttributeNumber").getAsInt();
 					String rightRelation = mdObject.get("rightRelation").getAsString();
 					int rightAttributeNumber = mdObject.get("rightAttributeNumber").getAsInt();
-					int maxDistance = mdObject.get("maxDistance").getAsInt();
+					double maxDistance = mdObject.get("maxDistance").getAsDouble();
 					MatchingDependency md = new MatchingDependency(leftRelation, leftAttributeNumber, rightRelation, rightAttributeNumber, maxDistance);
 					
-					// Add ms to list of mds (grouped by <left relation name , left attribute number>)
+					// Add md to list of mds (grouped by <left relation name , left attribute number>)
 					Pair<String,Integer> key = new Pair<String,Integer>(leftRelation, leftAttributeNumber);
 					if (!mds.containsKey(key)) {
 						mds.put(key, new LinkedList<MatchingDependency>());

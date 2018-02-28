@@ -9,7 +9,6 @@ import java.util.Set;
 
 import castor.utils.MyMath;
 import castor.utils.Pair;
-import castor.utils.RandomSet;
 
 /*
  * Implementation of algorithms in paper "Two Birds With One Stone: An Efficient Hierarchical Framework for Top-k and Threshold-based String Similarity Search".

@@ -7,9 +7,10 @@ public class MatchingDependency{
 	private int leftAttributeNumber;
 	private String rightPredicateName;
 	private int rightAttributeNumber;
-	private int maxDistance;
+	// If value < 1, use as relative value (actual distance is maxDistance * string length); otherwise, use as absolute value.
+	private double maxDistance;
 	
-	public MatchingDependency(String leftPredicateName, int leftAttributeNumber, String rightPredicateName, int rightAttributeNumber, int maxDistance){
+	public MatchingDependency(String leftPredicateName, int leftAttributeNumber, String rightPredicateName, int rightAttributeNumber, double maxDistance){
 		super();
 		this.leftPredicateName = leftPredicateName;
 		this.leftAttributeNumber = leftAttributeNumber;
@@ -34,11 +35,11 @@ public class MatchingDependency{
 		return rightAttributeNumber;
 	}
 	
-	public int getMaxDistance() {
+	public double getMaxDistance() {
 		return maxDistance;
 	}
 
-	public void setMaxDistance(int maxDistance) {
+	public void setMaxDistance(double maxDistance) {
 		this.maxDistance = maxDistance;
 	}
 }
