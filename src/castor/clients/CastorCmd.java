@@ -466,8 +466,20 @@ public class CastorCmd {
 					}
 
 					// For testing, use original bottom clause construction. Check parameters to determine whether to use sampling.
-//					BottomClauseGenerator testSaturator = new BottomClauseGeneratorNaiveSampling(this.parameters.isSampleInTesting());
-					BottomClauseGenerator testSaturator = new BottomClauseGeneratorNaiveSampling(this.parameters.isSampleInTesting(), parameters.getRandomSeed());
+					BottomClauseGenerator testSaturator;
+					if (parameters.isUseStoredProcedure()) {
+						if (parameters.isAllowSimilarity()) {
+							throw new UnsupportedOperationException("Sampling method or simliarity not supported inside stored procedure.");
+						} else {
+							testSaturator = new BottomClauseGeneratorInsideSP();
+						}
+					} else {
+						if (parameters.isAllowSimilarity()) {
+							testSaturator = new BottomClauseGeneratorNaiveSamplingWithSimilarity(genericDAO, schema, true, parameters.getRandomSeed());
+						} else {
+							testSaturator = new BottomClauseGeneratorNaiveSampling(this.parameters.isSampleInTesting(), parameters.getRandomSeed());
+						}
+					}
 					
 					logger.info("Evaluating on testing data...");
 					CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, testSaturator, 

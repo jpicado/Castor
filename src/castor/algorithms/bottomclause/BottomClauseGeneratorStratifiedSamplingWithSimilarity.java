@@ -45,6 +45,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 	private static final String SELECT_GROUPBY_SQL_STATEMENT = "SELECT %s FROM %s WHERE %s IN %s GROUP BY %s";
 
 	private int varCounter;
+	private int nullCounter;
 	private int seed;
 	private Map<Pair<String, Integer>, List<MatchingDependency>> mds;
 	private Map<Pair<String, Integer>, HSTree> hsTrees;
@@ -128,6 +129,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 			sampleSize = parameters.getRecall();
 
 		varCounter = 0;
+		nullCounter = 0;
 		MyClause clause = new MyClause();
 		Map<String, String> hashConstantToVariable = new HashMap<String, String>();
 		Map<Pair<String, Integer>, Double> maxDistanceForMDs = new HashMap<Pair<String, Integer>, Double>();
@@ -352,7 +354,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 						usedModes.add(mode.toGroundModeString());
 					}
 				}
-
+				
 				Predicate newLiteral = createLiteralFromTuple(hashConstantToVariable, tuple, mode, false);
 				clause.addNegativeLiteral(newLiteral);
 				
@@ -500,7 +502,14 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 			boolean headMode) {
 		List<Term> terms = new ArrayList<Term>();
 		for (int i = 0; i < mode.getArguments().size(); i++) {
-			String value = tuple.getValues().get(i).toString();
+			String value;
+			if (tuple.getValues().get(i) != null) {
+				value = tuple.getValues().get(i).toString();
+			}
+			else {
+				value = NULL_PREFIX+nullCounter;
+				nullCounter++;
+			}
 
 			if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
 				terms.add(new Constant("\"" + value + "\""));
