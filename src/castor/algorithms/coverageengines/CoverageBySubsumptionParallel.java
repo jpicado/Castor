@@ -157,8 +157,6 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 		counter = 0;
 		for (Tuple exampleTuple : negExamplesTuples) {
 			try {
-				// System.out.println("Generating ground bottom clause for negative example " +
-				// exampleTuple.getValues().toString()+"...");
 				String groundClause = saturator.generateGroundBottomClauseString(genericDAO, bottomClauseConstructionDAO,
 						exampleTuple, schema, dataModel, parameters);
 
@@ -214,18 +212,6 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 				examplesForMatching.add(negExamples.get(j));
 			}
 			this.negativeMatchings[i] = new Matching(examplesForMatching);
-			
-			//TODO DELETE
-			////
-//			boolean[] undecided = new boolean[examplesForMatching.size()];
-//			for (int j = 0; j < undecided.length; j++) {undecided[j] = true;}
-//			Clause h = Clause.parse("target(V0), zero(V0), successor(V0, V1), successor(V1, V2), successor(V2, V3), target(V2)");
-//			int[] result = negativeMatchings[i].evaluateOnExamples(h, undecided);
-//			for (int j = 0; j < result.length; j++) {
-//				System.out.println(examplesForMatching.get(j));
-//				System.out.println(result[j]);
-//			}
-			////
 		}
 	}
 
