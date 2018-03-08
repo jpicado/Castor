@@ -381,15 +381,24 @@ public class CastorLearner implements Learner {
 			int recall, int maxterms, int sampleSize, int beamWidth) {
 		TimeWatch tw = TimeWatch.start();
 
-		// First unseen positive example (pop)
-		Tuple exampleTuple = remainingPosExamples.remove(0);
-
-		// Generate bottom clause
 		TimeWatch twSaturation = TimeWatch.start();
-		logger.info("Generating bottom clause for " + exampleTuple.getValues().toString() + "...");
-		MyClause bottomClause = saturator.generateBottomClause(genericDAO, bottomClauseConstructionDAO, exampleTuple,
-				schema, dataModel, parameters);
+		MyClause bottomClause;
+		while(true) {
+			// Try until successfully get a bottom-clause (avoid crashing if there are errors in bottom-clause construction)
+			try {
+				// First unseen positive example (pop)
+				Tuple exampleTuple = remainingPosExamples.remove(0);
 
+				// Generate bottom clause
+				logger.info("Generating bottom clause for " + exampleTuple.getValues().toString() + "...");
+				bottomClause = saturator.generateBottomClause(genericDAO, bottomClauseConstructionDAO, exampleTuple,
+						schema, dataModel, parameters);
+				
+				break;
+			} catch (Exception e) {
+				logger.error(e.getMessage());
+			}
+		}
 		logger.debug("Bottom clause: \n" + Formatter.prettyPrint(bottomClause));
 		logger.info("Literals: " + bottomClause.getNumberLiterals());
 		logger.info("Saturation time: " + twSaturation.time(TimeUnit.MILLISECONDS) + " milliseconds.");

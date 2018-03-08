@@ -306,7 +306,6 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 			Set<Integer> usedIndexes = new HashSet<Integer>();
 			int resultsCounter = 0;
 			while (resultsCounter < sampleSize) {
-				// TODO sample without replacement?
 				int randomIndex = randomGenerator.nextInt(list.size());
 				if (withReplacement || !usedIndexes.contains(randomIndex)) {
 					sample.add(list.get(randomIndex));

@@ -344,6 +344,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 
 				// Create query and run
 				String query = String.format(SELECTIN_SQL_STATEMENT, relationName, attributeName, knownTerms);
+//				System.out.println(query);
 				GenericTableObject result = genericDAO.executeQuery(query);
 				if (result != null) {
 					for (Tuple tuple : result.getTable()) {
