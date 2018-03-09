@@ -573,16 +573,15 @@ public class QueryGenerator {
 						querySelect.append(predicateAlias + "." + schema.getRelations().get(predicateName).getAttributeNames().get(i) 
 								+ " = "
 								+ termName);
-						
-						// Check head substitutions stored in clauseInfo
-						for (Entry<Variable, Term> entry : clauseInfo.getHeadSubstitutions().entrySet()) {
-							String valueString = entry.getValue().getSymbolicName().replace("\"", "'");
-							if (termName.equals(valueString)) {
-								termAppearance.put(entry.getKey().getSymbolicName(), new Pair<String,String>(predicateAlias, schema.getRelations().get(predicateName).getAttributeNames().get(i)));
-							}
-						}
 					}
 					
+					// Check head substitutions stored in clauseInfo
+					for (Entry<Variable, Term> entry : clauseInfo.getHeadSubstitutions().entrySet()) {
+						String valueString = entry.getValue().getSymbolicName().replace("\"", "'");
+						if (termName.equals(valueString)) {
+							termAppearance.put(entry.getKey().getSymbolicName(), new Pair<String,String>(predicateAlias, schema.getRelations().get(predicateName).getAttributeNames().get(i)));
+						}
+					}
 				}
 				queryJoin.append(predicateName + " AS " + predicateAlias + " ");
 				
@@ -620,13 +619,13 @@ public class QueryGenerator {
 						querySelect.append(predicateAlias + "." + schema.getRelations().get(predicateName).getAttributeNames().get(i) 
 								+ " = "
 								+ termName);
-						
-						// Check head substitutions stored in clauseInfo
-						for (Entry<Variable, Term> entry : clauseInfo.getHeadSubstitutions().entrySet()) {
-							String valueString = entry.getValue().getSymbolicName().replace("\"", "'");
-							if (termName.equals(valueString)) {
-								termAppearance.put(entry.getKey().getSymbolicName(), new Pair<String,String>(predicateAlias, schema.getRelations().get(predicateName).getAttributeNames().get(i)));
-							}
+					}
+					
+					// Check head substitutions stored in clauseInfo
+					for (Entry<Variable, Term> entry : clauseInfo.getHeadSubstitutions().entrySet()) {
+						String valueString = entry.getValue().getSymbolicName().replace("\"", "'");
+						if (termName.equals(valueString)) {
+							termAppearance.put(entry.getKey().getSymbolicName(), new Pair<String,String>(predicateAlias, schema.getRelations().get(predicateName).getAttributeNames().get(i)));
 						}
 					}
 				}
