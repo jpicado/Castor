@@ -142,15 +142,14 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 		Predicate headLiteral = createLiteralFromTuple(hashConstantToVariable, exampleTuple, modeH, true);
 		clause.addPositiveLiteral(headLiteral);
 
-		// For each attribute, get relations that have attributes with same type, and
-		// call stratifiedSamplingRecursive
+		// For each attribute, get relations that have attributes with same type, and call stratifiedSamplingRecursive
 		for (int i = 0; i < modeH.getArguments().size(); i++) {
 			String attributeType = modeH.getArguments().get(i).getType();
 			List<String> values = new ArrayList<String>();
 			values.add(exampleTuple.getValues().get(i).toString());
 
-			// For each relation that have attributes with same type, call
-			// stratifiedSamplingRecursive
+			// For each relation that have attributes with same type, call stratifiedSamplingRecursive
+			// EXACT SEARCH
 			for (Pair<String, Integer> relationInputAttributePair : groupedRelationsByAttributeType
 					.get(attributeType)) {
 				String relationName = relationInputAttributePair.getFirst();
@@ -160,6 +159,20 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 						hashConstantToVariable, modeH.getPredicateName(), i, relationName, inputAttributePosition, values,
 						parameters.getIterations(), 1, sampleSize, ground, clause, randomGenerator,
 						maxDistanceForMDs);
+			}
+			
+			// SIMILARITY SEARCH
+			Pair<String,Integer> keyForMD = new Pair<String,Integer>(modeH.getPredicateName(), i);
+			if (mds.containsKey(keyForMD)) {
+				for (MatchingDependency md : mds.get(keyForMD)) {
+					String relationName = md.getRightPredicateName();
+					int inputAttributePosition = md.getRightAttributeNumber();
+					
+					stratifiedSamplingRecursive(genericDAO, schema, groupedModesByRelation, groupedModesByRelationAttribute, groupedRelationsByAttributeType,
+							hashConstantToVariable, modeH.getPredicateName(), i, relationName, inputAttributePosition, values,
+							parameters.getIterations(), 1, sampleSize, ground, clause, randomGenerator,
+							maxDistanceForMDs);
+				}
 			}
 		}
 
@@ -405,9 +418,16 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 			}
 			
 			String joinAttributeKnownTerms = collectionToString(joinAttributeValuesFromExact);
-			String joinQuery = String.format(SELECTIN_TWOATTRIBUTES_SQL_STATEMENT, relationName,
-					inputAttributeName, inputAttributeKnownTermsAll, joinAttributeName,
-					joinAttributeKnownTerms);
+			String joinQuery;
+			if (inputAttributeName.equals(joinAttributeName) && inputAttributeKnownTermsAll.equals(joinAttributeKnownTerms)) {
+				joinQuery = String.format(SELECTIN_SQL_STATEMENT, relationName,
+						inputAttributeName, inputAttributeKnownTermsAll);
+			} else {
+				joinQuery = String.format(SELECTIN_TWOATTRIBUTES_SQL_STATEMENT, relationName,
+						inputAttributeName, inputAttributeKnownTermsAll, joinAttributeName,
+						joinAttributeKnownTerms);
+			}
+			
 			GenericTableObject result = genericDAO.executeQuery(joinQuery);
 			if (result != null) {
 				for (Tuple tuple : result.getTable()) {

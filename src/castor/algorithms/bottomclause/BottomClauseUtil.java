@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
+import castor.algorithms.transformations.ClauseTransformations;
 import castor.dataaccess.db.BottomClauseConstructionDAO;
 import castor.dataaccess.db.GenericDAO;
 import castor.hypotheses.MyClause;
@@ -36,6 +37,7 @@ public class BottomClauseUtil {
 		logger.info("Generating bottom clause for example <" + String.join(",", exampleTuple.getStringValues()) + ">...");
 		watch = TimeWatch.start();
 		clause = saturator.generateBottomClause(genericDAO, bottomClauseConstructionDAO, exampleTuple, schema, dataModel, parameters);
+//		clause = ClauseTransformations.reorderClauseForHeadConnected(clause);
 		
 		logger.info("Bottom clause: \n"+ Formatter.prettyPrint(clause));
 		logger.info("Literals: " + clause.getNumberLiterals());
