@@ -2,12 +2,14 @@ package castor.algorithms.bottomclause;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
 
@@ -29,6 +31,7 @@ import castor.settings.DataModel;
 import castor.settings.Parameters;
 import castor.similarity.HSTree;
 import castor.similarity.HSTreeCreator;
+import castor.similarity.SimilarValue;
 import castor.utils.Commons;
 import castor.utils.Pair;
 import castor.utils.RandomSet;
@@ -242,16 +245,32 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 						} else {
 							distance = maxDistanceForMDs.get(keyForMDsSource).intValue();
 						}
-						Set<String> similarValues = hsTrees.get(keyForTrees).hsSearch(value, distance);
+						Set<SimilarValue> similarValues = hsTrees.get(keyForTrees).hsSearch(value, distance);
 						
 						if (similarValues.isEmpty())
 							continue;
 						
-						for (String similarValue : similarValues) {
-							sourceForSimilarValue.put(similarValue, value);
+						// Keep only top K (sampleSize)
+						//TODO TOP-K
+						PriorityQueue<SimilarValue> heap = new PriorityQueue<SimilarValue>(similarValues.size(), Comparator.comparing(SimilarValue::getDistance));
+						heap.addAll(similarValues);
+						similarValues.clear();
+						for (int i=0; i < sampleSize; i++) {
+							SimilarValue element = heap.poll();
+							if (element == null) 
+								break; 
+							else
+								similarValues.add(element);
 						}
 						
-						String knownTerms = collectionToString(similarValues);
+//						for (String similarValue : similarValues) {
+//							sourceForSimilarValue.put(similarValue, value);
+//						}
+						for (SimilarValue similarValue : similarValues) {
+							sourceForSimilarValue.put(similarValue.getValue(), value);
+						}
+						
+						String knownTerms = collectionSimilarValuesToString(similarValues);
 						
 						// Get tuples from similar values in relation
 						String query = String.format(SELECTIN_SQL_STATEMENT, relationName, inputAttributeName, knownTerms);
@@ -707,6 +726,23 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 			term = term.replace("'", "''");
 			builder.append("'" + term + "'");
 			if (counter < terms.size() - 1) {
+				builder.append(",");
+			}
+			counter++;
+		}
+		builder.append(")");
+		return builder.toString();
+	}
+	
+	private String collectionSimilarValuesToString(Collection<SimilarValue> similarValues) {
+		StringBuilder builder = new StringBuilder();
+		builder.append("(");
+		int counter = 0;
+		for (SimilarValue similarValue : similarValues) {
+			// Escape single quotes
+			String term = similarValue.getValue().replace("'", "''");
+			builder.append("'" + term + "'");
+			if (counter < similarValues.size() - 1) {
 				builder.append(",");
 			}
 			counter++;

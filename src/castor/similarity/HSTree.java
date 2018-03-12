@@ -36,15 +36,15 @@ public class HSTree {
 	/*
 	 * HSSearch algorithm.
 	 */
-	public Set<String> hsSearch(String query, int maxDistance) {
-		Set<String> matchingStrings = new HashSet<String>();
+	public Set<SimilarValue> hsSearch(String query, int maxDistance) {
+		Set<SimilarValue> matchingStrings = new HashSet<SimilarValue>();
 		
 		// If maxDistance is 0, get only strings that exactly match with query
 		if (maxDistance == 0) {
 			if (invertedIndex.containsKey(query.length())) {
 				for (String string : getAllStringsOfLengthInHSTree(query.length())) {
 					if (query.equals(string))
-						matchingStrings.add(string);
+						matchingStrings.add(new SimilarValue(string, 0));
 				}
 			}
 		}
@@ -102,10 +102,12 @@ public class HSTree {
 					
 					// If count of matched segments >= minSegments, it is a candidate
 					if (count >= minSegments) {
-						if (SimilarityUtils.editDistance(strings.get(matchStringIndex), query) <= maxDistance) {
+						int editDistance = SimilarityUtils.editDistance(strings.get(matchStringIndex), query);
+						//TODO currently compuyting edit distance
+						if (editDistance <= maxDistance) {
 //						if (SimilarityUtils.isLessThanDistance(strings.get(matchStringIndex), query, maxDistance)) {
 //						if (hsSearchFilter(query, maxDistance, maxLevel, matchStringIndex, matchedSegmentsForString.get(matchStringIndex), minSegments)) {
-							matchingStrings.add(strings.get(matchStringIndex));
+							matchingStrings.add(new SimilarValue(strings.get(matchStringIndex), editDistance));
 						}
 					}
 				}
