@@ -15,7 +15,7 @@ import castor.hypotheses.MyClause;
 import castor.language.Mode;
 import castor.language.Schema;
 import castor.language.Tuple;
-import castor.profiling.StatisticsOlkenSampling;
+import castor.sampling.StatisticsOlkenSampling;
 import castor.utils.RandomSet;
 
 public class BottomClauseGeneratorOlkenSampling extends BottomClauseGeneratorOriginalAlgorithm {

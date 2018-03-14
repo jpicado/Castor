@@ -28,6 +28,7 @@ import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSamplingWithSimi
 import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSamplingWithSimilarity;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSampling;
+import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSamplingNEW;
 import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesOlkenSampling;
 import castor.algorithms.bottomclause.BottomClauseUtil;
 import castor.algorithms.bottomclause.StoredProcedureGeneratorSaturationInsideSP;
@@ -46,9 +47,11 @@ import castor.language.MatchingDependency;
 import castor.language.Mode;
 import castor.language.Relation;
 import castor.language.Schema;
-import castor.profiling.StatisticsExtractor;
-import castor.profiling.StatisticsOlkenSampling;
-import castor.profiling.StatisticsStreamSampling;
+import castor.sampling.JoinNode;
+import castor.sampling.SamplingUtils;
+import castor.sampling.StatisticsExtractor;
+import castor.sampling.StatisticsOlkenSampling;
+import castor.sampling.StatisticsStreamSampling;
 import castor.settings.DataModel;
 import castor.settings.JsonSettingsReader;
 import castor.settings.Parameters;
@@ -276,6 +279,14 @@ public class CastorCmd {
 					return;
 				}
 			}
+			
+//			JoinNode node = SamplingUtils.findJoinTree(dataModel, parameters);
+//			System.out.println(node);
+//			System.out.println(node.getEdges().toString());
+//			System.out.println(node.getEdges().iterator().next().getJoinNode());
+//			System.out.println(node.getEdges().iterator().next().getJoinNode().getEdges().iterator().next().getJoinNode());
+//			System.out.println("RUNNING");
+//			BottomClauseGeneratorStreamSamplingNEW bc = new BottomClauseGeneratorStreamSamplingNEW(parameters.getRandomSeed(), genericDAO, schema, dataModel, parameters);
 			
 			// Create saturator
 			BottomClauseGenerator saturator;

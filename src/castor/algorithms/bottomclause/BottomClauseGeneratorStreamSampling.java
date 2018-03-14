@@ -15,7 +15,7 @@ import castor.hypotheses.MyClause;
 import castor.language.Mode;
 import castor.language.Schema;
 import castor.language.Tuple;
-import castor.profiling.StatisticsStreamSampling;
+import castor.sampling.StatisticsStreamSampling;
 import castor.utils.RandomSet;
 
 public class BottomClauseGeneratorStreamSampling extends BottomClauseGeneratorOriginalAlgorithm {

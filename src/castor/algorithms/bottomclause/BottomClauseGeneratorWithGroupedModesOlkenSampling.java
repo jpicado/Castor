@@ -16,7 +16,7 @@ import castor.language.IdentifierType;
 import castor.language.Mode;
 import castor.language.Schema;
 import castor.language.Tuple;
-import castor.profiling.StatisticsOlkenSampling;
+import castor.sampling.StatisticsOlkenSampling;
 import castor.utils.RandomSet;
 
 public class BottomClauseGeneratorWithGroupedModesOlkenSampling extends BottomClauseGeneratorWithGroupedModes {

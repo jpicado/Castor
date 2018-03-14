@@ -1,4 +1,4 @@
-package castor.profiling;
+package castor.sampling;
 
 import java.util.HashMap;
 import java.util.Map;

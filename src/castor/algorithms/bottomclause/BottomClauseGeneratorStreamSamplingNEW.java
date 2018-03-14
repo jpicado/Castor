@@ -1,5 +1,8 @@
 package castor.algorithms.bottomclause;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -15,33 +18,112 @@ import castor.hypotheses.MyClause;
 import castor.language.Mode;
 import castor.language.Schema;
 import castor.language.Tuple;
-import castor.profiling.StatisticsStreamSampling;
+import castor.sampling.JoinEdge;
+import castor.sampling.JoinNode;
+import castor.sampling.SamplingUtils;
+import castor.sampling.StatisticsStreamSampling;
 import castor.settings.DataModel;
+import castor.settings.Parameters;
 import castor.utils.RandomSet;
 
 public class BottomClauseGeneratorStreamSamplingNEW extends BottomClauseGeneratorOriginalAlgorithm {
 
-	private static final String SELECT_SQL_STATEMENT = "SELECT * FROM %s WHERE %s = %s;";
+	private static final String SELECT_WHERE_SQL_STATEMENT = "SELECT * FROM %s WHERE %s = %s;";
+	private static final String SELECT_SQL_STATEMENT = "SELECT * FROM %s;";
 	
 	private StatisticsStreamSampling statistics;
-	private Map<Tuple,Long> weightUpperBounds;
-	private Map<Pair<Tuple,String>,Long> weightWithChildUpperBounds;
+//	private Map<Tuple,Long> weightUpperBounds;
+	private Map<Pair<Tuple,String>,Integer> weightWithChildUpperBounds;
 
-	public BottomClauseGeneratorStreamSamplingNEW(int seed, Schema schema, DataModel dataModel) {
+	public BottomClauseGeneratorStreamSamplingNEW(int seed, GenericDAO genericDAO, Schema schema, DataModel dataModel, Parameters parameters) {
 		super(seed);
 		this.varCounter = 0;
 		
-		computeUpperBounds(schema, dataModel);
+		computeUpperBounds(genericDAO, schema, dataModel, parameters);
 	}
 	
-	private Map<Pair<Tuple,String>, Long> computeUpperBounds(Schema schema, DataModel dataModel) {
-		// TODO Auto-generated method stub
+	private void computeUpperBounds(GenericDAO genericDAO, Schema schema, DataModel dataModel, Parameters parameters) {
+		// weightWithChildUpperBounds: <t,R> -> W
+		weightWithChildUpperBounds = new HashMap<Pair<Tuple,String>,Integer>();
 		
-		// weightUpperBounds: <t> -> W
-		// weightWithChildUpperBounds: <t,R_i^k> -> W
+		JoinNode rootNode = SamplingUtils.findJoinTree(dataModel, parameters);
 		
-		return null;
+		// Group nodes by depth
+		Map<Integer,List<JoinNode>> nodesAtDepth = new HashMap<Integer,List<JoinNode>>();
+		groupJoinNodesByDepth(rootNode, nodesAtDepth, 0);
+		
+		// Dynamic programming algorithm
+		int maxDepth = Collections.max(nodesAtDepth.keySet());
+		for (int i = maxDepth; i >= 1; i--) {
+			System.out.println("Depth:"+i);
+			for (JoinNode node : nodesAtDepth.get(i)) {
+				String query = String.format(SELECT_SQL_STATEMENT, node.getRelation());
+				System.out.println("A:"+query);
+				GenericTableObject result = genericDAO.executeQuery(query);
+				if (result != null) {
+					if (i == maxDepth) {
+						// Leaf
+						for (Tuple tuple : result.getTable()) {
+							weightWithChildUpperBounds.put(new Pair<Tuple,String>(tuple, ""), 1);
+							System.out.println(tuple.toString() + "-" + "none" + ":" + 1);
+						}
+					} else {
+						// Non-leaf
+						for (Tuple tuple : result.getTable()) {
+							for (JoinEdge joinEdge : node.getEdges()) {
+								String leftAttributeValue = tuple.getValues().get(joinEdge.getLeftJoinAttribute()).toString();
+								JoinNode rightNode = joinEdge.getJoinNode();
+								String rightRelation = rightNode.getRelation();
+								String rightAttributeName = schema.getRelations().get(rightRelation.toUpperCase()).getAttributeNames().get(joinEdge.getRightJoinAttribute());
+								
+								// tuple semijoin rightRelation
+								String queryChild = String.format(SELECT_WHERE_SQL_STATEMENT, rightRelation, rightAttributeName, "'"+leftAttributeValue+"'");
+//								System.out.println("B:"+queryChild);
+								GenericTableObject resultChild = genericDAO.executeQuery(queryChild);
+								
+								// W(tuple semijoin rightRelation) = sum of W(t) for each t in (tuple semijoin rightRelation)
+								int weight = 0;
+								if (resultChild != null) {
+									for (Tuple tupleChild : resultChild.getTable()) {
+										if (rightNode.getEdges().size() == 0) {
+											// Child is leaf
+											weight += weightWithChildUpperBounds.get(new Pair<Tuple,String>(tupleChild,""));
+										} else {
+											// Child is non-leaf
+											
+											// W(t) = product W(t,R)
+											int product = 1;
+											for (JoinEdge childJoinEdge : rightNode.getEdges()) {
+												product *= weightWithChildUpperBounds.get(new Pair<Tuple,String>(tupleChild,childJoinEdge.getJoinNode().getRelation()));
+											}
+											weight += product;
+										}
+									}
+								}
+								
+								weightWithChildUpperBounds.put(new Pair<Tuple,String>(tuple, rightRelation), weight);
+								System.out.println(tuple.toString() + "-" + rightRelation + ":" + weight);
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		System.out.println(weightWithChildUpperBounds.toString());
 	}
+	
+	private void groupJoinNodesByDepth(JoinNode joinNode, Map<Integer,List<JoinNode>> nodesAtDepth, int currentDepth) {
+		if (!nodesAtDepth.containsKey(currentDepth)) {
+			nodesAtDepth.put(currentDepth, new ArrayList<JoinNode>());
+		}
+		nodesAtDepth.get(currentDepth).add(joinNode);
+		
+		for (JoinEdge joinEdge : joinNode.getEdges()) {
+			groupJoinNodesByDepth(joinEdge.getJoinNode(), nodesAtDepth, currentDepth+1);
+		}
+	}
+	
 
 	/*
 	 * Implements Stream-Sampling algorithm from paper "On Random Sampling Over Joins"
@@ -88,7 +170,7 @@ public class BottomClauseGeneratorStreamSamplingNEW extends BottomClauseGenerato
 		// Step 2
 		for (String value : sample) {
 			// Create query and run
-			String query = String.format(SELECT_SQL_STATEMENT, relationName, attributeName, "'"+value+"'");
+			String query = String.format(SELECT_WHERE_SQL_STATEMENT, relationName, attributeName, "'"+value+"'");
 			GenericTableObject result = genericDAO.executeQuery(query);
 			
 			if (result != null && result.getTable().size() > 0) {
