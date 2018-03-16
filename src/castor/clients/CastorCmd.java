@@ -280,7 +280,11 @@ public class CastorCmd {
 				}
 			}
 			
-//			JoinNode node = SamplingUtils.findJoinTree(dataModel, parameters);
+//			JoinNode node = SamplingUtils.findStratifiedJoinTree(dataModel, parameters);
+//			List<List<String>> joinPaths = SamplingUtils.getAllJoinPathsFromTree(node);
+//			for (List<String> joinPath : joinPaths) {
+//				System.out.println(joinPath.toString());
+//			}
 //			System.out.println(node);
 //			System.out.println(node.getEdges().toString());
 //			System.out.println(node.getEdges().iterator().next().getJoinNode());

@@ -69,6 +69,39 @@ public class Mode {
 		return sb.toString();
 	}
 	
+	public String toStringWithoutAccessModes() {
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append(predicateName + "(");
+		for (int i = 0; i < arguments.size(); i++) {
+			String mode = arguments.get(i).getType();
+			if (i < arguments.size() - 1) {
+				mode += ",";
+			}
+			sb.append(mode);
+		}
+		sb.append(")");
+		return sb.toString();
+	}
+	
+	public String toStringOnlyConstantAccessModes() {
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append(predicateName + "(");
+		for (int i = 0; i < arguments.size(); i++) {
+			String accessMode = "";
+			if (arguments.get(i).getIdentifierType().equals(IdentifierType.CONSTANT))
+				accessMode = "#";
+			String mode = accessMode+arguments.get(i).getType();
+			if (i < arguments.size() - 1) {
+				mode += ",";
+			}
+			sb.append(mode);
+		}
+		sb.append(")");
+		return sb.toString();
+	}
+	
 	public void printMod(){
 		System.out.println("predicate name:" + "\t" + predicateName);
 		System.out.println("types:");

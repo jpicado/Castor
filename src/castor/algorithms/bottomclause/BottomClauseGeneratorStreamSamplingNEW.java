@@ -47,6 +47,7 @@ public class BottomClauseGeneratorStreamSamplingNEW implements BottomClauseGener
 		return clause.toString2(MyClauseToIDAClause.POSITIVE_SYMBOL, MyClauseToIDAClause.NEGATE_SYMBOL);
 	}
 
+	//TODO finish implementation
 	public MyClause generateBottomClause(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO,
 			Tuple exampleTuple, Schema schema, DataModel dataModel, Parameters parameters, boolean ground) {
 		Random randomGenerator = new Random(seed);

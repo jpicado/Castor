@@ -6,30 +6,29 @@ import java.util.Set;
 
 public class JoinNode {
 
-	private String relation;
+	private JoinNodeRelation nodeRelation;
 	private Set<JoinEdge> edges;
 	
-	public JoinNode(String relation, Set<JoinEdge> edges) {
+	public JoinNode(JoinNodeRelation nodeRelation, Set<JoinEdge> edges) {
 		super();
-		this.relation = relation;
+		this.nodeRelation = nodeRelation;
 		this.edges = edges;
+	}
+	public JoinNode(JoinNodeRelation nodeRelation) {
+		super();
+		this.nodeRelation = nodeRelation;
+		edges = new HashSet<JoinEdge>();
 	}
 	public JoinNode(String relation) {
 		super();
-		this.relation = relation;
+		this.nodeRelation = new JoinNodeRelation(relation);
 		edges = new HashSet<JoinEdge>();
 	}
-	public String getRelation() {
-		return relation;
-	}
-	public void setRelation(String relation) {
-		this.relation = relation;
+	public JoinNodeRelation getNodeRelation() {
+		return nodeRelation;
 	}
 	public Set<JoinEdge> getEdges() {
 		return edges;
-	}
-	public void setEdges(Set<JoinEdge> edges) {
-		this.edges = edges;
 	}
 	
 	@Override
@@ -40,17 +39,17 @@ public class JoinNode {
             return false;
         }
         JoinNode joinNode = (JoinNode) o;
-        return relation == joinNode.relation &&
+        return Objects.equals(nodeRelation, joinNode.nodeRelation) &&
                 Objects.equals(edges, joinNode.edges);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(relation, edges);
+        return Objects.hash(nodeRelation, edges);
     }
     
 	@Override
 	public String toString() {
-		return "JoinNode [relation=" + relation + ", edges=" + edges.toString() + "]";
+		return "JoinNode [nodeRelation=" + nodeRelation + ", edges=" + edges.toString() + "]";
 	}
 }
