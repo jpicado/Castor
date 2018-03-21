@@ -28,7 +28,6 @@ import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSamplingWithSimi
 import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSamplingWithSimilarity;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSampling;
-import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSamplingNEW;
 import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesOlkenSampling;
 import castor.algorithms.bottomclause.BottomClauseUtil;
 import castor.algorithms.bottomclause.StoredProcedureGeneratorSaturationInsideSP;
@@ -47,8 +46,7 @@ import castor.language.MatchingDependency;
 import castor.language.Mode;
 import castor.language.Relation;
 import castor.language.Schema;
-import castor.sampling.JoinNode;
-import castor.sampling.SamplingUtils;
+import castor.mappings.MyClauseToClauseAsString;
 import castor.sampling.StatisticsExtractor;
 import castor.sampling.StatisticsOlkenSampling;
 import castor.sampling.StatisticsStreamSampling;
@@ -61,6 +59,8 @@ import castor.utils.Formatter;
 import castor.utils.NumbersKeeper;
 import castor.utils.Pair;
 import castor.utils.TimeWatch;
+import castor.wrappers.EvaluationResult;
+import castor.wrappers.LearningResult;
 
 public class CastorCmd {
 
@@ -150,9 +150,10 @@ public class CastorCmd {
 		program.run(args);
 	}
 
-	public void run(String[] args) {
+	public LearningResult run(String[] args) {
 		TimeWatch tw = TimeWatch.start();
 		boolean success;
+		LearningResult learningResult = new LearningResult();
 
 		// Parse the arguments
 		CmdLineParser parser = new CmdLineParser(this);
@@ -161,12 +162,12 @@ public class CastorCmd {
 		} catch (CmdLineException e) {
 			logger.error(e.getMessage());
 			parser.printUsage(System.out);
-			return;
+			return learningResult;
 		}
 
 		if (help) {
 			parser.printUsage(System.out);
-			return;
+			return learningResult;
 		}
 
 		// Get parameters from file
@@ -184,7 +185,7 @@ public class CastorCmd {
 				daoFactory.initConnection(url);
 			} catch (RuntimeException e) {
 				logger.error("Unable to connect to server with URL: " + this.parameters.getDbURL());
-				return;
+				return learningResult;
 			}
 			GenericDAO genericDAO = daoFactory.getGenericDAO();
 			BottomClauseConstructionDAO bottomClauseConstructionDAO = daoFactory.getBottomClauseConstructionDAO();
@@ -210,7 +211,7 @@ public class CastorCmd {
 				String ddlFile = getOption(ddlFilePath);
 				success = DDLIndMain.extractIndFromDDL(ddlFile, indsFile);
 				if (!success) {
-					return;
+					return learningResult;
 				}
 			}
 			// If INDs were specified either on IND file or DDL file, read them
@@ -276,7 +277,7 @@ public class CastorCmd {
 			if (this.parameters.isCreateStoredProcedure()) {
 				success = this.compileStoredProcedures();
 				if (!success) {
-					return;
+					return learningResult;
 				}
 			}
 			
@@ -437,6 +438,7 @@ public class CastorCmd {
 				learner.evaluate(coverageEngine, this.schema, definition, posTrain, negTrain);
 
 				// EVALUATE DEFINITION ON TESTING DATA
+				EvaluationResult testEvaluationResult = null;
 				if (testLearnedDefinition) {
 					// Get examples from file or from DB
 					Relation posTest;
@@ -446,7 +448,7 @@ public class CastorCmd {
 					// If file names for examples are given, assume examples are in files
 					String posTestExamplesFile = null;
 					String negTestExamplesFile = null;
-					if (posTrainExamplesFilePath != null && negTestExamplesFilePath != null) {
+					if (posTestExamplesFilePath != null && negTestExamplesFilePath != null) {
 						// Get examples from file
 						examplesSourceTest = CoverageBySubsumptionParallel.EXAMPLES_SOURCE.FILE;
 						
@@ -500,7 +502,7 @@ public class CastorCmd {
 					CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, testSaturator, 
 							posTest, negTest, this.schema, this.dataModel, this.parameters, true,
 							examplesSourceTest, posTestExamplesFile, negTestExamplesFile);
-					learner.evaluate(testCoverageEngine, this.schema, definition, posTest, negTest);
+					testEvaluationResult = learner.evaluate(testCoverageEngine, this.schema, definition, posTest, negTest);
 				}
 				
 				logger.info("Total time: " + NumbersKeeper.totalTime);
@@ -515,6 +517,17 @@ public class CastorCmd {
 				logger.info("LGG time: " + NumbersKeeper.lggTime);
 				logger.info("LearnClause time: " + NumbersKeeper.learnClauseTime);
 				logger.info("Preprocessing time (extracting statistics, creating indexes, etc) (not included in total time): " + NumbersKeeper.preprocessingTime);
+				
+				// Set learning result
+	            learningResult.setSuccess(true);
+	            learningResult.setDefinition(MyClauseToClauseAsString.parseDefinition(definition));
+	            if (testEvaluationResult != null) {
+		            learningResult.setAccuracy(testEvaluationResult.getAccuracy());
+		            learningResult.setPrecision(testEvaluationResult.getPrecision());
+		            learningResult.setRecall(testEvaluationResult.getRecall());
+		            learningResult.setF1(testEvaluationResult.getF1());
+	            }
+	            learningResult.setTime(NumbersKeeper.totalTime/1000);//transforming to seconds
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -522,6 +535,8 @@ public class CastorCmd {
 			// Close connection to DBMS
 			daoFactory.closeConnection();
 		}
+		
+		return learningResult;
 	}
 	
 	/*

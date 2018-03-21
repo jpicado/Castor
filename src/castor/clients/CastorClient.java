@@ -147,10 +147,10 @@ public class CastorClient {
 //    		return learningResult;
 //    	}
 //		
-//		String postrainTableName = this.dataModel.getTarget()+DBCommons.TRAIN_POS_SUFFIX;
-//		String negtrainTableName = this.dataModel.getTarget()+DBCommons.TRAIN_NEG_SUFFIX;
-//		String postestTableName = this.dataModel.getTarget()+DBCommons.TEST_POS_SUFFIX;
-//		String negtestTableName = this.dataModel.getTarget()+DBCommons.TEST_NEG_SUFFIX;
+//		String postrainTableName = this.dataModel.getModeH().getPredicateName()+DBCommons.TRAIN_POS_SUFFIX;
+//		String negtrainTableName = this.dataModel.getModeH().getPredicateName()+DBCommons.TRAIN_NEG_SUFFIX;
+//		String postestTableName = this.dataModel.getModeH().getPredicateName()+DBCommons.TEST_POS_SUFFIX;
+//		String negtestTableName = this.dataModel.getModeH().getPredicateName()+DBCommons.TEST_NEG_SUFFIX;
 //		
 //		DAOFactory daoFactory = DAOFactory.getDAOFactory(DAOFactory.VOLTDB);
 //        try {
@@ -302,7 +302,8 @@ public class CastorClient {
 //		boolean success;
 //		try {
 //			StoredProcedureGeneratorSaturationInsideSP spGenerator = new StoredProcedureGeneratorSaturationInsideSP();
-//			success = spGenerator.generateAndCompileStoredProcedures("sp", this.dataModel.getSpName(), this.parameters.getIterations(), this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), this.parameters.isUseInds());
+//			success = spGenerator.generateAndCompileStoredProcedures(this.parameters.getDbURL(),
+//					this.parameters.getPort(), "sp", this.dataModel.getSpName(), this.parameters.getIterations(), this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), this.parameters.isUseInds());
 //		} catch (Exception e) {
 //			e.printStackTrace();
 //			success = false;
