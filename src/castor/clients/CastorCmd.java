@@ -152,6 +152,7 @@ public class CastorCmd {
 
 	public LearningResult run(String[] args) {
 		TimeWatch tw = TimeWatch.start();
+		NumbersKeeper.reset();
 		boolean success;
 		LearningResult learningResult = new LearningResult();
 

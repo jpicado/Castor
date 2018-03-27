@@ -7,13 +7,13 @@
 	<classpathentry kind="lib" path="lib/log4j-1.2.16.jar"/>
 	<classpathentry kind="lib" path="lib/mymln2poss.jar"/>
 	<classpathentry kind="lib" path="lib/ST-4.0.8.jar"/>
-	<classpathentry kind="lib" path="lib/voltdb-5.9.jar"/>
-	<classpathentry kind="lib" path="lib/voltdbclient-5.9.jar"/>
 	<classpathentry kind="lib" path="lib/jsqlparser-1.2.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="lib/opencsv-4.0.jar"/>
 	<classpathentry kind="lib" path="lib/commons-io-2.5.jar"/>
 	<classpathentry kind="lib" path="lib/commons-lang3-3.6.jar"/>
 	<classpathentry kind="lib" path="lib/commons-math3-3.6.1.jar"/>
+	<classpathentry kind="lib" path="lib/voltdb-7.4.jar"/>
+	<classpathentry kind="lib" path="lib/voltdbclient-7.4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
