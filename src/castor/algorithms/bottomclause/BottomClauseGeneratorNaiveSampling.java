@@ -72,35 +72,6 @@ public class BottomClauseGeneratorNaiveSampling extends BottomClauseGeneratorOri
 				}
 			}
 		}
-		
-//		if (result != null) {
-//			Set<String> usedModes = new HashSet<String>();
-//			for (Mode mode : relationAttributeModes) {
-//				if (ground) {
-//					if (usedModes.contains(mode.toGroundModeString())) {
-//						continue;
-//					}
-//					else {
-//						mode = mode.toGroundMode();
-//						usedModes.add(mode.toGroundModeString());
-//					}
-//				}
-//				int solutionsCounter = 0;
-//				for (Tuple tuple : result.getTable()) {
-//					if (solutionsCounter >= recall)
-//						break;
-//
-//					Predicate literal = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, tuple,
-//							mode, false, newInTerms, distinctTerms);
-//					
-//					// Do not add literal if it's exactly the same as head literal
-//					if (!literal.equals(clause.getPositiveLiterals().get(0).getAtomicSentence())) {
-//						addNotRepeated(newLiterals, literal);
-//						solutionsCounter++;
-//					}
-//				}
-//			}
-//		}
 
 		return newLiterals;
 	}
