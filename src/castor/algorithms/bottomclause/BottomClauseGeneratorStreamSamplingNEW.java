@@ -29,7 +29,6 @@ import castor.sampling.SamplingUtils;
 import castor.settings.DataModel;
 import castor.settings.Parameters;
 import castor.utils.Commons;
-import castor.utils.Pair;
 import castor.utils.Triple;
 
 public class BottomClauseGeneratorStreamSamplingNEW implements BottomClauseGenerator {
@@ -158,9 +157,9 @@ public class BottomClauseGeneratorStreamSamplingNEW implements BottomClauseGener
 						if (joinPathSizes.containsKey(key))
 							size = joinPathSizes.get(key);
 						else {
-							size = SamplingUtils.computeJoinPathSizeFromTuple(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode());
+//							size = SamplingUtils.computeJoinPathSizeFromTuple(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode());
 //							System.out.println("a:"+size);
-//							size = SamplingUtils.computeJoinPathSizeFromTuple2(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode(), depth, joinPathSizes);
+							size = SamplingUtils.computeJoinPathSizeFromTuple2(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode(), depth, joinPathSizes);
 //							System.out.println("b:"+size);
 							joinPathSizes.put(key, size);
 						}

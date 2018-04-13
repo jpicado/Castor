@@ -247,7 +247,7 @@ public class SamplingUtils {
 	
 	/*
 	 * Dynamic programming algorithm to compute size of join paths starting from tuple, for all tuples.
-	 * This corresponds to statistics needed by Stream Sampling
+	 * This corresponds to statistics needed by Stream Sampling.
 	 */
 	public static Map<Pair<Tuple,String>,Integer> computeJoinPathSizeAllTuples(GenericDAO genericDAO, Schema schema, DataModel dataModel, Parameters parameters) {
 		// weightWithChildUpperBounds: <t,R> -> W
@@ -327,7 +327,7 @@ public class SamplingUtils {
 	}
 	
 	/*
-	 * Count number of join paths starting from tuple
+	 * Count number of join paths starting from tuple using a query
 	 */
 	public static long computeJoinPathSizeFromTuple(GenericDAO genericDAO, Schema schema, Tuple tuple, JoinNode node) {
 		List<List<JoinPathNode>> joinPaths = SamplingUtils.getAllJoinPathsFromTree(node);
@@ -347,6 +347,9 @@ public class SamplingUtils {
 		return size;
 	}
 	
+	/*
+	 * Count number of join paths starting from tuple using memorization
+	 */
 	public static long computeJoinPathSizeFromTuple2(GenericDAO genericDAO, Schema schema, Tuple tuple, JoinNode node, int depth, Map<Triple<String,Integer,Tuple>,Long> joinPathSizes) {
 		long size = 1;
 		
