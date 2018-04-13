@@ -53,7 +53,7 @@ public class JoinEdge {
     
 	@Override
 	public String toString() {
-		return "JoinEdge [joinNode=" + joinNode.getNodeRelation() + ", leftJoinAttribute=" + leftJoinAttribute + ", rightJoinAttribute="
+		return "JoinEdge [joinNode=" + joinNode.getNodeRelation().toString() + ", leftJoinAttribute=" + leftJoinAttribute + ", rightJoinAttribute="
 				+ rightJoinAttribute + "]";
 	}
 }

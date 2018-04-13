@@ -47,6 +47,9 @@ import castor.language.Mode;
 import castor.language.Relation;
 import castor.language.Schema;
 import castor.mappings.MyClauseToClauseAsString;
+import castor.sampling.JoinEdge;
+import castor.sampling.JoinNode;
+import castor.sampling.SamplingUtils;
 import castor.sampling.StatisticsExtractor;
 import castor.sampling.StatisticsOlkenSampling;
 import castor.settings.DataModel;
@@ -280,6 +283,16 @@ public class CastorCmd {
 					return learningResult;
 				}
 			}
+			
+			////
+			//TODO remove
+			JoinNode n = SamplingUtils.findStratifiedJoinTree(genericDAO, schema, dataModel, parameters);
+			n = n.getEdges().iterator().next().getJoinNode();
+			System.out.println(n.getNodeRelation().getRelation());
+			for (JoinEdge e : n.getEdges()) {
+				System.out.println(e.toString());
+			}
+			////
 			
 			// Create saturator
 			BottomClauseGenerator saturator;
@@ -526,7 +539,9 @@ public class CastorCmd {
 //			StatisticsStreamSampling statistics = StatisticsExtractor.extractStatisticsForStreamSampling(genericDAO, schema);
 //			saturator = new BottomClauseGeneratorStreamSampling(parameters.getRandomSeed(), statistics);
 			
-			saturator = new BottomClauseGeneratorStreamSamplingNEW(parameters.getRandomSeed());
+			JoinNode joinTree = SamplingUtils.findJoinTree(dataModel, parameters);
+//			JoinNode joinTree = SamplingUtils.findStratifiedJoinTree(genericDAO, schema, dataModel, parameters);
+			saturator = new BottomClauseGeneratorStreamSamplingNEW(parameters.getRandomSeed(), joinTree);
 		} else if (parameters.getSamplingMethod().equals(SamplingMethods.STRATIFIED)) {
 			saturator = new BottomClauseGeneratorStratifiedSampling(parameters.getRandomSeed());
 		} else {

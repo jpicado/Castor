@@ -45,6 +45,9 @@ public class Mode {
 		return sb.toString();
 	}
 	
+	/*
+	 * Output mode, where all identifier types (access modes) are converted to constant (#)
+	 */
 	public Mode toGroundMode() {
 		String predicateName =  this.predicateName;
 		List<Argument> arguments = new LinkedList<Argument>();
@@ -54,6 +57,9 @@ public class Mode {
 		return new Mode(predicateName, arguments);
 	}
 	
+	/*
+	 * Output string of mode, where all identifier types (access modes) are converted to constant (#)
+	 */
 	public String toGroundModeString() {
 		StringBuilder sb = new StringBuilder();
 		
@@ -69,6 +75,9 @@ public class Mode {
 		return sb.toString();
 	}
 	
+	/*
+	 * Output string for mode without identifier types (access modes)
+	 */
 	public String toStringWithoutAccessModes() {
 		StringBuilder sb = new StringBuilder();
 		
@@ -84,6 +93,9 @@ public class Mode {
 		return sb.toString();
 	}
 	
+	/*
+	 * Output mode containing only identified types (access modes) for constant attributes (#)
+	 */
 	public String toStringOnlyConstantAccessModes() {
 		StringBuilder sb = new StringBuilder();
 		
@@ -100,13 +112,6 @@ public class Mode {
 		}
 		sb.append(")");
 		return sb.toString();
-	}
-	
-	public void printMod(){
-		System.out.println("predicate name:" + "\t" + predicateName);
-		System.out.println("types:");
-		for (int i = 0; i < arguments.size(); i++)
-			arguments.get(i).printArg();
 	}
 	
 	/*

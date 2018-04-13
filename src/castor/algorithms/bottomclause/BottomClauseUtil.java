@@ -4,7 +4,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
-import castor.algorithms.transformations.ClauseTransformations;
 import castor.dataaccess.db.BottomClauseConstructionDAO;
 import castor.dataaccess.db.GenericDAO;
 import castor.hypotheses.MyClause;

@@ -19,12 +19,14 @@ import castor.language.Schema;
 import castor.language.Tuple;
 import castor.settings.DataModel;
 import castor.settings.Parameters;
+import castor.utils.TimeWatch;
 import castor.utils.Triple;
 
 public class SamplingUtils {
 	
-	private static final String SELECT_WHERE_SQL_STATEMENT = "SELECT * FROM %s WHERE %s = %s;";
-	private static final String SELECT_SQL_STATEMENT = "SELECT * FROM %s;";
+	private static final String SELECT_WHERE_SQL_STATEMENT = "SELECT * FROM %s WHERE %s = %s";
+	private static final String SELECT_SQL_STATEMENT = "SELECT * FROM %s";
+	private static final String SELECT_GROUPBY_SQL_STATEMENT = "SELECT %s FROM %s GROUP BY %s";
 
 	/*
 	 * Finds the join tree at schema level (using modes)
@@ -92,7 +94,10 @@ public class SamplingUtils {
 		}
 	}
 	
-	public static JoinNode findStratifiedJoinTree(DataModel dataModel, Parameters parameters) {
+	/*
+	 * Finds the join tree at schema level (using modes). If an attribute can be constant, consider each distinct value as a separate join path.
+	 */
+	public static JoinNode findStratifiedJoinTree(GenericDAO genericDAO, Schema schema, DataModel dataModel, Parameters parameters) {
 		JoinNode headNode = new JoinNode(dataModel.getModeH().getPredicateName());
 		
 		// Group modes by type
@@ -134,13 +139,15 @@ public class SamplingUtils {
 		}
 		
 		// Call recursive function
-		findStratifiedJoinTreeAux(headNode, dataModel.getModeH(), modesGroupedByType, 0, parameters.getIterations());
+		findStratifiedJoinTreeAux(genericDAO, schema, headNode, dataModel.getModeH(), modesGroupedByType, 0, parameters.getIterations());
 		
 		return headNode;
 	}
 	
-	//TODO finish implementation
-	private static void findStratifiedJoinTreeAux(JoinNode node, Mode modeForNode, Map<String, List<Mode>> modesGroupedByType, int currentIteration, int maxIterations) {
+	/*
+	 * Recursive auxiliary function for findStratifiedJoinTree
+	 */
+	private static void findStratifiedJoinTreeAux(GenericDAO genericDAO, Schema schema, JoinNode node, Mode modeForNode, Map<String, List<Mode>> modesGroupedByType, int currentIteration, int maxIterations) {
 		if (currentIteration == maxIterations)
 			return;
 		
@@ -152,17 +159,22 @@ public class SamplingUtils {
 		}
 		
 		for (int i = 0; i < modeForNode.getArguments().size(); i++) {
-			String type = modeForNode.getArguments().get(i).getType();
+			String type = modeForNode.getArguments().get(i).getType();			
 			
 			// Find other relations that join with current relation
 			for (Mode mode : modesGroupedByType.get(type)) {
+				String relationName = mode.getPredicateName();
+				
 				List<JoinNodeRelation> nodeRelations = new ArrayList<JoinNodeRelation>();
 				
 				// Find regions
 				List<Integer> constantAttributesPositions = new ArrayList<Integer>();
-				for (int j = 0; i < mode.getArguments().size(); i++) {
-					if (mode.getArguments().get(j).getIdentifierType() == IdentifierType.CONSTANT) {
-						constantAttributesPositions.add(i);
+				List<String> constantAttributesNames = new ArrayList<String>();
+				for (int attrPos = 0; attrPos < mode.getArguments().size(); attrPos++) {
+					if (mode.getArguments().get(attrPos).getIdentifierType() == IdentifierType.CONSTANT) {
+						constantAttributesPositions.add(attrPos);
+						String attributeName = schema.getRelations().get(relationName.toUpperCase()).getAttributeNames().get(attrPos);
+						constantAttributesNames.add(attributeName);
 					}
 				}
 				
@@ -170,9 +182,19 @@ public class SamplingUtils {
 					nodeRelations.add(new JoinNodeRelation(mode.getPredicateName()));
 				} else {
 					// Add a nodeRelation for each region
+					// Get regions
+					String constantAttributesString = String.join(",", constantAttributesNames);
+					String getRegionsQuery = String.format(SELECT_GROUPBY_SQL_STATEMENT, constantAttributesString,
+							relationName, constantAttributesString);
+
+					GenericTableObject getRegionsResult = genericDAO.executeQuery(getRegionsQuery);
+					if (getRegionsResult != null) {
+						// Each tuple represents a region
+						for (Tuple tuple : getRegionsResult.getTable()) {
+							nodeRelations.add(new JoinNodeRelation(relationName, constantAttributesNames, tuple.getStringValues()));
+						}
+					}
 				}
-				
-				
 				
 				for (int j = 0; j < mode.getArguments().size(); j++) {
 					// Skip cases where joining same relation over same attribute
@@ -181,13 +203,16 @@ public class SamplingUtils {
 					
 					// If same type, relations can join
 					if (type.equals(mode.getArguments().get(j).getType())) {
-						
-						
-						JoinNode newJoinNode = new JoinNode(mode.getPredicateName());
-						node.getEdges().add(new JoinEdge(newJoinNode, i, j));
+						// Temporal node, created to find 
+						JoinNode tempJoinNode = new JoinNode(mode.getPredicateName());
 						
 						// Recursive call
-						findJoinTreeAux(newJoinNode, mode, modesGroupedByType, currentIteration+1, maxIterations);
+						findStratifiedJoinTreeAux(genericDAO, schema, tempJoinNode, mode, modesGroupedByType, currentIteration+1, maxIterations);
+						
+						for (JoinNodeRelation joinNodeRelation : nodeRelations) {
+							JoinNode newJoinNode = new JoinNode(joinNodeRelation, tempJoinNode.getEdges());
+							node.getEdges().add(new JoinEdge(newJoinNode, i, j));
+						}
 					}
 				}
 			}
@@ -329,7 +354,7 @@ public class SamplingUtils {
 	/*
 	 * Count number of join paths starting from tuple using a query
 	 */
-	public static long computeJoinPathSizeFromTuple(GenericDAO genericDAO, Schema schema, Tuple tuple, JoinNode node) {
+	public static long computeJoinPathSizeFromTupleWithQueries(GenericDAO genericDAO, Schema schema, Tuple tuple, JoinNode node) {
 		List<List<JoinPathNode>> joinPaths = SamplingUtils.getAllJoinPathsFromTree(node);
 		
 		long size = 1;
@@ -350,7 +375,7 @@ public class SamplingUtils {
 	/*
 	 * Count number of join paths starting from tuple using memorization
 	 */
-	public static long computeJoinPathSizeFromTuple2(GenericDAO genericDAO, Schema schema, Tuple tuple, JoinNode node, int depth, Map<Triple<String,Integer,Tuple>,Long> joinPathSizes) {
+	public static long computeJoinPathSizeFromTuple(GenericDAO genericDAO, Schema schema, Tuple tuple, JoinNode node, int depth, Map<Triple<String,Integer,Tuple>,Long> joinPathSizes) {
 		long size = 1;
 		
 		Triple<String,Integer,Tuple> key = new Triple<String,Integer,Tuple>(node.getNodeRelation().getRelation(),depth,tuple);
@@ -363,12 +388,22 @@ public class SamplingUtils {
 					String leftAttributeValue = tuple.getValues().get(joinEdge.getLeftJoinAttribute()).toString();
 					String rightAttributeName = schema.getRelations().get(joinEdge.getJoinNode().getNodeRelation().getRelation().toUpperCase()).getAttributeNames().get(joinEdge.getRightJoinAttribute());
 					String query = String.format(SELECT_WHERE_SQL_STATEMENT, joinEdge.getJoinNode().getNodeRelation().getRelation(), rightAttributeName, "'"+leftAttributeValue+"'");
+					
+					for (int attrPos = 0; attrPos < joinEdge.getJoinNode().getNodeRelation().getConstantAttributeNames().size(); attrPos++) {
+						query += " AND ";
+						String selectAttributeName = joinEdge.getJoinNode().getNodeRelation().getConstantAttributeNames().get(attrPos);
+						String selectAttributeValue = joinEdge.getJoinNode().getNodeRelation().getConstantAttributeValues().get(attrPos);
+						query += selectAttributeName + " = '" + selectAttributeValue + "'";
+					}
+//					System.out.println(query);
+					TimeWatch tw = TimeWatch.start();
 					GenericTableObject result = genericDAO.executeQuery(query);
+//					System.out.println(tw.time());
 					
 					long sum = 0;
 					if (result != null) {
 						for (Tuple tupleChild : result.getTable()) {
-							sum += computeJoinPathSizeFromTuple2(genericDAO, schema, tupleChild, joinEdge.getJoinNode(), depth+1, joinPathSizes);
+							sum += computeJoinPathSizeFromTuple(genericDAO, schema, tupleChild, joinEdge.getJoinNode(), depth+1, joinPathSizes);
 						}
 					}
 					if (sum > 0) {

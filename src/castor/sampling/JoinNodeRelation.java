@@ -1,5 +1,6 @@
 package castor.sampling;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -12,6 +13,8 @@ public class JoinNodeRelation {
 	public JoinNodeRelation(String relation) {
 		super();
 		this.relation = relation;
+		this.constantAttributeNames = new ArrayList<String>();
+		this.constantAttributeValues = new ArrayList<String>();
 	}
 
 	public JoinNodeRelation(String relation, List<String> constantAttributeNames,
@@ -26,7 +29,7 @@ public class JoinNodeRelation {
 		return relation;
 	}
 
-	public List<String> getConstantAttributePositions() {
+	public List<String> getConstantAttributeNames() {
 		return constantAttributeNames;
 	}
 
@@ -51,4 +54,10 @@ public class JoinNodeRelation {
     public int hashCode() {
         return Objects.hash(relation, constantAttributeNames, constantAttributeValues);
     }
+    
+    @Override
+	public String toString() {
+		return "JoinNodeRelation [relation=" + relation + ", constantAttributeNames=" + constantAttributeNames
+				+ ", constantAttributeValues=" + constantAttributeValues + "]";
+	}
 }

@@ -37,10 +37,12 @@ public class BottomClauseGeneratorStreamSamplingNEW implements BottomClauseGener
 	
 	private int varCounter;
 	private int seed;
+	private JoinNode joinTree;
 
-	public BottomClauseGeneratorStreamSamplingNEW(int seed) {
+	public BottomClauseGeneratorStreamSamplingNEW(int seed, JoinNode joinTree) {
 		this.seed = seed;
 		this.varCounter = 0;
+		this.joinTree = joinTree;
 	}
 	
 	@Override
@@ -109,12 +111,14 @@ public class BottomClauseGeneratorStreamSamplingNEW implements BottomClauseGener
 		}
 		
 		// Compute join tree
-		// Maximum depth of join tree is parameters.iterations 
-		JoinNode node = SamplingUtils.findJoinTree(dataModel, parameters);
+		// Maximum depth of join tree is parameters.iterations
+//		TimeWatch tw = TimeWatch.start();
+//		JoinNode node = SamplingUtils.findStratifiedJoinTree(genericDAO, schema, dataModel, parameters);
+//		System.out.println(tw.time());
 		
 		// Sample from all relations
 		for (int i=0; i<sampleSize; i++) {
-			for (JoinEdge joinEdge : node.getEdges()) {
+			for (JoinEdge joinEdge : joinTree.getEdges()) {
 				generateBottomClauseAux(genericDAO, schema, exampleTuple, joinEdge, groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, 1);
 			}
 		}
@@ -157,9 +161,9 @@ public class BottomClauseGeneratorStreamSamplingNEW implements BottomClauseGener
 						if (joinPathSizes.containsKey(key))
 							size = joinPathSizes.get(key);
 						else {
-//							size = SamplingUtils.computeJoinPathSizeFromTuple(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode());
+//							size = SamplingUtils.computeJoinPathSizeFromTupleWithQueries(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode());
 //							System.out.println("a:"+size);
-							size = SamplingUtils.computeJoinPathSizeFromTuple2(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode(), depth, joinPathSizes);
+							size = SamplingUtils.computeJoinPathSizeFromTuple(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode(), depth, joinPathSizes);
 //							System.out.println("b:"+size);
 							joinPathSizes.put(key, size);
 						}
@@ -208,6 +212,7 @@ public class BottomClauseGeneratorStreamSamplingNEW implements BottomClauseGener
 		}
 	}
 	
+	//TODO delete
 	private void acyclicStreamSample(GenericDAO genericDAO, Schema schema, Tuple tuple, JoinEdge joinEdge, Random randomGenerator, List<Tuple> sample) {
 		String relation = joinEdge.getJoinNode().getNodeRelation().getRelation().toUpperCase();
 		String attributeName = schema.getRelations().get(relation).getAttributeNames().get(joinEdge.getRightJoinAttribute());
@@ -230,7 +235,7 @@ public class BottomClauseGeneratorStreamSamplingNEW implements BottomClauseGener
 				long weightSummed = 0;
 				while (joinTuple == null) {
 					for (Tuple tupleInJoin : result.getTable()) {
-						long size = SamplingUtils.computeJoinPathSizeFromTuple(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode());
+						long size = SamplingUtils.computeJoinPathSizeFromTupleWithQueries(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode());
 						weightSummed += size;
 						double p = (double)size / (double)weightSummed;
 						if (randomGenerator.nextDouble() < p) {
