@@ -27,7 +27,7 @@ import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSamplingWithSimilarity;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSamplingWithSimilarity;
-import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSampling;
+import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSamplingNEW;
 import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesOlkenSampling;
 import castor.algorithms.bottomclause.BottomClauseUtil;
 import castor.algorithms.bottomclause.StoredProcedureGeneratorSaturationInsideSP;
@@ -49,7 +49,6 @@ import castor.language.Schema;
 import castor.mappings.MyClauseToClauseAsString;
 import castor.sampling.StatisticsExtractor;
 import castor.sampling.StatisticsOlkenSampling;
-import castor.sampling.StatisticsStreamSampling;
 import castor.settings.DataModel;
 import castor.settings.JsonSettingsReader;
 import castor.settings.Parameters;
@@ -523,11 +522,11 @@ public class CastorCmd {
 			StatisticsOlkenSampling statistics = StatisticsExtractor.extractStatisticsForOlkenSampling(genericDAO, schema);
 			saturator = new BottomClauseGeneratorWithGroupedModesOlkenSampling(parameters.getRandomSeed(), statistics);
 		} else if (parameters.getSamplingMethod().equals(SamplingMethods.STREAM)) {
-			logger.info("Use Stream sampling. Extracting statistics from database instance...");
-			StatisticsStreamSampling statistics = StatisticsExtractor.extractStatisticsForStreamSampling(genericDAO, schema);
-			saturator = new BottomClauseGeneratorStreamSampling(parameters.getRandomSeed(), statistics);
+//			logger.info("Use Stream sampling. Extracting statistics from database instance...");
+//			StatisticsStreamSampling statistics = StatisticsExtractor.extractStatisticsForStreamSampling(genericDAO, schema);
+//			saturator = new BottomClauseGeneratorStreamSampling(parameters.getRandomSeed(), statistics);
 			
-			//saturator = new BottomClauseGeneratorStreamSamplingNEW(parameters.getRandomSeed());
+			saturator = new BottomClauseGeneratorStreamSamplingNEW(parameters.getRandomSeed());
 		} else if (parameters.getSamplingMethod().equals(SamplingMethods.STRATIFIED)) {
 			saturator = new BottomClauseGeneratorStratifiedSampling(parameters.getRandomSeed());
 		} else {

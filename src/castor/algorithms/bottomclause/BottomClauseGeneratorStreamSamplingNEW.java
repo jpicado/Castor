@@ -30,6 +30,7 @@ import castor.settings.DataModel;
 import castor.settings.Parameters;
 import castor.utils.Commons;
 import castor.utils.Pair;
+import castor.utils.Triple;
 
 public class BottomClauseGeneratorStreamSamplingNEW implements BottomClauseGenerator {
 
@@ -85,7 +86,11 @@ public class BottomClauseGeneratorStreamSamplingNEW implements BottomClauseGener
 		varCounter = 0;
 		MyClause clause = new MyClause();
 		Map<String, String> hashConstantToVariable = new HashMap<String, String>();
-		Map<Pair<String,Tuple>,Long> joinPathSizes = new HashMap<Pair<String,Tuple>,Long>();
+		
+		// <relation,depth,tuple> -> size
+		// need relation in case the same tuple appears in multiple relations
+		// need depth in case a relation appears at different depths in the join tree
+		Map<Triple<String,Integer,Tuple>,Long> joinPathSizes = new HashMap<Triple<String,Integer,Tuple>,Long>();
 		
 		// Create head literal
 		Mode modeH = dataModel.getModeH();
@@ -105,24 +110,27 @@ public class BottomClauseGeneratorStreamSamplingNEW implements BottomClauseGener
 		}
 		
 		// Compute join tree
+		// Maximum depth of join tree is parameters.iterations 
 		JoinNode node = SamplingUtils.findJoinTree(dataModel, parameters);
-		
 		
 		// Sample from all relations
 		for (int i=0; i<sampleSize; i++) {
 			for (JoinEdge joinEdge : node.getEdges()) {
-				generateBottomClauseAux(genericDAO, schema, exampleTuple, joinEdge, groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes);
+				generateBottomClauseAux(genericDAO, schema, exampleTuple, joinEdge, groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, 1);
 			}
 		}
 		
 		return clause;
 	}
 	
+	/*
+	 * Implements idea of Acyclic-Stream-Sample for bottom-clause construction
+	 */
 	private void generateBottomClauseAux(GenericDAO genericDAO, Schema schema, 
 			Tuple tuple, JoinEdge joinEdge, 
 			Map<String, List<Mode>> groupedModes, Map<String, String> hashConstantToVariable, 
 			Random randomGenerator, MyClause clause, boolean ground,
-			Map<Pair<String,Tuple>,Long> joinPathSizes) {
+			Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int depth) {
 		
 		String relation = joinEdge.getJoinNode().getNodeRelation().getRelation();
 		String attributeName = schema.getRelations().get(relation.toUpperCase()).getAttributeNames().get(joinEdge.getRightJoinAttribute());
@@ -146,11 +154,14 @@ public class BottomClauseGeneratorStreamSamplingNEW implements BottomClauseGener
 				while (joinTuple == null) {
 					for (Tuple tupleInJoin : result.getTable()) {
 						long size;
-						Pair<String,Tuple> key = new Pair<String,Tuple>(relation,tupleInJoin);
+						Triple<String,Integer,Tuple> key = new Triple<String,Integer,Tuple>(relation,depth,tupleInJoin);
 						if (joinPathSizes.containsKey(key))
 							size = joinPathSizes.get(key);
 						else {
 							size = SamplingUtils.computeJoinPathSizeFromTuple(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode());
+//							System.out.println("a:"+size);
+//							size = SamplingUtils.computeJoinPathSizeFromTuple2(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode(), depth, joinPathSizes);
+//							System.out.println("b:"+size);
 							joinPathSizes.put(key, size);
 						}
 						
@@ -170,7 +181,7 @@ public class BottomClauseGeneratorStreamSamplingNEW implements BottomClauseGener
 		// Recursive call on node's children
 		for (JoinEdge childJoinEdge : joinEdge.getJoinNode().getEdges()) {
 			generateBottomClauseAux(genericDAO, schema, joinTuple, childJoinEdge, 
-					groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes);
+					groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, depth+1);
 		}
 	}
 	

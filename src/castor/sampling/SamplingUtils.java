@@ -19,6 +19,7 @@ import castor.language.Schema;
 import castor.language.Tuple;
 import castor.settings.DataModel;
 import castor.settings.Parameters;
+import castor.utils.Triple;
 
 public class SamplingUtils {
 	
@@ -331,19 +332,50 @@ public class SamplingUtils {
 	public static long computeJoinPathSizeFromTuple(GenericDAO genericDAO, Schema schema, Tuple tuple, JoinNode node) {
 		List<List<JoinPathNode>> joinPaths = SamplingUtils.getAllJoinPathsFromTree(node);
 		
-		long size = 0;
-		if (joinPaths.size() == 0) {
-			// current tuple is only joinPath
-			size = 1;
-		} else {
+		long size = 1;
+		if (joinPaths.size() > 0) {
 			// sum sizes of join paths
 			for (List<JoinPathNode> joinPath : joinPaths) {
 				String countQuery = generateCountQueryForJoinPathStartingFromTuple(schema, joinPath, tuple);
 //				System.out.println(countQuery);
 				Long result = genericDAO.executeScalarQuery(countQuery);
-				size += result;
+				if (result > 0) {
+					size *= result;
+				}
 			}
 		}
+		return size;
+	}
+	
+	public static long computeJoinPathSizeFromTuple2(GenericDAO genericDAO, Schema schema, Tuple tuple, JoinNode node, int depth, Map<Triple<String,Integer,Tuple>,Long> joinPathSizes) {
+		long size = 1;
+		
+		Triple<String,Integer,Tuple> key = new Triple<String,Integer,Tuple>(node.getNodeRelation().getRelation(),depth,tuple);
+		if (joinPathSizes.containsKey(key)) {
+			size = joinPathSizes.get(key);
+		} else {
+			if (node.getEdges().size() > 0) {
+				for (JoinEdge joinEdge : node.getEdges()) {
+					// tuple semijoin child
+					String leftAttributeValue = tuple.getValues().get(joinEdge.getLeftJoinAttribute()).toString();
+					String rightAttributeName = schema.getRelations().get(joinEdge.getJoinNode().getNodeRelation().getRelation().toUpperCase()).getAttributeNames().get(joinEdge.getRightJoinAttribute());
+					String query = String.format(SELECT_WHERE_SQL_STATEMENT, joinEdge.getJoinNode().getNodeRelation().getRelation(), rightAttributeName, "'"+leftAttributeValue+"'");
+					GenericTableObject result = genericDAO.executeQuery(query);
+					
+					long sum = 0;
+					if (result != null) {
+						for (Tuple tupleChild : result.getTable()) {
+							sum += computeJoinPathSizeFromTuple2(genericDAO, schema, tupleChild, joinEdge.getJoinNode(), depth+1, joinPathSizes);
+						}
+					}
+					if (sum > 0) {
+						size *= sum;
+					}
+				}
+			}
+			joinPathSizes.put(key, size);
+		}
+		
 		return size;
 	}
 
