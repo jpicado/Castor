@@ -29,11 +29,13 @@ import castor.sampling.SamplingUtils;
 import castor.settings.DataModel;
 import castor.settings.Parameters;
 import castor.utils.Commons;
+import castor.utils.NumbersKeeper;
+import castor.utils.TimeWatch;
 import castor.utils.Triple;
 
 public class BottomClauseGeneratorStreamSamplingNEW implements BottomClauseGenerator {
 
-	private static final String SELECT_WHERE_SQL_STATEMENT = "SELECT * FROM %s WHERE %s = %s;";
+	private static final String SELECT_WHERE_SQL_STATEMENT = "SELECT * FROM %s WHERE %s = %s";
 	
 	private int varCounter;
 	private int seed;
@@ -110,24 +112,26 @@ public class BottomClauseGeneratorStreamSamplingNEW implements BottomClauseGener
 			groupedModes.get(mode.getPredicateName()).add(mode);
 		}
 		
-		// Compute join tree
-		// Maximum depth of join tree is parameters.iterations
-//		TimeWatch tw = TimeWatch.start();
-//		JoinNode node = SamplingUtils.findStratifiedJoinTree(genericDAO, schema, dataModel, parameters);
-//		System.out.println(tw.time());
-		
 		// Sample from all relations
-		for (int i=0; i<sampleSize; i++) {
-			for (JoinEdge joinEdge : joinTree.getEdges()) {
-				generateBottomClauseAux(genericDAO, schema, exampleTuple, joinEdge, groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, 1);
-			}
+//		for (int i=0; i<sampleSize; i++) {
+//			for (JoinEdge joinEdge : joinTree.getEdges()) {
+//				generateBottomClauseAux(genericDAO, schema, exampleTuple, joinEdge, groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, 1);
+//			}
+//		}
+		//// Get multiple samples from each relation, instead of calling it multiple times
+		List<Tuple> exampleTupleList = new ArrayList<Tuple>();
+		exampleTupleList.add(exampleTuple);
+		for (JoinEdge joinEdge : joinTree.getEdges()) {
+			generateBottomClauseAux(genericDAO, schema, exampleTupleList, joinEdge, groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, 1, sampleSize);
 		}
+		////
 		
 		return clause;
 	}
 	
 	/*
-	 * Implements idea of Acyclic-Stream-Sample for bottom-clause construction
+	 * Implements idea of Acyclic-Stream-Sample for bottom-clause construction.
+	 * Gets only one sample from each relation.
 	 */
 	private void generateBottomClauseAux(GenericDAO genericDAO, Schema schema, 
 			Tuple tuple, JoinEdge joinEdge, 
@@ -185,6 +189,90 @@ public class BottomClauseGeneratorStreamSamplingNEW implements BottomClauseGener
 		for (JoinEdge childJoinEdge : joinEdge.getJoinNode().getEdges()) {
 			generateBottomClauseAux(genericDAO, schema, joinTuple, childJoinEdge, 
 					groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, depth+1);
+		}
+	}
+	
+	/*
+	 * Implements idea of Acyclic-Stream-Sample for bottom-clause construction.
+	 * Gets multiple samples from each relation.
+	 */
+	private void generateBottomClauseAux(GenericDAO genericDAO, Schema schema, 
+			List<Tuple> tuples, JoinEdge joinEdge, 
+			Map<String, List<Mode>> groupedModes, Map<String, String> hashConstantToVariable, 
+			Random randomGenerator, MyClause clause, boolean ground,
+			Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int depth, int sampleSize) {
+		
+		String relation = joinEdge.getJoinNode().getNodeRelation().getRelation();
+		String attributeName = schema.getRelations().get(relation.toUpperCase()).getAttributeNames().get(joinEdge.getRightJoinAttribute());
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < tuples.size(); i++) {
+			if (tuples.get(i) != null) {
+				if (i > 0) {
+					sb.append(" UNION ");
+				}
+				sb.append(String.format(SELECT_WHERE_SQL_STATEMENT, relation, attributeName, "'"+tuples.get(i).getValues().get(joinEdge.getLeftJoinAttribute()).toString()+"'"));
+			}
+		}
+		String query = sb.toString();
+		
+		// Run query to get all tuples in join
+		GenericTableObject result = genericDAO.executeQuery(query);
+		
+		// Create reservoir
+		List<Tuple> joinTuples = new ArrayList<Tuple>();
+		for (int i = 0; i < sampleSize; i++) {
+			joinTuples.add(null);
+		}
+		
+		if (result != null) {
+			if (result.getTable().size() == 0) {
+				// no tuples
+				return;
+			} else if (result.getTable().size() == 1) {
+				// only one tuple
+				joinTuples.set(0, result.getTable().get(0));
+			} else {
+				// sample a tuple using reservoir sampling (reservoir is joinTuples)
+				long weightSummed = 0;
+				for (Tuple tupleInJoin : result.getTable()) {
+					long size;
+					Triple<String,Integer,Tuple> key = new Triple<String,Integer,Tuple>(relation,depth,tupleInJoin);
+					if (joinPathSizes.containsKey(key))
+						size = joinPathSizes.get(key);
+					else {
+						TimeWatch tw = TimeWatch.start();
+						
+//							size = SamplingUtils.computeJoinPathSizeFromTupleWithQueries(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode());
+//							System.out.println("a:"+size);
+						size = SamplingUtils.computeJoinPathSizeFromTuple(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode(), depth, joinPathSizes);
+//							System.out.println("b:"+size);
+						joinPathSizes.put(key, size);
+						
+						NumbersKeeper.computeJoinSizesTime += tw.time();
+					}
+					
+					weightSummed += size;
+					double p = (double)size / (double)weightSummed;
+					for (int i = 0; i < joinTuples.size(); i++) {
+						if (randomGenerator.nextDouble() < p) {
+							joinTuples.set(i, tupleInJoin);
+						}
+					}
+				}
+			}
+		}
+		
+		for (Tuple joinTuple : joinTuples) {
+			if (joinTuple != null) {
+				// Apply modes and add literal to clause
+				modeOperationsForTuple(joinTuple, clause, hashConstantToVariable, groupedModes.get(relation), ground);
+			}
+		}
+		
+		// Recursive call on node's children
+		for (JoinEdge childJoinEdge : joinEdge.getJoinNode().getEdges()) {
+			generateBottomClauseAux(genericDAO, schema, joinTuples, childJoinEdge, 
+					groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, depth+1, sampleSize);
 		}
 	}
 	

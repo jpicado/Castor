@@ -21,6 +21,8 @@ public class NumbersKeeper {
 	
 	public static long learnClauseTime = 0;
 	
+	public static long computeJoinSizesTime = 0;
+	
 	public static void reset() {
 		totalTime = 0;
 		learningTime = 0;
@@ -40,5 +42,7 @@ public class NumbersKeeper {
 		lggTime = 0;
 		
 		learnClauseTime = 0;
+		
+		computeJoinSizesTime = 0;
 	}
 }

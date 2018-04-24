@@ -19,7 +19,6 @@ import castor.language.Schema;
 import castor.language.Tuple;
 import castor.settings.DataModel;
 import castor.settings.Parameters;
-import castor.utils.TimeWatch;
 import castor.utils.Triple;
 
 public class SamplingUtils {
@@ -395,10 +394,7 @@ public class SamplingUtils {
 						String selectAttributeValue = joinEdge.getJoinNode().getNodeRelation().getConstantAttributeValues().get(attrPos);
 						query += selectAttributeName + " = '" + selectAttributeValue + "'";
 					}
-//					System.out.println(query);
-					TimeWatch tw = TimeWatch.start();
 					GenericTableObject result = genericDAO.executeQuery(query);
-//					System.out.println(tw.time());
 					
 					long sum = 0;
 					if (result != null) {

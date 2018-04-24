@@ -286,12 +286,12 @@ public class CastorCmd {
 			
 			////
 			//TODO remove
-			JoinNode n = SamplingUtils.findStratifiedJoinTree(genericDAO, schema, dataModel, parameters);
-			n = n.getEdges().iterator().next().getJoinNode();
-			System.out.println(n.getNodeRelation().getRelation());
-			for (JoinEdge e : n.getEdges()) {
-				System.out.println(e.toString());
-			}
+//			JoinNode n = SamplingUtils.findStratifiedJoinTree(genericDAO, schema, dataModel, parameters);
+//			n = n.getEdges().iterator().next().getJoinNode();
+//			System.out.println(n.getNodeRelation().getRelation());
+//			for (JoinEdge e : n.getEdges()) {
+//				System.out.println(e.toString());
+//			}
 			////
 			
 			// Create saturator
@@ -502,6 +502,7 @@ public class CastorCmd {
 				logger.info("LGG time: " + NumbersKeeper.lggTime);
 				logger.info("LearnClause time: " + NumbersKeeper.learnClauseTime);
 				logger.info("Preprocessing time (extracting statistics, creating indexes, etc) (not included in total time): " + NumbersKeeper.preprocessingTime);
+				logger.info("Computing join sizes time: " + NumbersKeeper.computeJoinSizesTime);
 				
 				// Set learning result
 	            learningResult.setSuccess(true);
@@ -542,6 +543,13 @@ public class CastorCmd {
 			JoinNode joinTree = SamplingUtils.findJoinTree(dataModel, parameters);
 //			JoinNode joinTree = SamplingUtils.findStratifiedJoinTree(genericDAO, schema, dataModel, parameters);
 			saturator = new BottomClauseGeneratorStreamSamplingNEW(parameters.getRandomSeed(), joinTree);
+			
+			
+			
+//			System.out.println(joinTree.getNodeRelation().getRelation());
+//			for (JoinEdge e : joinTree.getEdges()) {
+//				System.out.println(e.toString());
+//			}
 		} else if (parameters.getSamplingMethod().equals(SamplingMethods.STRATIFIED)) {
 			saturator = new BottomClauseGeneratorStratifiedSampling(parameters.getRandomSeed());
 		} else {
