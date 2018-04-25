@@ -2,12 +2,12 @@ package castor.sampling;
 
 public class JoinPathNode {
 
-	private String leftJoinRelation;
+	private JoinNodeRelation leftJoinRelation;
 	private int leftJoinAttribute;
-	private String rightJoinRelation;
+	private JoinNodeRelation rightJoinRelation;
 	private int rightJoinAttribute;
 	
-	public JoinPathNode(String leftJoinRelation, int leftJoinAttribute, String rightJoinRelation,
+	public JoinPathNode(JoinNodeRelation leftJoinRelation, int leftJoinAttribute, JoinNodeRelation rightJoinRelation,
 			int rightJoinAttribute) {
 		super();
 		this.leftJoinRelation = leftJoinRelation;
@@ -15,13 +15,13 @@ public class JoinPathNode {
 		this.rightJoinRelation = rightJoinRelation;
 		this.rightJoinAttribute = rightJoinAttribute;
 	}
-	public String getLeftJoinRelation() {
+	public JoinNodeRelation getLeftJoinRelation() {
 		return leftJoinRelation;
 	}
 	public int getLeftJoinAttribute() {
 		return leftJoinAttribute;
 	}
-	public String getRightJoinRelation() {
+	public JoinNodeRelation getRightJoinRelation() {
 		return rightJoinRelation;
 	}
 	public int getRightJoinAttribute() {

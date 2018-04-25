@@ -27,7 +27,8 @@ import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSamplingWithSimilarity;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSamplingWithSimilarity;
-import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSamplingNEW;
+import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSamplingRandom;
+import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSamplingStratified;
 import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesOlkenSampling;
 import castor.algorithms.bottomclause.BottomClauseUtil;
 import castor.algorithms.bottomclause.StoredProcedureGeneratorSaturationInsideSP;
@@ -47,7 +48,6 @@ import castor.language.Mode;
 import castor.language.Relation;
 import castor.language.Schema;
 import castor.mappings.MyClauseToClauseAsString;
-import castor.sampling.JoinEdge;
 import castor.sampling.JoinNode;
 import castor.sampling.SamplingUtils;
 import castor.sampling.StatisticsExtractor;
@@ -286,11 +286,17 @@ public class CastorCmd {
 			
 			////
 			//TODO remove
+//			JoinNode n = SamplingUtils.findJoinTree(dataModel, parameters);
 //			JoinNode n = SamplingUtils.findStratifiedJoinTree(genericDAO, schema, dataModel, parameters);
 //			n = n.getEdges().iterator().next().getJoinNode();
 //			System.out.println(n.getNodeRelation().getRelation());
 //			for (JoinEdge e : n.getEdges()) {
 //				System.out.println(e.toString());
+//			}
+//			List<JoinNode> l = SamplingUtils.getAllJoinPathsFromTree(n);
+//			for (JoinNode j : l) {
+//				System.out.println("n:"+j.getNodeRelation().toString());
+//				System.out.println("e:"+j.getEdges().toString());
 //			}
 			////
 			
@@ -375,6 +381,7 @@ public class CastorCmd {
 							coverageEngine.getAllPosExamples().get(this.exampleForSaturation), this.schema,
 							this.dataModel, this.parameters);
 				}
+//				logger.info("Computing join sizes time: " + NumbersKeeper.computeJoinSizesTime);
 			} else {
 				// LEARN
 				logger.info("Learning...");
@@ -541,9 +548,10 @@ public class CastorCmd {
 //			saturator = new BottomClauseGeneratorStreamSampling(parameters.getRandomSeed(), statistics);
 			
 			JoinNode joinTree = SamplingUtils.findJoinTree(dataModel, parameters);
-//			JoinNode joinTree = SamplingUtils.findStratifiedJoinTree(genericDAO, schema, dataModel, parameters);
-			saturator = new BottomClauseGeneratorStreamSamplingNEW(parameters.getRandomSeed(), joinTree);
+			saturator = new BottomClauseGeneratorStreamSamplingRandom(parameters.getRandomSeed(), joinTree);
 			
+//			JoinNode joinTree = SamplingUtils.findStratifiedJoinTree(genericDAO, schema, dataModel, parameters);
+//			saturator = new BottomClauseGeneratorStreamSamplingStratified(parameters.getRandomSeed(), joinTree);
 			
 			
 //			System.out.println(joinTree.getNodeRelation().getRelation());

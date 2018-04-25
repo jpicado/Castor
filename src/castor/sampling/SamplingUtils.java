@@ -226,17 +226,17 @@ public class SamplingUtils {
 		return false;
 	}
 	
-	public static List<List<JoinPathNode>> getAllJoinPathsFromTree(JoinNode node) {
+	public static List<List<JoinPathNode>> getAllJoinPathsByListFromTree(JoinNode node) {
 		List<List<JoinPathNode>> joinPaths = new ArrayList<List<JoinPathNode>>();
 		for (JoinEdge edge : node.getEdges()) {
 			List<JoinPathNode> newPath = new ArrayList<JoinPathNode>();
-			getAllJoinPathsFromTreeAux(node.getNodeRelation().getRelation(), edge.getLeftJoinAttribute(), edge.getJoinNode(), edge.getRightJoinAttribute(), newPath, joinPaths);
+			getAllJoinPathsByListFromTreeAux(node.getNodeRelation(), edge.getLeftJoinAttribute(), edge.getJoinNode(), edge.getRightJoinAttribute(), newPath, joinPaths);
 		}
 		return joinPaths;
 	}
 	
-	private static void getAllJoinPathsFromTreeAux(String sourceJoinRelation, int sourceJoinAttribute, JoinNode targetJoinNode, int targetJoinAttribute, List<JoinPathNode> currentPath, List<List<JoinPathNode>> allPaths) {
-		currentPath.add(new JoinPathNode(sourceJoinRelation, sourceJoinAttribute, targetJoinNode.getNodeRelation().getRelation(), targetJoinAttribute));
+	private static void getAllJoinPathsByListFromTreeAux(JoinNodeRelation sourceJoinRelation, int sourceJoinAttribute, JoinNode targetJoinNode, int targetJoinAttribute, List<JoinPathNode> currentPath, List<List<JoinPathNode>> allPaths) {
+		currentPath.add(new JoinPathNode(sourceJoinRelation, sourceJoinAttribute, targetJoinNode.getNodeRelation(), targetJoinAttribute));
 		
 		if (targetJoinNode.getEdges().isEmpty()) {
 			allPaths.add(currentPath);
@@ -244,18 +244,18 @@ public class SamplingUtils {
 		
 		for (JoinEdge edge : targetJoinNode.getEdges()) {
 			List<JoinPathNode> newPath = new ArrayList<JoinPathNode>(currentPath);
-			getAllJoinPathsFromTreeAux(targetJoinNode.getNodeRelation().getRelation(), edge.getLeftJoinAttribute(), edge.getJoinNode(), edge.getRightJoinAttribute(), newPath, allPaths);
+			getAllJoinPathsByListFromTreeAux(targetJoinNode.getNodeRelation(), edge.getLeftJoinAttribute(), edge.getJoinNode(), edge.getRightJoinAttribute(), newPath, allPaths);
 		}
 	}
 	
-	public static List<List<String>> getAllJoinPathsStringsFromTree(JoinNode node) {
+	public static List<List<String>> getAllJoinPathsByListStringsFromTree(JoinNode node) {
 		List<List<String>> joinPaths = new ArrayList<List<String>>();
 		List<String> newPath = new ArrayList<String>();
-		getAllJoinPathsStringsFromTreeAux(node, 0, 0, newPath, joinPaths);
+		getAllJoinPathsByListStringsFromTreeAux(node, 0, 0, newPath, joinPaths);
 		return joinPaths;
 	}
 	
-	private static void getAllJoinPathsStringsFromTreeAux(JoinNode node, int sourceJoinAttribute, int targetJoinAttribute, List<String> currentPath, List<List<String>> allPaths) {
+	private static void getAllJoinPathsByListStringsFromTreeAux(JoinNode node, int sourceJoinAttribute, int targetJoinAttribute, List<String> currentPath, List<List<String>> allPaths) {
 		currentPath.add(//"["+sourceJoinAttribute+"] " +
 				node.getNodeRelation().getRelation());// + " [" + targetJoinAttribute + "]");
 		
@@ -265,8 +265,30 @@ public class SamplingUtils {
 		
 		for (JoinEdge edge : node.getEdges()) {
 			List<String> newPath = new ArrayList<String>(currentPath);
-			getAllJoinPathsStringsFromTreeAux(edge.getJoinNode(), edge.getLeftJoinAttribute(), edge.getRightJoinAttribute(), newPath, allPaths);
+			getAllJoinPathsByListStringsFromTreeAux(edge.getJoinNode(), edge.getLeftJoinAttribute(), edge.getRightJoinAttribute(), newPath, allPaths);
 		}
+	}
+	
+	public static List<JoinNode> getAllJoinPathsFromTree(JoinNode node) {
+		List<JoinNode> joinPaths = new ArrayList<JoinNode>();
+		
+		List<List<JoinPathNode>> joinPathsList = getAllJoinPathsByListFromTree(node);
+		System.out.println(joinPathsList.size());
+		for (List<JoinPathNode> joinPath : joinPathsList) {
+			JoinNode currentNode = new JoinNode(joinPath.get(0).getLeftJoinRelation());
+			joinPaths.add(currentNode);
+			System.out.print(currentNode.getNodeRelation().toString()+"\t");
+			for (JoinPathNode pathNode : joinPath) {
+				JoinNode newNode = new JoinNode(pathNode.getRightJoinRelation());
+				JoinEdge newEdge = new JoinEdge(newNode, pathNode.getLeftJoinAttribute(), pathNode.getRightJoinAttribute());
+				currentNode.getEdges().add(newEdge);
+				currentNode = newNode;
+				System.out.print(currentNode.getNodeRelation().toString()+"\t");
+			}
+			System.out.println();
+		}
+		
+		return joinPaths;
 	}
 	
 	/*
@@ -354,7 +376,7 @@ public class SamplingUtils {
 	 * Count number of join paths starting from tuple using a query
 	 */
 	public static long computeJoinPathSizeFromTupleWithQueries(GenericDAO genericDAO, Schema schema, Tuple tuple, JoinNode node) {
-		List<List<JoinPathNode>> joinPaths = SamplingUtils.getAllJoinPathsFromTree(node);
+		List<List<JoinPathNode>> joinPaths = SamplingUtils.getAllJoinPathsByListFromTree(node);
 		
 		long size = 1;
 		if (joinPaths.size() > 0) {
@@ -425,8 +447,8 @@ public class SamplingUtils {
 		
 		for (int i=joinPath.size()-1; i >= 0; i--) {
 			JoinPathNode joinPathNode = joinPath.get(i);
-			String leftAttributeName = schema.getRelations().get(joinPathNode.getLeftJoinRelation().toUpperCase()).getAttributeNames().get(joinPathNode.getLeftJoinAttribute());
-			String rightAttributeName = schema.getRelations().get(joinPathNode.getRightJoinRelation().toUpperCase()).getAttributeNames().get(joinPathNode.getRightJoinAttribute());
+			String leftAttributeName = schema.getRelations().get(joinPathNode.getLeftJoinRelation().getRelation().toUpperCase()).getAttributeNames().get(joinPathNode.getLeftJoinAttribute());
+			String rightAttributeName = schema.getRelations().get(joinPathNode.getRightJoinRelation().getRelation().toUpperCase()).getAttributeNames().get(joinPathNode.getRightJoinAttribute());
 			
 			String rightRelationAlias = tableNamePrefix + tableCounter++;
 			sb.append("SELECT " + rightRelationAlias + ".* FROM " + joinPathNode.getRightJoinRelation() + " " + rightRelationAlias + " JOIN (");
@@ -437,7 +459,7 @@ public class SamplingUtils {
 					if (j != 0) {
 						sb.append(" AND ");
 					}
-					String attributeName = schema.getRelations().get(joinPathNode.getLeftJoinRelation().toUpperCase()).getAttributeNames().get(j);
+					String attributeName = schema.getRelations().get(joinPathNode.getLeftJoinRelation().getRelation().toUpperCase()).getAttributeNames().get(j);
 					sb.append(attributeName + " = '" + tuple.getValues().get(j).toString() + "'" );
 				}
 				
