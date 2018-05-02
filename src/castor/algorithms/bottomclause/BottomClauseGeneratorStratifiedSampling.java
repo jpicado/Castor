@@ -218,7 +218,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 						for (Mode mode : groupedModes
 								.get(new Pair<String, Integer>(joinRelationName, joinAttributePosition))) {
 							// Get type for attribute in mode
-							String joinAttributeType = mode.getArguments().get(inputAttributePosition).getType();
+							String joinAttributeType = mode.getArguments().get(joinAttributePosition).getType();
 
 							// Skip mode if another mode with same relation and input attribute has already
 							// been seen

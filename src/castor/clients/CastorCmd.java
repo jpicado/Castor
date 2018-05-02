@@ -28,7 +28,6 @@ import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSamplingWithSimi
 import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSamplingWithSimilarity;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSamplingRandom;
-import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSamplingStratified;
 import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesOlkenSampling;
 import castor.algorithms.bottomclause.BottomClauseUtil;
 import castor.algorithms.bottomclause.StoredProcedureGeneratorSaturationInsideSP;
@@ -543,23 +542,25 @@ public class CastorCmd {
 			StatisticsOlkenSampling statistics = StatisticsExtractor.extractStatisticsForOlkenSampling(genericDAO, schema);
 			saturator = new BottomClauseGeneratorWithGroupedModesOlkenSampling(parameters.getRandomSeed(), statistics);
 		} else if (parameters.getSamplingMethod().equals(SamplingMethods.STREAM)) {
+			// OLD
 //			logger.info("Use Stream sampling. Extracting statistics from database instance...");
 //			StatisticsStreamSampling statistics = StatisticsExtractor.extractStatisticsForStreamSampling(genericDAO, schema);
 //			saturator = new BottomClauseGeneratorStreamSampling(parameters.getRandomSeed(), statistics);
 			
+			// NEW
+			////
 			JoinNode joinTree = SamplingUtils.findJoinTree(dataModel, parameters);
 			saturator = new BottomClauseGeneratorStreamSamplingRandom(parameters.getRandomSeed(), joinTree);
-			
+			////
+		} else if (parameters.getSamplingMethod().equals(SamplingMethods.STRATIFIED)) {
+			// Stratified but not random
+			saturator = new BottomClauseGeneratorStratifiedSampling(parameters.getRandomSeed());
+
+			////
+			// NEW (stratified+random)
 //			JoinNode joinTree = SamplingUtils.findStratifiedJoinTree(genericDAO, schema, dataModel, parameters);
 //			saturator = new BottomClauseGeneratorStreamSamplingStratified(parameters.getRandomSeed(), joinTree);
-			
-			
-//			System.out.println(joinTree.getNodeRelation().getRelation());
-//			for (JoinEdge e : joinTree.getEdges()) {
-//				System.out.println(e.toString());
-//			}
-		} else if (parameters.getSamplingMethod().equals(SamplingMethods.STRATIFIED)) {
-			saturator = new BottomClauseGeneratorStratifiedSampling(parameters.getRandomSeed());
+			////
 		} else {
 			saturator = new BottomClauseGeneratorNaiveSampling(true, parameters.getRandomSeed());
 //			saturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(true);

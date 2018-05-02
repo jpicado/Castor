@@ -273,19 +273,15 @@ public class SamplingUtils {
 		List<JoinNode> joinPaths = new ArrayList<JoinNode>();
 		
 		List<List<JoinPathNode>> joinPathsList = getAllJoinPathsByListFromTree(node);
-		System.out.println(joinPathsList.size());
 		for (List<JoinPathNode> joinPath : joinPathsList) {
 			JoinNode currentNode = new JoinNode(joinPath.get(0).getLeftJoinRelation());
 			joinPaths.add(currentNode);
-			System.out.print(currentNode.getNodeRelation().toString()+"\t");
 			for (JoinPathNode pathNode : joinPath) {
 				JoinNode newNode = new JoinNode(pathNode.getRightJoinRelation());
 				JoinEdge newEdge = new JoinEdge(newNode, pathNode.getLeftJoinAttribute(), pathNode.getRightJoinAttribute());
 				currentNode.getEdges().add(newEdge);
 				currentNode = newNode;
-				System.out.print(currentNode.getNodeRelation().toString()+"\t");
 			}
-			System.out.println();
 		}
 		
 		return joinPaths;
