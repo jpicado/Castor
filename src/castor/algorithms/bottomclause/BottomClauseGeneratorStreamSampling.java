@@ -216,16 +216,15 @@ public abstract class BottomClauseGeneratorStreamSampling implements BottomClaus
 		
 		String relation = joinEdge.getJoinNode().getNodeRelation().getRelation();
 		String attributeName = schema.getRelations().get(relation.toUpperCase()).getAttributeNames().get(joinEdge.getRightJoinAttribute());
-		StringBuilder sb = new StringBuilder();
+		Set<String> selectQueries = new HashSet<String>();
 		for (int i = 0; i < tuples.size(); i++) {
 			if (tuples.get(i) != null) {
-				if (i > 0) {
-					sb.append(" UNION ");
-				}
-				sb.append(String.format(SELECT_WHERE_SQL_STATEMENT, relation, attributeName, "'"+tuples.get(i).getValues().get(joinEdge.getLeftJoinAttribute()).toString()+"'"));
+				String selectQuery = String.format(SELECT_WHERE_SQL_STATEMENT, relation, attributeName, "'"+tuples.get(i).getValues().get(joinEdge.getLeftJoinAttribute()).toString()+"'");
+				selectQueries.add(selectQuery);
 			}
 		}
-		String query = sb.toString();
+		
+		String query = String.join(" UNION ", selectQueries);
 		
 		// Run query to get all tuples in join
 		GenericTableObject result = genericDAO.executeQuery(query);
