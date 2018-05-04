@@ -220,6 +220,14 @@ public abstract class BottomClauseGeneratorStreamSampling implements BottomClaus
 		for (int i = 0; i < tuples.size(); i++) {
 			if (tuples.get(i) != null) {
 				String selectQuery = String.format(SELECT_WHERE_SQL_STATEMENT, relation, attributeName, "'"+tuples.get(i).getValues().get(joinEdge.getLeftJoinAttribute()).toString()+"'");
+				
+				for (int attrPos = 0; attrPos < joinEdge.getJoinNode().getNodeRelation().getConstantAttributeNames().size(); attrPos++) {
+					selectQuery += " AND ";
+					String selectAttributeName = joinEdge.getJoinNode().getNodeRelation().getConstantAttributeNames().get(attrPos);
+					String selectAttributeValue = joinEdge.getJoinNode().getNodeRelation().getConstantAttributeValues().get(attrPos);
+					selectQuery += selectAttributeName + " = '" + selectAttributeValue + "'";
+				}
+				
 				selectQueries.add(selectQuery);
 			}
 		}
