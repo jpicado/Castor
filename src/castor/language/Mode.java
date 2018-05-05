@@ -94,15 +94,39 @@ public class Mode {
 	}
 	
 	/*
-	 * Output mode containing only identified types (access modes) for constant attributes (#)
+	 * Output mode containing only identifier types (access modes) for input attributes (+)
 	 */
-	public String toStringOnlyConstantAccessModes() {
+	public String toStringOnlyInputAccessModes() {
 		StringBuilder sb = new StringBuilder();
 		
 		sb.append(predicateName + "(");
 		for (int i = 0; i < arguments.size(); i++) {
 			String accessMode = "";
-			if (arguments.get(i).getIdentifierType().equals(IdentifierType.CONSTANT))
+			if (arguments.get(i).getIdentifierType().equals(IdentifierType.INPUT))
+				accessMode = "+";
+			String mode = accessMode+arguments.get(i).getType();
+			if (i < arguments.size() - 1) {
+				mode += ",";
+			}
+			sb.append(mode);
+		}
+		sb.append(")");
+		return sb.toString();
+	}
+	
+	/*
+	 * Output mode containing only identifier types (access modes) for input (+) and constant (#) attributes
+	 */
+	public String toStringOnlyInputOrConstantAccessModes() {
+		StringBuilder sb = new StringBuilder();
+		
+		sb.append(predicateName + "(");
+		for (int i = 0; i < arguments.size(); i++) {
+			String accessMode = "";
+			if (arguments.get(i).getIdentifierType().equals(IdentifierType.INPUT))
+				accessMode = "+";
+			else 
+				if (arguments.get(i).getIdentifierType().equals(IdentifierType.CONSTANT))
 				accessMode = "#";
 			String mode = accessMode+arguments.get(i).getType();
 			if (i < arguments.size() - 1) {

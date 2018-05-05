@@ -38,14 +38,16 @@ public class SamplingUtils {
 		Set<String> usedModes = new HashSet<String>();
 		for (Mode mode : dataModel.getModesB()) {
 			// Skip modes if already seen same modes but with different access modes (+,-,#)
-			if (!usedModes.contains(mode.toStringWithoutAccessModes())) {
-				usedModes.add(mode.toStringWithoutAccessModes());
+			if (!usedModes.contains(mode.toStringOnlyInputAccessModes())) {
+				usedModes.add(mode.toStringOnlyInputAccessModes());
 				
 				for (Argument argument : mode.getArguments()) {
-					if (!modesGroupedByType.containsKey(argument.getType())) {
-						modesGroupedByType.put(argument.getType(), new ArrayList<Mode>());
+					if (argument.getIdentifierType().equals(IdentifierType.INPUT)) {
+						if (!modesGroupedByType.containsKey(argument.getType())) {
+							modesGroupedByType.put(argument.getType(), new ArrayList<Mode>());
+						}
+						modesGroupedByType.get(argument.getType()).add(mode);
 					}
-					modesGroupedByType.get(argument.getType()).add(mode);
 				}
 			}
 		}
@@ -74,19 +76,21 @@ public class SamplingUtils {
 			String type = modeForNode.getArguments().get(i).getType();
 			
 			// Find other relations that join with current relation
-			for (Mode mode : modesGroupedByType.get(type)) {
-				for (int j = 0; j < mode.getArguments().size(); j++) {
-					// Skip cases where joining same relation over same attribute
-					if (modeForNode.getPredicateName().equals(mode.getPredicateName()) && inputAttribute == j)
-						continue;
-					
-					// If same type, relations can join
-					if (type.equals(mode.getArguments().get(j).getType())) {
-						JoinNode newJoinNode = new JoinNode(mode.getPredicateName());
-						node.getEdges().add(new JoinEdge(newJoinNode, i, j));
+			if (modesGroupedByType.containsKey(type)) {
+				for (Mode mode : modesGroupedByType.get(type)) {
+					for (int j = 0; j < mode.getArguments().size(); j++) {
+						// Skip cases where joining same relation over same attribute
+						if (modeForNode.getPredicateName().equals(mode.getPredicateName()) && inputAttribute == j)
+							continue;
 						
-						// Recursive call
-						findJoinTreeAux(newJoinNode, mode, modesGroupedByType, currentIteration+1, maxIterations);
+						// If same type, relations can join
+						if (type.equals(mode.getArguments().get(j).getType())) {
+							JoinNode newJoinNode = new JoinNode(mode.getPredicateName());
+							node.getEdges().add(new JoinEdge(newJoinNode, i, j));
+							
+							// Recursive call
+							findJoinTreeAux(newJoinNode, mode, modesGroupedByType, currentIteration+1, maxIterations);
+						}
 					}
 				}
 			}
@@ -103,36 +107,40 @@ public class SamplingUtils {
 		Map<String,List<Mode>> modesGroupedByType = new HashMap<String,List<Mode>>();
 		Set<String> usedModes = new HashSet<String>();
 		for (Mode mode : dataModel.getModesB()) {
-			if (!usedModes.contains(mode.toStringOnlyConstantAccessModes())) {
-				usedModes.add(mode.toStringOnlyConstantAccessModes());
+			if (!usedModes.contains(mode.toStringOnlyInputOrConstantAccessModes())) {
+				usedModes.add(mode.toStringOnlyInputOrConstantAccessModes());
 				
 				boolean containsConstantAttribute = containsConstantAttribute(mode);
 				
 				for (Argument argument : mode.getArguments()) {
-					if (!modesGroupedByType.containsKey(argument.getType())) {
-						modesGroupedByType.put(argument.getType(), new ArrayList<Mode>());
-					}
+					if (argument.getIdentifierType().equals(IdentifierType.INPUT)) {
 					
-					// If mode contains constant attribute, remove previous modes that do not contain constant attributes or previous modes with same constant attribute
-					if (containsConstantAttribute) {
-						Iterator<Mode> it = modesGroupedByType.get(argument.getType()).iterator();
-						while (it.hasNext()) {
-							Mode previousMode = it.next();
-							if (previousMode.toStringWithoutAccessModes().equals(mode.toStringWithoutAccessModes())) {
-								if (containsConstantAttribute(previousMode)) {
-									// Remove previous modes with same constant attribute
-									if (previousMode.toStringOnlyConstantAccessModes().equals(mode.toStringOnlyConstantAccessModes())) {
+						if (!modesGroupedByType.containsKey(argument.getType())) {
+							modesGroupedByType.put(argument.getType(), new ArrayList<Mode>());
+						}
+						
+						// If mode contains constant attribute, remove previous modes that do not contain constant attributes or previous modes with same constant attribute
+						if (containsConstantAttribute) {
+							Iterator<Mode> it = modesGroupedByType.get(argument.getType()).iterator();
+							while (it.hasNext()) {
+								Mode previousMode = it.next();
+								if (previousMode.toStringWithoutAccessModes().equals(mode.toStringWithoutAccessModes())) {
+									if (containsConstantAttribute(previousMode)) {
+										// Remove previous modes with same constant attribute
+										if (previousMode.toStringOnlyInputOrConstantAccessModes().equals(mode.toStringOnlyInputOrConstantAccessModes())) {
+											it.remove();
+										}
+									} else {
+										// Remove modes that do not contain constant attributes
 										it.remove();
 									}
-								} else {
-									// Remove modes that do not contain constant attributes
-									it.remove();
 								}
 							}
 						}
-					}
+						
+						modesGroupedByType.get(argument.getType()).add(mode);
 					
-					modesGroupedByType.get(argument.getType()).add(mode);
+					}
 				}
 			}
 		}
@@ -161,56 +169,58 @@ public class SamplingUtils {
 			String type = modeForNode.getArguments().get(i).getType();			
 			
 			// Find other relations that join with current relation
-			for (Mode mode : modesGroupedByType.get(type)) {
-				String relationName = mode.getPredicateName();
-				
-				List<JoinNodeRelation> nodeRelations = new ArrayList<JoinNodeRelation>();
-				
-				// Find regions
-				List<Integer> constantAttributesPositions = new ArrayList<Integer>();
-				List<String> constantAttributesNames = new ArrayList<String>();
-				for (int attrPos = 0; attrPos < mode.getArguments().size(); attrPos++) {
-					if (mode.getArguments().get(attrPos).getIdentifierType() == IdentifierType.CONSTANT) {
-						constantAttributesPositions.add(attrPos);
-						String attributeName = schema.getRelations().get(relationName.toUpperCase()).getAttributeNames().get(attrPos);
-						constantAttributesNames.add(attributeName);
-					}
-				}
-				
-				if (constantAttributesPositions.isEmpty()) {
-					nodeRelations.add(new JoinNodeRelation(mode.getPredicateName()));
-				} else {
-					// Add a nodeRelation for each region
-					// Get regions
-					String constantAttributesString = String.join(",", constantAttributesNames);
-					String getRegionsQuery = String.format(SELECT_GROUPBY_SQL_STATEMENT, constantAttributesString,
-							relationName, constantAttributesString);
-
-					GenericTableObject getRegionsResult = genericDAO.executeQuery(getRegionsQuery);
-					if (getRegionsResult != null) {
-						// Each tuple represents a region
-						for (Tuple tuple : getRegionsResult.getTable()) {
-							nodeRelations.add(new JoinNodeRelation(relationName, constantAttributesNames, tuple.getStringValues()));
+			if (modesGroupedByType.containsKey(type)) {
+				for (Mode mode : modesGroupedByType.get(type)) {
+					String relationName = mode.getPredicateName();
+					
+					List<JoinNodeRelation> nodeRelations = new ArrayList<JoinNodeRelation>();
+					
+					// Find regions
+					List<Integer> constantAttributesPositions = new ArrayList<Integer>();
+					List<String> constantAttributesNames = new ArrayList<String>();
+					for (int attrPos = 0; attrPos < mode.getArguments().size(); attrPos++) {
+						if (mode.getArguments().get(attrPos).getIdentifierType() == IdentifierType.CONSTANT) {
+							constantAttributesPositions.add(attrPos);
+							String attributeName = schema.getRelations().get(relationName.toUpperCase()).getAttributeNames().get(attrPos);
+							constantAttributesNames.add(attributeName);
 						}
 					}
-				}
-				
-				for (int j = 0; j < mode.getArguments().size(); j++) {
-					// Skip cases where joining same relation over same attribute
-					if (modeForNode.getPredicateName().equals(mode.getPredicateName()) && inputAttribute == j)
-						continue;
 					
-					// If same type, relations can join
-					if (type.equals(mode.getArguments().get(j).getType())) {
-						// Temporal node, created to find 
-						JoinNode tempJoinNode = new JoinNode(mode.getPredicateName());
+					if (constantAttributesPositions.isEmpty()) {
+						nodeRelations.add(new JoinNodeRelation(mode.getPredicateName()));
+					} else {
+						// Add a nodeRelation for each region
+						// Get regions
+						String constantAttributesString = String.join(",", constantAttributesNames);
+						String getRegionsQuery = String.format(SELECT_GROUPBY_SQL_STATEMENT, constantAttributesString,
+								relationName, constantAttributesString);
+	
+						GenericTableObject getRegionsResult = genericDAO.executeQuery(getRegionsQuery);
+						if (getRegionsResult != null) {
+							// Each tuple represents a region
+							for (Tuple tuple : getRegionsResult.getTable()) {
+								nodeRelations.add(new JoinNodeRelation(relationName, constantAttributesNames, tuple.getStringValues()));
+							}
+						}
+					}
+					
+					for (int j = 0; j < mode.getArguments().size(); j++) {
+						// Skip cases where joining same relation over same attribute
+						if (modeForNode.getPredicateName().equals(mode.getPredicateName()) && inputAttribute == j)
+							continue;
 						
-						// Recursive call
-						findStratifiedJoinTreeAux(genericDAO, schema, tempJoinNode, mode, modesGroupedByType, currentIteration+1, maxIterations);
-						
-						for (JoinNodeRelation joinNodeRelation : nodeRelations) {
-							JoinNode newJoinNode = new JoinNode(joinNodeRelation, tempJoinNode.getEdges());
-							node.getEdges().add(new JoinEdge(newJoinNode, i, j));
+						// If same type, relations can join
+						if (type.equals(mode.getArguments().get(j).getType())) {
+							// Temporal node, created to find 
+							JoinNode tempJoinNode = new JoinNode(mode.getPredicateName());
+							
+							// Recursive call
+							findStratifiedJoinTreeAux(genericDAO, schema, tempJoinNode, mode, modesGroupedByType, currentIteration+1, maxIterations);
+							
+							for (JoinNodeRelation joinNodeRelation : nodeRelations) {
+								JoinNode newJoinNode = new JoinNode(joinNodeRelation, tempJoinNode.getEdges());
+								node.getEdges().add(new JoinEdge(newJoinNode, i, j));
+							}
 						}
 					}
 				}

@@ -25,7 +25,6 @@ import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
 import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSamplingWithSimilarity;
-import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSamplingWithSimilarity;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSamplingRandom;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSamplingStratified;
