@@ -441,13 +441,15 @@ public class SamplingUtils {
 		return size;
 	}
 	
+	/*
+	 * Count number of join paths starting from tuple joining with relation
+	 */
 	public static long computeJoinPathSizeFromTupleAndRelation(GenericDAO genericDAO, Schema schema, Tuple tuple, JoinNode node, JoinEdge joinEdge, int depth, Map<Triple<String,Integer,Tuple>,Long> joinPathSizes) {
 		// tuple semijoin child
 		String leftAttributeValue = tuple.getValues().get(joinEdge.getLeftJoinAttribute()).toString();
 		String rightAttributeName = schema.getRelations().get(joinEdge.getJoinNode().getNodeRelation().getRelation().toUpperCase()).getAttributeNames().get(joinEdge.getRightJoinAttribute());
 		String query = String.format(SELECT_WHERE_SQL_STATEMENT, joinEdge.getJoinNode().getNodeRelation().getRelation(), rightAttributeName, "'"+leftAttributeValue+"'");
 		
-//		System.out.println(node.getNodeRelation().toString()+"-"+depth+"-"+tuple.toString()+"-"+joinEdge.getJoinNode().getNodeRelation().toString());
 		for (int attrPos = 0; attrPos < joinEdge.getJoinNode().getNodeRelation().getConstantAttributeNames().size(); attrPos++) {
 			query += " AND ";
 			String selectAttributeName = joinEdge.getJoinNode().getNodeRelation().getConstantAttributeNames().get(attrPos);

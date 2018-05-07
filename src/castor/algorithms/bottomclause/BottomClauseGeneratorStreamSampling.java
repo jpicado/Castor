@@ -112,21 +112,7 @@ public abstract class BottomClauseGeneratorStreamSampling implements BottomClaus
 			groupedModes.get(mode.getPredicateName()).add(mode);
 		}
 		
-		// Sample from all relations
-//		for (int i=0; i<sampleSize; i++) {
-//			for (JoinEdge joinEdge : joinTree.getEdges()) {
-//				generateBottomClauseAux(genericDAO, schema, exampleTuple, joinEdge, groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, 1);
-//			}
-//		}
-		//// Get multiple samples from each relation, instead of calling it multiple times
-//		List<Tuple> exampleTupleList = new ArrayList<Tuple>();
-//		exampleTupleList.add(exampleTuple);
-//		for (JoinEdge joinEdge : joinTree.getEdges()) {
-//			generateBottomClauseAux(genericDAO, schema, exampleTupleList, joinEdge, groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, 1, sampleSize);
-//		}
-		////
 		createBodyLiterals(genericDAO, schema, joinTree, exampleTuple, groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, sampleSize);
-		////
 		
 		return clause;
 	}
@@ -254,21 +240,9 @@ public abstract class BottomClauseGeneratorStreamSampling implements BottomClaus
 				// sample a tuple using reservoir sampling (reservoir is joinTuples)
 				long weightSummed = 0;
 				for (Tuple tupleInJoin : result.getTable()) {
-					long size;
-					Triple<String,Integer,Tuple> key = new Triple<String,Integer,Tuple>(relation,depth,tupleInJoin);
-					if (joinPathSizes.containsKey(key))
-						size = joinPathSizes.get(key);
-					else {
-						TimeWatch tw = TimeWatch.start();
-						
-//							size = SamplingUtils.computeJoinPathSizeFromTupleWithQueries(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode());
-//							System.out.println("a:"+size);
-						size = SamplingUtils.computeJoinPathSizeFromTuple(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode(), depth, joinPathSizes);
-//							System.out.println("b:"+size);
-						joinPathSizes.put(key, size);
-						
-						NumbersKeeper.computeJoinSizesTime += tw.time();
-					}
+					TimeWatch tw = TimeWatch.start();
+					long size = SamplingUtils.computeJoinPathSizeFromTuple(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode(), depth, joinPathSizes);
+					NumbersKeeper.computeJoinSizesTime += tw.time();
 					
 					weightSummed += size;
 					double p = (double)size / (double)weightSummed;

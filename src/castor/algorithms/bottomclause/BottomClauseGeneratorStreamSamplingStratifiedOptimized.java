@@ -77,7 +77,6 @@ public class BottomClauseGeneratorStreamSamplingStratifiedOptimized extends Bott
 		}
 		
 		String query = String.join(" UNION ", selectQueries);
-//		System.out.println(query);
 		
 		// Run query to get all tuples in join
 		GenericTableObject result = genericDAO.executeQuery(query);
