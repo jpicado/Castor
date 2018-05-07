@@ -141,7 +141,7 @@ public abstract class BottomClauseGeneratorStreamSampling implements BottomClaus
 	 * Implements idea of Acyclic-Stream-Sample for bottom-clause construction.
 	 * Gets only one sample from each relation.
 	 */
-	protected void generateBottomClauseAux(GenericDAO genericDAO, Schema schema, 
+	private void generateBottomClauseAux(GenericDAO genericDAO, Schema schema, 
 			Tuple tuple, JoinEdge joinEdge, 
 			Map<String, List<Mode>> groupedModes, Map<String, String> hashConstantToVariable, 
 			Random randomGenerator, MyClause clause, boolean ground,

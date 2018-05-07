@@ -15,6 +15,9 @@ import castor.sampling.JoinNode;
 import castor.sampling.SamplingUtils;
 import castor.utils.Triple;
 
+/*
+ * This version computes all join paths, and uses stream sampling for each join path
+ */
 public class BottomClauseGeneratorStreamSamplingStratified extends BottomClauseGeneratorStreamSampling {
 	
 	private List<JoinNode> joinPaths;
