@@ -40,6 +40,8 @@ public class BottomClauseGeneratorStreamSamplingStratified extends BottomClauseG
 		// For each join path, generate samples and add to clause
 		for (JoinNode node : joinPaths) {
 			for (JoinEdge joinEdge : node.getEdges()) {
+				// Join path sizes change for each join path
+				joinPathSizes.clear();
 				generateBottomClauseAux(genericDAO, schema, exampleTupleList, joinEdge, groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, 1, sampleSize);
 			}
 		}
