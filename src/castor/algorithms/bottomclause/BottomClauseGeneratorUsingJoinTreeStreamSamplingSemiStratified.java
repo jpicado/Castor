@@ -26,9 +26,9 @@ import castor.utils.Triple;
 /*
  * This version optimizes V1 by sampling only once per node in join tree.
  */
-public class BottomClauseGeneratorStreamSamplingStratifiedOptimized extends BottomClauseGeneratorStreamSampling {
+public class BottomClauseGeneratorUsingJoinTreeStreamSamplingSemiStratified extends BottomClauseGeneratorUsingJoinTreeStreamSampling {
 	
-	public BottomClauseGeneratorStreamSamplingStratifiedOptimized(int seed, JoinNode joinTree) {
+	public BottomClauseGeneratorUsingJoinTreeStreamSamplingSemiStratified(int seed, JoinNode joinTree) {
 		super(seed, joinTree);
 	}
 

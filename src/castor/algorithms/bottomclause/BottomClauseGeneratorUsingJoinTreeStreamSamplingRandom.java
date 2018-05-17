@@ -14,9 +14,9 @@ import castor.sampling.JoinEdge;
 import castor.sampling.JoinNode;
 import castor.utils.Triple;
 
-public class BottomClauseGeneratorStreamSamplingRandom extends BottomClauseGeneratorStreamSampling {
+public class BottomClauseGeneratorUsingJoinTreeStreamSamplingRandom extends BottomClauseGeneratorUsingJoinTreeStreamSampling {
 	
-	public BottomClauseGeneratorStreamSamplingRandom(int seed, JoinNode joinTree) {
+	public BottomClauseGeneratorUsingJoinTreeStreamSamplingRandom(int seed, JoinNode joinTree) {
 		super(seed, joinTree);
 	}
 

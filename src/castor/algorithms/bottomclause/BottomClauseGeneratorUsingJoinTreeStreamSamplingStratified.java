@@ -18,11 +18,11 @@ import castor.utils.Triple;
 /*
  * This version computes all join paths, and uses stream sampling for each join path
  */
-public class BottomClauseGeneratorStreamSamplingStratified extends BottomClauseGeneratorStreamSampling {
+public class BottomClauseGeneratorUsingJoinTreeStreamSamplingStratified extends BottomClauseGeneratorUsingJoinTreeStreamSampling {
 	
 	private List<JoinNode> joinPaths;
 	
-	public BottomClauseGeneratorStreamSamplingStratified(int seed, JoinNode joinTree) {
+	public BottomClauseGeneratorUsingJoinTreeStreamSamplingStratified(int seed, JoinNode joinTree) {
 		super(seed, joinTree);
 		this.joinPaths = SamplingUtils.getAllJoinPathsFromTree(joinTree);
 	}

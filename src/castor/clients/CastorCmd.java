@@ -26,9 +26,9 @@ import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
 import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSamplingWithSimilarity;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSamplingWithSimilarity;
-import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSamplingRandom;
-import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSamplingStratified;
-import castor.algorithms.bottomclause.BottomClauseGeneratorStreamSamplingStratifiedOptimized;
+import castor.algorithms.bottomclause.BottomClauseGeneratorUsingJoinTreeStreamSamplingRandom;
+import castor.algorithms.bottomclause.BottomClauseGeneratorUsingJoinTreeStreamSamplingSemiStratified;
+import castor.algorithms.bottomclause.BottomClauseGeneratorUsingJoinTreeStreamSamplingStratified;
 import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesOlkenSampling;
 import castor.algorithms.bottomclause.BottomClauseUtil;
 import castor.algorithms.bottomclause.StoredProcedureGeneratorSaturationInsideSP;
@@ -543,16 +543,15 @@ public class CastorCmd {
 			StatisticsOlkenSampling statistics = StatisticsExtractor.extractStatisticsForOlkenSampling(genericDAO, schema);
 			saturator = new BottomClauseGeneratorWithGroupedModesOlkenSampling(parameters.getRandomSeed(), statistics);
 		} else if (parameters.getSamplingMethod().equals(SamplingMethods.STREAM)) {
-			// OLD
+			// OLD AND WRONG
 //			logger.info("Use Stream sampling. Extracting statistics from database instance...");
 //			StatisticsStreamSampling statistics = StatisticsExtractor.extractStatisticsForStreamSampling(genericDAO, schema);
 //			saturator = new BottomClauseGeneratorStreamSampling(parameters.getRandomSeed(), statistics);
 			
-			// NEW
 			////
+			// NEW
 			JoinNode joinTree = SamplingUtils.findJoinTree(dataModel, parameters);
-//			JoinNode joinTree = SamplingUtils.findStratifiedJoinTree(genericDAO, schema, dataModel, parameters);
-			saturator = new BottomClauseGeneratorStreamSamplingRandom(parameters.getRandomSeed(), joinTree);
+			saturator = new BottomClauseGeneratorUsingJoinTreeStreamSamplingRandom(parameters.getRandomSeed(), joinTree);
 			////
 		} else if (parameters.getSamplingMethod().equals(SamplingMethods.STRATIFIED)) {
 			// Stratified but not random
@@ -561,9 +560,11 @@ public class CastorCmd {
 			////
 			// NEW (stratified+random)
 			JoinNode joinTree = SamplingUtils.findStratifiedJoinTree(genericDAO, schema, dataModel, parameters);
-//			saturator = new BottomClauseGeneratorStreamSamplingStratified(parameters.getRandomSeed(), joinTree);
-			saturator = new BottomClauseGeneratorStreamSamplingStratifiedOptimized(parameters.getRandomSeed(), joinTree);
+			saturator = new BottomClauseGeneratorUsingJoinTreeStreamSamplingStratified(parameters.getRandomSeed(), joinTree);
 			////
+		} else if (parameters.getSamplingMethod().equals(SamplingMethods.SEMISTRATIFIED)) {
+			JoinNode joinTree = SamplingUtils.findStratifiedJoinTree(genericDAO, schema, dataModel, parameters);
+			saturator = new BottomClauseGeneratorUsingJoinTreeStreamSamplingSemiStratified(parameters.getRandomSeed(), joinTree);
 		} else {
 			saturator = new BottomClauseGeneratorNaiveSampling(true, parameters.getRandomSeed());
 //			saturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(true);
