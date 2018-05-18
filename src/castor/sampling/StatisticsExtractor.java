@@ -19,7 +19,7 @@ public class StatisticsExtractor {
 	
 	public static StatisticsOlkenSampling extractStatisticsForOlkenSampling(GenericDAO genericDAO, Schema schema) {
 		Map<String, Long> relationSize = new HashMap<String, Long>();
-		Map<Pair<String,String>, Long> maxNumberOfDistinctTuplesWithAttribute = new HashMap<Pair<String,String>, Long>();
+		Map<Pair<String,String>, Long> maximumFrequencyOnAttribute = new HashMap<Pair<String,String>, Long>();
 		
 		for (Relation relation : schema.getRelations().values()) {
 			// Get relation size
@@ -31,11 +31,11 @@ public class StatisticsExtractor {
 			for (String attribute: relation.getAttributeNames()) {
 				String query = String.format(QUERY_COUNT_DISTINCT_TUPLES, relation.getName(), attribute);
 				long count = genericDAO.executeScalarQuery(query);
-				maxNumberOfDistinctTuplesWithAttribute.put(new Pair<String,String>(relation.getName(), attribute), count);
+				maximumFrequencyOnAttribute.put(new Pair<String,String>(relation.getName(), attribute), count);
 			}
 		}
 		
-		return new StatisticsOlkenSampling(relationSize, maxNumberOfDistinctTuplesWithAttribute);
+		return new StatisticsOlkenSampling(relationSize, maximumFrequencyOnAttribute);
 	}
 	
 	public static StatisticsStreamSampling extractStatisticsForStreamSampling(GenericDAO genericDAO, Schema schema) {

@@ -467,6 +467,24 @@ public class SamplingUtils {
 		
 		return sum;
 	}
+	
+	public static long computeOlkenWeightFromJoinNode(GenericDAO genericDAO, Schema schema, JoinNode node, StatisticsOlkenSampling statistics) {
+		long weight = 1;
+		
+		for (JoinEdge joinEdge : node.getEdges()) {
+			String relationName = joinEdge.getJoinNode().getNodeRelation().getRelation();
+			String attributeName = schema.getRelations().get(joinEdge.getJoinNode().getNodeRelation().getRelation().toUpperCase()).getAttributeNames().get(joinEdge.getRightJoinAttribute());
+			Pair<String,String> key = new Pair<String,String>(relationName, attributeName);
+			
+			// Multiply by maximum frequency of current relation
+			weight *= statistics.getMaximumFrequencyOnAttribute().get(key);
+			
+			// Multiply by maximum frequencies of children
+			weight *= computeOlkenWeightFromJoinNode(genericDAO, schema, joinEdge.getJoinNode(), statistics);
+		}
+		
+		return weight;
+	}
 
 	/* 
 	 * Generate query to count join paths starting from tuple

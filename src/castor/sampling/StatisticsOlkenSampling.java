@@ -7,12 +7,12 @@ import aima.core.util.datastructure.Pair;
 public class StatisticsOlkenSampling {
 
 	private Map<String, Long> relationSize;
-	private Map<Pair<String,String>, Long> maxNumberOfDistinctTuplesWithAttribute;
+	private Map<Pair<String,String>, Long> maximumFrequencyOnAttribute;
 	
-	public StatisticsOlkenSampling(Map<String, Long> relationSize, Map<Pair<String, String>, Long> maxNumberOfDistinctTuplesWithAttribute) {
+	public StatisticsOlkenSampling(Map<String, Long> relationSize, Map<Pair<String, String>, Long> maximumFrequencyOnAttribute) {
 		super();
 		this.relationSize = relationSize;
-		this.maxNumberOfDistinctTuplesWithAttribute = maxNumberOfDistinctTuplesWithAttribute;
+		this.maximumFrequencyOnAttribute = maximumFrequencyOnAttribute;
 	}
 
 	public Map<String, Long> getRelationSize() {
@@ -23,12 +23,11 @@ public class StatisticsOlkenSampling {
 		this.relationSize = relationSize;
 	}
 
-	public Map<Pair<String, String>, Long> getMaxNumberOfDistinctTuplesWithAttribute() {
-		return maxNumberOfDistinctTuplesWithAttribute;
+	public Map<Pair<String, String>, Long> getMaximumFrequencyOnAttribute() {
+		return maximumFrequencyOnAttribute;
 	}
 
-	public void setMaxNumberOfDistinctTuplesWithAttribute(
-			Map<Pair<String, String>, Long> numberOfDistinctTuplesWithAttribute) {
-		this.maxNumberOfDistinctTuplesWithAttribute = numberOfDistinctTuplesWithAttribute;
+	public void setMaximumFrequencyOnAttribute(Map<Pair<String, String>, Long> maximumFrequencyOnAttribute) {
+		this.maximumFrequencyOnAttribute = maximumFrequencyOnAttribute;
 	}
 }

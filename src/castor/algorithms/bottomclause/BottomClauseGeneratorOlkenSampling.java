@@ -90,7 +90,7 @@ public class BottomClauseGeneratorOlkenSampling extends BottomClauseGeneratorOri
 				
 				// Compute probability to keep sample
 				Pair<String,String> key = new Pair<String, String>(relationName.toUpperCase(), attributeName.toUpperCase());
-				double p = (double)cardinality / (double)statistics.getMaxNumberOfDistinctTuplesWithAttribute().get(key);
+				double p = (double)cardinality / (double)statistics.getMaximumFrequencyOnAttribute().get(key);
 				
 				// Generate random number and check if accept or reject
 				if (randomGenerator.nextDouble() < p) {

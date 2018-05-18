@@ -102,7 +102,7 @@ public abstract class BottomClauseGeneratorUsingJoinTreeStreamSampling extends B
 			Map<String, List<Mode>> groupedModes, Map<String, String> hashConstantToVariable, 
 			Random randomGenerator, MyClause clause, boolean ground,
 			Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int depth, int sampleSize) {
-		
+		// Get tuples in relation in joinEdge that join with given tuples
 		String relation = joinEdge.getJoinNode().getNodeRelation().getRelation();
 		String attributeName = schema.getRelations().get(relation.toUpperCase()).getAttributeNames().get(joinEdge.getRightJoinAttribute());
 		Set<String> selectQueries = new HashSet<String>();
@@ -128,9 +128,6 @@ public abstract class BottomClauseGeneratorUsingJoinTreeStreamSampling extends B
 		
 		// Create reservoir
 		List<Tuple> joinTuples = new ArrayList<Tuple>();
-		for (int i = 0; i < sampleSize; i++) {
-			joinTuples.add(null);
-		}
 		
 		if (result != null) {
 			if (result.getTable().size() == 0) {
@@ -138,17 +135,23 @@ public abstract class BottomClauseGeneratorUsingJoinTreeStreamSampling extends B
 				return;
 			} else if (result.getTable().size() == 1) {
 				// only one tuple
-				joinTuples.set(0, result.getTable().get(0));
+				joinTuples.add(result.getTable().get(0));
 			} else {
-				// sample a tuple using reservoir sampling (reservoir is joinTuples)
+				// add copies of first sample
+				for (int i = 0; i < sampleSize; i++) {
+					//joinTuples.add(result.getTable().get(0));
+					joinTuples.add(null);
+				}
+				
+				// sample tuples using reservoir sampling (reservoir is joinTuples)
 				long weightSummed = 0;
 				for (Tuple tupleInJoin : result.getTable()) {
 					TimeWatch tw = TimeWatch.start();
-					long size = SamplingUtils.computeJoinPathSizeFromTuple(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode(), depth, joinPathSizes);
+					long weight = SamplingUtils.computeJoinPathSizeFromTuple(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode(), depth, joinPathSizes);
 					NumbersKeeper.computeJoinSizesTime += tw.time();
 					
-					weightSummed += size;
-					double p = (double)size / (double)weightSummed;
+					weightSummed += weight;
+					double p = (double)weight / (double)weightSummed;
 					for (int i = 0; i < joinTuples.size(); i++) {
 						if (randomGenerator.nextDouble() < p) {
 							joinTuples.set(i, tupleInJoin);

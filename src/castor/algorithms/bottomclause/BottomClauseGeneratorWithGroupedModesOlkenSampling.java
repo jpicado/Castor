@@ -193,7 +193,7 @@ public class BottomClauseGeneratorWithGroupedModesOlkenSampling extends BottomCl
 							
 							// Compute probability and add to sum
 							Pair<String,String> key = new Pair<String, String>(relationName.toUpperCase(), inputAttributeName.toUpperCase());
-							double p = (double)cardinality / (double)statistics.getMaxNumberOfDistinctTuplesWithAttribute().get(key);
+							double p = (double)cardinality / (double)statistics.getMaximumFrequencyOnAttribute().get(key);
 							probabilitySum += p;
 						}
 					}
