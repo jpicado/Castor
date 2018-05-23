@@ -7,6 +7,7 @@ public class NumbersKeeper {
 	
 	public static long creatingCoverageTime = 0;
 	public static long preprocessingTime = 0;
+	public static long bottomClauseConstructionTime = 0;
 	
 	public static long coverageTime = 0;
 	public static int coverageCalls = 0;
@@ -29,6 +30,7 @@ public class NumbersKeeper {
 		
 		creatingCoverageTime = 0;
 		preprocessingTime = 0;
+		bottomClauseConstructionTime = 0;
 		
 		coverageTime = 0;
 		coverageCalls = 0;

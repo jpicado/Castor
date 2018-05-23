@@ -6,6 +6,7 @@ import aima.core.logic.fol.kb.data.Literal;
 import aima.core.logic.fol.parsing.ast.*;
 import castor.hypotheses.ClauseInfo;
 import castor.hypotheses.MyClause;
+import castor.utils.Commons;
 import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
 
@@ -107,6 +108,10 @@ public class ClauseTransformations {
                 NumbersKeeper.minimizationTime += tw.time();
 
                 clauseInfo.setMoreGeneralClause(tempClause);
+                
+                // Add previous substitutions to new substitutions?
+                newHeadSubstitutions.putAll(headSubstitutions);
+                
                 return minimize(clauseInfo, newHeadSubstitutions);
             }
         }
@@ -203,14 +208,21 @@ public class ClauseTransformations {
                     headSubstitutions.clear();
                     for (Variable var : theta.keySet()) {
                         if (headLiteral.getAtomicSentence().getArgs().contains(var)) {
-                        		
-                        		if (headLiteral.getAtomicSentence().getArgs().contains(theta.get(var))) {
-                        			// Not a valid substitution if head variable is substituted by other head variable
-                        			validSubstitution = false;
-                        			break;
-                        		} else {
-                        			headSubstitutions.put(var, theta.get(var));
-                        		}
+                        	// Avoid head substitutions
+//                        	validSubstitution = false;
+//                			break;
+                			
+                    		if (
+                    				// do not allow substitutions of head variables for other head variables
+                    				headLiteral.getAtomicSentence().getArgs().contains(theta.get(var)) ||
+                    				// do not allow substitutions of head variables for other variables
+                    				Commons.isVariable(theta.get(var))) {
+                    			// Not a valid substitution if head variable is substituted by other head variable
+                    			validSubstitution = false;
+                    			break;
+                    		} else {
+                    			headSubstitutions.put(var, theta.get(var));
+                    		}
                         }
                     }
 

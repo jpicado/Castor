@@ -309,8 +309,9 @@ public class CastorCmd {
 				if (parameters.isAllowSimilarity() ||
 						parameters.getSamplingMethod().equals(SamplingMethods.OLKEN) ||
 						parameters.getSamplingMethod().equals(SamplingMethods.STREAM) ||
-						parameters.getSamplingMethod().equals(SamplingMethods.STRATIFIED)) {
-					throw new UnsupportedOperationException("Sampling method or simliarity not supported inside stored procedure.");
+						parameters.getSamplingMethod().equals(SamplingMethods.STRATIFIED) ||
+						parameters.getSamplingMethod().equals(SamplingMethods.SEMISTRATIFIED)) {
+					throw new UnsupportedOperationException("Sampling method or similarity not supported inside stored procedure.");
 				} else {
 					saturator = new BottomClauseGeneratorInsideSP();
 					coverageEngineSaturator = new BottomClauseGeneratorInsideSP();
@@ -500,6 +501,7 @@ public class CastorCmd {
 				logger.info("Total time: " + NumbersKeeper.totalTime);
 				logger.info("Creating coverage engine time: " + NumbersKeeper.creatingCoverageTime);
 				logger.info("Learning time: " + NumbersKeeper.learningTime);
+				logger.info("Bottom-clause construction time: " + NumbersKeeper.bottomClauseConstructionTime);
 				logger.info("Coverage time: " + NumbersKeeper.coverageTime);
 				logger.info("Coverage calls: " + NumbersKeeper.coverageCalls);
 				logger.info("Scoring time: " + NumbersKeeper.scoringTime);

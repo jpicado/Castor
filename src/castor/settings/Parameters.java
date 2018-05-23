@@ -166,6 +166,8 @@ public class Parameters {
 			this.samplingMethod = SamplingMethods.STREAM;
 		} else if (samplingMethod.equals("stratified")) {
 			this.samplingMethod = SamplingMethods.STRATIFIED;
+		} else if (samplingMethod.equals("semistratified")) {
+			this.samplingMethod = SamplingMethods.SEMISTRATIFIED;
 		} else {
 			throw new IllegalArgumentException("Unknown sampling method.");
 		}

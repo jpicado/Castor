@@ -381,22 +381,20 @@ public class CastorLearner implements Learner {
 			int recall, int maxterms, int sampleSize, int beamWidth) {
 		TimeWatch tw = TimeWatch.start();
 
-		TimeWatch twSaturation = TimeWatch.start();
-		MyClause bottomClause;
-		while(true) {
-			// First unseen positive example (pop)
-			Tuple exampleTuple = remainingPosExamples.remove(0);
+		// First unseen positive example (pop)
+		Tuple exampleTuple = remainingPosExamples.remove(0);
 
-			// Generate bottom clause
-			logger.info("Generating bottom clause for " + exampleTuple.getValues().toString() + "...");
-			bottomClause = saturator.generateBottomClause(genericDAO, bottomClauseConstructionDAO, exampleTuple,
-					schema, dataModel, parameters);
-			
-			break;
-		}
+		// Generate bottom clause
+		logger.info("Generating bottom clause for " + exampleTuple.getValues().toString() + "...");
+		TimeWatch twSaturation = TimeWatch.start();
+		MyClause bottomClause = saturator.generateBottomClause(genericDAO, bottomClauseConstructionDAO, exampleTuple,
+				schema, dataModel, parameters);
+		long saturationTime = twSaturation.time(TimeUnit.MILLISECONDS);
+		NumbersKeeper.bottomClauseConstructionTime += saturationTime;
+
 		logger.debug("Bottom clause: \n" + Formatter.prettyPrint(bottomClause));
 		logger.info("Literals: " + bottomClause.getNumberLiterals());
-		logger.info("Saturation time: " + twSaturation.time(TimeUnit.MILLISECONDS) + " milliseconds.");
+		logger.info("Saturation time: " + saturationTime + " milliseconds.");
 
 		// MINIMIZATION CAN BE USEFUL WHEN THERE ARE NO ISSUES IF LITERALS WITH
 		// VARIABLES ARE REMOVED BECAUSE THERE ARE LITERALS WITH CONSTANTS.
