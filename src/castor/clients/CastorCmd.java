@@ -284,22 +284,6 @@ public class CastorCmd {
 				}
 			}
 			
-			////
-			//TODO remove
-//			JoinNode n = SamplingUtils.findJoinTree(dataModel, parameters);
-//			JoinNode n = SamplingUtils.findStratifiedJoinTree(genericDAO, schema, dataModel, parameters);
-//			n = n.getEdges().iterator().next().getJoinNode();
-//			System.out.println(n.getNodeRelation().getRelation());
-//			for (JoinEdge e : n.getEdges()) {
-//				System.out.println(e.toString());
-//			}
-//			List<JoinNode> l = SamplingUtils.getAllJoinPathsFromTree(n);
-//			for (JoinNode j : l) {
-//				System.out.println("n:"+j.getNodeRelation().toString());
-//				System.out.println("e:"+j.getEdges().toString());
-//			}
-			////
-			
 			// Create saturator
 			BottomClauseGenerator saturator;
 			BottomClauseGenerator coverageEngineSaturator;
