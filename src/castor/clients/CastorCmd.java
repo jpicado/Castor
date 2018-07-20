@@ -307,7 +307,6 @@ public class CastorCmd {
 			CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, coverageEngineSaturator,
 					posTrain, negTrain, this.schema, this.dataModel, this.parameters, createFullCoverageEngine,
 					examplesSource, posTrainExamplesFile, negTrainExamplesFile);
-//			CoverageEngine coverageEngine = new CoverageByDBJoiningAllSingleExample(genericDAO, posTrain, negTrain, parameters);
 			
 			logger.info("Creating coverage engine for covering approach...");
 			CoverageEngine coverageEngineForCoveringApproach;
