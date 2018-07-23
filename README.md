@@ -39,12 +39,12 @@ java -jar Castor.jar -dataModel <data_model_file> -parameters <parameters_file> 
 ```
 
 ### Castor command line arguments
-- **dataModel** &lt;data_model_file&gt; (required): JSON file containing mode declarations (language bias). See an example [here](https://github.com/jpicado/Castor/examples/uwcse/castor-input/dataModel.json). A short explanation on mode declarations can be found in [this paper](https://arxiv.org/abs/1710.01420).
+- **dataModel** &lt;data_model_file&gt; (required): JSON file containing mode declarations (language bias). See an example [here](https://github.com/jpicado/Castor/examples/uwcse/castor-input/dataModel.json). A short explanation on mode declarations can be found in Section 3 of [this paper](https://arxiv.org/abs/1710.01420).
 - **parameters** &lt;parameters_file&gt; (required): JSON file containing parameters (explained below).
 - **inds** &lt;inds_file&gt;: JSON file containing inclusion dependencies. See an example [here](https://github.com/jpicado/Castor/examples/uwcse/castor-input/inds.json).
 - **trainPosSuffix** &lt;train_pos_suffix&gt;: Suffix of table containing positive training examples.
 - **trainNegSuffix** &lt;train_neg_suffix&gt;: Suffix of table containing negative training examples.
-- **testPosSuffix** &lt;test_pos_suffix&gt;: Suffix of table containing positive test examples.
+- **testPosSuffix** &lt;test_pos_suffix&gt;: Suffix of table containing positive testing examples.
 - **testNegSuffix** &lt;test_neg_suffix&gt;: Suffix of table containing negative testing examples.
 - **posTrainExamplesFile** &lt;pos_train_examples_file&gt;: CSV file containing positive training examples.
 - **negTrainExamplesFile** &lt;neg_train_examples_file&gt;: CSV file containing negative training examples.
@@ -58,20 +58,20 @@ java -jar Castor.jar -dataModel <data_model_file> -parameters <parameters_file> 
 
 ### Castor parameters
 These parameters are specified inside the file pointed by the `parameters` argument.
-- **dbURL**: URL where VoltDB server is running. (default: "localhost")
+- **dbURL**: VoltDB server URL. (default: "localhost")
 - **port**: VoltDB client port. (default: 21212)
 - **iterations**: Number of iterations in bottom-clause construction algorithm. Equivalent to maximum depth of variables in a bottom-clause.
 - **minprec**: Minimum precision that a clause must satisfy to be included in the learned definition (computed based on uncovered positive examples). In other words, how precise each clause should be. (default: 0.5)
-- **minrec**: Minimum recall that a clause must satisfy to be included in the learned definition (computed based on all positive examples). In other words, the minimum percentage of positive examples that clause should cover. (default: 0).
+- **minrec**: Minimum recall that a clause must satisfy to be included in the learned definition (computed based on all positive examples). In other words, the minimum percentage of positive examples that a clause should cover. (default: 0).
 - **minPos**: Minimum number of positive examples that a clause must cover to be included in the learned definition. (default: 2)
 - **sample**: Number of examples to use when generalizing a clause using ARMG. (default: 1)
 - **beam**: Number of candidate clauses to keep. (default: 1)
 - **recall**: Maximum number of literals added to a bottom-clause for each application of a mode declaration. (default: 10)
 - **groundRecall**: Maximum number of literals added to a ground bottom-clause for each application of a mode declaration. Ground bottom-clauses are used to evaluate coverage using theta-subsumption. If this parameter is restricted, result of coverage is approximate. (default: Integer.Max_VALUE)
-- **threads**: Number of threads, used to parallelize coverage operations. (default: 1)
+- **threads**: Number of threads; used to parallelize coverage operations. (default: 1)
 - **randomSeed**: Random seed. (default: 1)
 - **createStoredProcedure**: Create stored procedures that run bottom-clause construction algorithm. (default: true)
-- **useStoredProcedure**: Use stored procedures to build bottom-clause. (default: true)
+- **useStoredProcedure**: Use stored procedures to run bottom-clause construction algorithm. (default: true)
 
 
 ## Notes
