@@ -1,0 +1,30 @@
+{
+	"headMode": "advisedby(+student,+professor)",
+	"bodyModes": [
+		"student(+student)",
+		"inphase(+student,#phase)",
+		"inphase(+student,-phase)",
+		
+		"yearsinprogram(+student,#years)",
+		"yearsinprogram(+student,-years)",
+		
+		"professor(+professor)",
+		"hasposition(+professor,#faculty)",
+		"hasposition(+professor,-faculty)",
+		
+		"courselevel(+course,#level)",
+		"courselevel(+course,-level)",
+		
+		"taughtby(+course,-professor,-date)",
+		"taughtby(-course,+professor,-date)",
+		
+		"ta(+course,-student,-date)",
+		"ta(-course,+student,-date)",
+		
+		"publication(+ref,-student)",
+		"publication(-ref,+student)",
+		"publication(+ref,-professor)",
+		"publication(-ref,+professor)"
+	],
+	"spName": "UWCSEProcedure"
+}

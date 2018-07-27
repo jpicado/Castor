@@ -1,0 +1,64 @@
+{
+	"inds": [
+		{
+			"leftRelation": "student",
+			"leftAttributeNumber": 0,
+			"rightRelation": "inphase",
+			"rightAttributeNumber": 0
+		},
+		{
+			"leftRelation": "inphase",
+			"leftAttributeNumber": 0,
+			"rightRelation": "student",
+			"rightAttributeNumber": 0
+		},
+		{
+			"leftRelation": "student",
+			"leftAttributeNumber": 0,
+			"rightRelation": "yearsinprogram",
+			"rightAttributeNumber": 0
+		},
+		{
+			"leftRelation": "yearsinprogram",
+			"leftAttributeNumber": 0,
+			"rightRelation": "student",
+			"rightAttributeNumber": 0
+		},
+		{
+			"leftRelation": "professor",
+			"leftAttributeNumber": 0,
+			"rightRelation": "hasposition",
+			"rightAttributeNumber": 0
+		},
+		{
+			"leftRelation": "hasposition",
+			"leftAttributeNumber": 0,
+			"rightRelation": "professor",
+			"rightAttributeNumber": 0
+		},
+		{
+			"leftRelation": "courselevel",
+			"leftAttributeNumber": 0,
+			"rightRelation": "taughtby",
+			"rightAttributeNumber": 0
+		},
+		{
+			"leftRelation": "taughtby",
+			"leftAttributeNumber": 0,
+			"rightRelation": "courselevel",
+			"rightAttributeNumber": 0
+		},
+		{
+			"leftRelation": "professor",
+			"leftAttributeNumber": 0,
+			"rightRelation": "taughtby",
+			"rightAttributeNumber": 1
+		},
+		{
+			"leftRelation": "taughtby",
+			"leftAttributeNumber": 1,
+			"rightRelation": "professor",
+			"rightAttributeNumber": 0
+		}
+	]
+}

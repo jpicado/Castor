@@ -1,0 +1,18 @@
+{
+	"createStoredProcedure": true,
+	"useStoredProcedure": true,
+	"sampling": "naive",
+	"iterations": 1,
+	"minprec": 0.67,
+	"minrec": 0,
+	"sample": 20,
+	"beam": 3,
+	"minimizeBottomClause": false,
+	"threads": 1,
+	"reductionMethod": "consistency",
+	"recall": 10,
+	"useInds": false,
+	"dbURL": "localhost",
+	"port": 21212,
+	"randomSeed": 1
+}
