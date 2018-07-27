@@ -74,6 +74,14 @@ These parameters are specified inside the file pointed by the `parameters` argum
 - **useStoredProcedure**: Use stored procedures to run bottom-clause construction algorithm. (default: true)
 
 
+### Castor assumptions
+Castor makes the following assumptions. We may remove some of these assumptions in the future.
+- The schema contains unique relation names.
+- All attributes in schema are strings.
+- Only one attribute is input (+) in mode declarations (language bias).
+
+
+
 ## Notes
 - Castor is under development.
 - Castor has only been tested in macOS and Linux (Red Hat).
@@ -81,4 +89,12 @@ These parameters are specified inside the file pointed by the `parameters` argum
 
 
 ## Citation
-If you use Castor, please cite the paper [Schema Independent Relational Learning](http://josepicado.com/papers/Castor_SIGMOD2017.pdf) (SIGMOD 2017) ([ACM Digital Library](https://dl.acm.org/citation.cfm?id=3035923)).
+If you use Castor, please cite the paper [Schema Independent Relational Learning](http://josepicado.com/papers/Castor_SIGMOD2017.pdf) (SIGMOD 2017) ([ACM Digital Library](https://dl.acm.org/citation.cfm?id=3035923)):
+```
+@inproceedings{Picado2017SchemaIR,
+  title={Schema Independent Relational Learning},
+  author={Jose Picado and Arash Termehchy and Alan Fern and Parisa Ataei},
+  booktitle={SIGMOD Conference},
+  year={2017}
+}
+```

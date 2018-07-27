@@ -267,7 +267,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 			coveredExamples = clauseInfo.getPosExamplesCovered();
 			evaluatedExamples = clauseInfo.getPosExamplesEvaluated();
 		} else {
-			if (this.negExamplesIndexes.containsKey(example.hashCode()))
+			if (!this.negExamplesIndexes.containsKey(example.hashCode()))
 				return false;
 
 			index = this.negExamplesIndexes.get(example.hashCode());
