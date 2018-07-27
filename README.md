@@ -39,9 +39,9 @@ java -jar Castor.jar -dataModel <data_model_file> -parameters <parameters_file> 
 ```
 
 ### Castor command line arguments
-- **dataModel** &lt;data_model_file&gt; (required): JSON file containing mode declarations (language bias). See an example [here](https://github.com/jpicado/Castor/examples/uwcse/castor-input/dataModel.json). A short explanation on mode declarations can be found in Section 3 of [this paper](https://arxiv.org/abs/1710.01420).
+- **dataModel** &lt;data_model_file&gt; (required): JSON file containing mode declarations (language bias). See an example [here](https://github.com/jpicado/Castor/blob/master/examples/uwcse/castor-input/datamodel.json). A short explanation on mode declarations can be found in Section 3 of [this paper](https://arxiv.org/abs/1710.01420).
 - **parameters** &lt;parameters_file&gt; (required): JSON file containing parameters (explained below).
-- **inds** &lt;inds_file&gt;: JSON file containing inclusion dependencies. See an example [here](https://github.com/jpicado/Castor/examples/uwcse/castor-input/inds.json).
+- **inds** &lt;inds_file&gt;: JSON file containing inclusion dependencies. See an example [here](https://github.com/jpicado/Castor/blob/master/examples/uwcse/castor-input/inds.json).
 - **trainPosSuffix** &lt;train_pos_suffix&gt;: Suffix of table containing positive training examples.
 - **trainNegSuffix** &lt;train_neg_suffix&gt;: Suffix of table containing negative training examples.
 - **testPosSuffix** &lt;test_pos_suffix&gt;: Suffix of table containing positive testing examples.
