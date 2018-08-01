@@ -354,6 +354,7 @@ public class CastorCmd {
 							this.dataModel, this.parameters);
 				}
 				logger.info("Computing join sizes time: " + NumbersKeeper.computeJoinSizesTime);
+				logger.info("Similarity search time: " + NumbersKeeper.similaritySearchTime);
 			} else {
 				// LEARN
 				logger.info("Learning...");
@@ -483,6 +484,7 @@ public class CastorCmd {
 				logger.info("LearnClause time: " + NumbersKeeper.learnClauseTime);
 				logger.info("Preprocessing time (extracting statistics, creating indexes, etc) (not included in total time): " + NumbersKeeper.preprocessingTime);
 				logger.info("Computing join sizes time: " + NumbersKeeper.computeJoinSizesTime);
+				logger.info("Similarity search time: " + NumbersKeeper.similaritySearchTime);
 				
 				// Set learning result
 	            learningResult.setSuccess(true);

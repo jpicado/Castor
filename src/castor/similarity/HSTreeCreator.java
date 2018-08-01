@@ -25,12 +25,12 @@ public class HSTreeCreator {
 //		l.add("acompany");
 //		l.add("are accommodate to");
 //		l.add("ovner loevi");
-		l.add("scorsese");
-		l.add("sandler");
+		l.add("swingale");
+//		l.add("sandler");
 		HSTree hsTree = HSTreeCreator.buildHSTree(l);
 //		System.out.println(hsTree.getInvertedIndex().toString());
 		
-		System.out.println(hsTree.hsSearch("scorsese", 0));
+		System.out.println(hsTree.hsSearch("blending", 2).toString());
 		
 //		System.out.println(hs.generateSubstrings("abna levina", hsTree, 7, 2, 1, 9));
 //		System.out.println(hs.editDistance("ovner loevi", "abna levina"));
@@ -81,7 +81,7 @@ public class HSTreeCreator {
 			
 			int maxLevel = (int)Math.floor(MyMath.log2(l));
 			
-			// Crete maps for first level
+			// Create maps for first level
 			stringsByLengthLevelSibling.put(l, new HashMap<Integer,Map<Integer,Set<String>>>());
 			stringsByLengthLevelSibling.get(l).put(1, new HashMap<Integer,Set<String>>());
 			stringsByLengthLevelSibling.get(l).get(1).put(1, new HashSet<String>());

@@ -103,7 +103,7 @@ public class HSTree {
 					// If count of matched segments >= minSegments, it is a candidate
 					if (count >= minSegments) {
 						int editDistance = SimilarityUtils.editDistance(strings.get(matchStringIndex), query);
-						//TODO currently compuyting edit distance
+						//TODO currently computing edit distance
 						if (editDistance <= maxDistance) {
 //						if (SimilarityUtils.isLessThanDistance(strings.get(matchStringIndex), query, maxDistance)) {
 //						if (hsSearchFilter(query, maxDistance, maxLevel, matchStringIndex, matchedSegmentsForString.get(matchStringIndex), minSegments)) {
@@ -302,17 +302,22 @@ public class HSTree {
 		int segmentLength = someSegment.length();
 		int fromIndex = (int)(Math.floor(l / Math.pow(2, i)) * (j-1));
 		int segmentStartPosition = someString.indexOf(someSegment, fromIndex);
-		int lengthDifference = Math.abs(query.length() - someString.length());
+		int lengthDifference = Math.abs(query.length() - l);
 		
 		//TODO currently using position-aware method because other methods have bugs
 		
+		// NO OPTIMIZATION
+//		int lowerBound = 0;
+//		int upperBound = query.length();
+		
+		// PASSJOIN METHODS
 		// Shift-based method
 //		int lowerBound = Math.max(0, segmentStartPosition - maxDistance);
 //		int upperBound = Math.min(query.length() - segmentLength, segmentStartPosition + maxDistance);
 		
 		// Position-aware method
-		int lowerBound = Math.max(0, segmentStartPosition - (int)Math.floor(Math.abs(maxDistance - lengthDifference) / 2));
-		int upperBound = Math.min(query.length() - segmentLength, segmentStartPosition + (int)Math.floor(Math.abs(maxDistance + lengthDifference) / 2));
+//		int lowerBound = Math.max(0, segmentStartPosition - (int)Math.floor(Math.abs(maxDistance - lengthDifference) / 2));
+//		int upperBound = Math.min(query.length() - segmentLength, segmentStartPosition + (int)Math.floor(Math.abs(maxDistance + lengthDifference) / 2));
 		
 		// Multi-match-aware left-side perspective
 //		int lowerBound = Math.max(0, segmentStartPosition - (j - 1));
@@ -327,6 +332,21 @@ public class HSTree {
 		// Multi-match-aware method
 //		int lowerBound = Math.max(0, Math.max(segmentStartPosition - (j - 1), segmentStartPosition + lengthDifference - (maxDistance + 1 - j)));
 //		int upperBound = Math.min(query.length() - segmentLength, Math.min(segmentStartPosition + (j - 1), segmentStartPosition + lengthDifference + (maxDistance + 1 - j)));
+		
+		
+		// TWO BIRDS METHODS
+		// (use formulas with index starting on 1, then reduce 1)
+		segmentStartPosition += 1;// with index starting on 1, add 1
+		
+		// Position filter
+		int lowerBound = Math.max(1, segmentStartPosition - (int)Math.floor(Math.abs(maxDistance - lengthDifference))) - 1;
+		int upperBound = Math.min(query.length() - segmentLength + 1, segmentStartPosition + (int)Math.floor(Math.abs(maxDistance + lengthDifference))) - 1;
+		
+		// Position filter, left-side and right-side perspectives
+//		int lowerBound = Math.max(1, 
+//				Math.max(segmentStartPosition - (j - 1), segmentStartPosition + lengthDifference - (maxDistance + 1 - j))) - 1;
+//		int upperBound = Math.min(query.length() - segmentLength + 1, 
+//				Math.min(segmentStartPosition + (j - 1), segmentStartPosition + lengthDifference + (maxDistance + 1 - j))) - 1;
 		
 		for (int p = lowerBound; p <= upperBound && p + segmentLength <= query.length(); p++) {
 			substrings.add(new Pair<String,Integer>(query.substring(p, p + segmentLength), p));

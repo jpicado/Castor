@@ -37,8 +37,10 @@ import castor.similarity.HSTreeCreator;
 import castor.similarity.SimilarValue;
 import castor.similarity.SimilarityUtils;
 import castor.utils.Commons;
+import castor.utils.NumbersKeeper;
 import castor.utils.Pair;
 import castor.utils.RandomSet;
+import castor.utils.TimeWatch;
 
 public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomClauseGenerator {
 
@@ -338,7 +340,9 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 				} else {
 					distance = maxDistanceForMDs.get(key).intValue();
 				}
+				TimeWatch tw = TimeWatch.start();
 				Set<SimilarValue> similarValues = hsTrees.get(key).hsSearch(value, distance);
+				NumbersKeeper.similaritySearchTime += tw.time();
 				
 				if (similarValues.isEmpty())
 					continue;
