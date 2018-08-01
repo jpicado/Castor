@@ -348,8 +348,8 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 					continue;
 				
 				// Keep only top K (sampleSize)
-				//TODO TOP-K
-				PriorityQueue<SimilarValue> heap = new PriorityQueue<SimilarValue>(similarValues.size(), Comparator.comparing(SimilarValue::getDistance));
+				//TODO TOP-K no distance, then on value (to not be dependent on the order in which they come -> always return same results)
+				PriorityQueue<SimilarValue> heap = new PriorityQueue<SimilarValue>(similarValues.size(), Comparator.comparing(SimilarValue::getDistance).thenComparing(SimilarValue::getValue));
 				heap.addAll(similarValues);
 				similarValues.clear();
 				for (int i=0; i < recall; i++) {

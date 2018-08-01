@@ -307,14 +307,12 @@ public class HSTree {
 //		int segmentStartPosition = someString.indexOf(someSegment, fromIndex);
 		
 		// Method 2 to calculate segmentStartPosition
-		int segmentStartPosition = 0;
+		int segmentStartPosition = 1;// with index starting on 1 because formulas are based on index starting on 1
 		if (j > 0) {
 			for (int k=1; k<j; k++) {
 				segmentStartPosition += invertedIndex.get(l).get(i).get(k).keySet().iterator().next().length();
 			}
 		}
-		// Use formulas with index starting on 1, then reduce 1
-		segmentStartPosition += 1;// with index starting on 1, add 1
 		
 		//TODO currently using position-aware method because other methods have bugs
 		
@@ -322,7 +320,6 @@ public class HSTree {
 //		int lowerBound = 0;
 //		int upperBound = query.length();
 		
-		//TODO remove these methods
 		// PASSJOIN METHODS
 		// Shift-based method
 //		int lowerBound = Math.max(1, segmentStartPosition - maxDistance) - 1;
@@ -332,29 +329,28 @@ public class HSTree {
 //		int lowerBound = Math.max(1, segmentStartPosition - (int)Math.floor(Math.abs(maxDistance - lengthDifference) / 2)) - 1;
 //		int upperBound = Math.min(query.length() - segmentLength + 1, segmentStartPosition + (int)Math.floor(Math.abs(maxDistance + lengthDifference) / 2)) - 1;
 		
-//		// Multi-match-aware left-side perspective
-		// There's a bug here
-//		int lowerBound = Math.max(1, segmentStartPosition - (j - 1)) - 1;
-//		int upperBound = Math.min(query.length() - segmentLength + 1, segmentStartPosition + (j - 1)) - 1;
+//		// Multi-match-aware left-side perspective 
+		int lowerBound = Math.max(1, segmentStartPosition - (j - 1)) - 1;
+		int upperBound = Math.min(query.length() - segmentLength + 1, segmentStartPosition + (j - 1)) - 1;
 		
 		// Multi-match-aware right-side perspective
-		// There's a bug here
+		//TODO There's a bug here
 //		int lowerBound = Math.max(1, segmentStartPosition + lengthDifference - (maxDistance + 1 - j)) - 1;
 //		int upperBound = Math.min(query.length() - segmentLength + 1, segmentStartPosition + lengthDifference + (maxDistance + 1 - j)) - 1;
 		
 		// Multi-match-aware method
-		// There's a bug here
-//		int lowerBound = Math.max(0, Math.max(segmentStartPosition - (j - 1), segmentStartPosition + lengthDifference - (maxDistance + 1 - j)));
-//		int upperBound = Math.min(query.length() - segmentLength, Math.min(segmentStartPosition + (j - 1), segmentStartPosition + lengthDifference + (maxDistance + 1 - j)));
+		//TODO There's a bug here
+//		int lowerBound = Math.max(1, Math.max(segmentStartPosition - (j - 1), segmentStartPosition + lengthDifference - (maxDistance + 1 - j))) - 1;
+//		int upperBound = Math.min(query.length() - segmentLength + 1, Math.min(segmentStartPosition + (j - 1), segmentStartPosition + lengthDifference + (maxDistance + 1 - j))) - 1;
 		
-		// TWO BIRDS METHODS
+		// TWO BIRDS WITH ONE STONE METHODS
 		
 		// Position filter
-		int lowerBound = Math.max(1, segmentStartPosition - (int)Math.floor(Math.abs(maxDistance - lengthDifference))) - 1;
-		int upperBound = Math.min(query.length() - segmentLength + 1, segmentStartPosition + (int)Math.floor(Math.abs(maxDistance + lengthDifference))) - 1;
+//		int lowerBound = Math.max(1, segmentStartPosition - (int)Math.floor(Math.abs(maxDistance - lengthDifference))) - 1;
+//		int upperBound = Math.min(query.length() - segmentLength + 1, segmentStartPosition + (int)Math.floor(Math.abs(maxDistance + lengthDifference))) - 1;
 		
 		// Position filter, left-side and right-side perspectives
-		// There's a bug in these
+		//TODO There's a bug in these
 //		int lowerBound = Math.max(1, 
 //				Math.max(segmentStartPosition - (j - 1), segmentStartPosition + lengthDifference - (maxDistance + 1 - j))) - 1;
 //		int upperBound = Math.min(l - segmentLength + 1, 
