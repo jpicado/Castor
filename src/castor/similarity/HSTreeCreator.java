@@ -25,12 +25,15 @@ public class HSTreeCreator {
 //		l.add("acompany");
 //		l.add("are accommodate to");
 //		l.add("ovner loevi");
-		l.add("swingale");
-//		l.add("sandler");
+//		l.add("swingable");
+		l.add("Avengers: Age of Ultron (2015)");
 		HSTree hsTree = HSTreeCreator.buildHSTree(l);
 //		System.out.println(hsTree.getInvertedIndex().toString());
 		
-		System.out.println(hsTree.hsSearch("blending", 2).toString());
+		System.out.println(hsTree.getInvertedIndex().toString());
+		
+		System.out.println(hsTree.hsSearch("Avengers: Age of Ultron", 8).toString());
+		System.out.println(SimilarityUtils.editDistance("Avengers: Age of Ultron", "Avengers: Age of Ultron (2015)"));
 		
 //		System.out.println(hs.generateSubstrings("abna levina", hsTree, 7, 2, 1, 9));
 //		System.out.println(hs.editDistance("ovner loevi", "abna levina"));
