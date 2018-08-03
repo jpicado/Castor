@@ -9,6 +9,7 @@ import java.util.Set;
 
 import castor.utils.MyMath;
 import castor.utils.Pair;
+import castor.utils.TimeWatch;
 
 /*
  * Implementation of algorithms in paper "Two Birds With One Stone: An Efficient Hierarchical Framework for Top-k and Threshold-based String Similarity Search".
@@ -30,17 +31,35 @@ public class HSTreeCreator {
 		HSTree hsTree = HSTreeCreator.buildHSTree(l);
 //		System.out.println(hsTree.getInvertedIndex().toString());
 		
-		System.out.println(hsTree.getInvertedIndex().toString());
+//		System.out.println(hsTree.getInvertedIndex().toString());
 		
-		System.out.println(hsTree.hsSearch("Avengers: Age of Ultron", 8).toString());
-		System.out.println(SimilarityUtils.editDistance("Avengers: Age of Ultron", "Avengers: Age of Ultron (2015)"));
+//		System.out.println(hsTree.hsSearch("Avengers: Age of Ultron", 8).toString());
+//		System.out.println(SimilarityUtils.editDistance("Avengers: Age of Ultron", "Avengers: Age of Ultron (2015)"));
 		
 //		System.out.println(hs.generateSubstrings("abna levina", hsTree, 7, 2, 1, 9));
 //		System.out.println(hs.editDistance("ovner loevi", "abna levina"));
 //		System.out.println(hs.editDistance("abna levina", "vankatesh"));
 //		System.out.println(hs.isLessThanDistance("ovner loevi", "abna levina", 7));
-//		System.out.println(hs.isLessThanDistance("bro", "brother", 3));
+//		System.out.println(SimilarityUtils.isLessThanDistance2("bro", "brother", 3));
 //		System.out.println(hs.isLessThanDistance2("bro", "brother", 3));
+		
+		
+//		System.out.println(SimilarityUtils.editDistance("bro", "brother"));
+//		System.out.println(SimilarityUtils.isLessThanDistanceImprovement1("bro", "brother", 4));
+//		System.out.println(SimilarityUtils.isLessThanDistanceImprovement1("brother", "bro", 2));
+		
+//		System.out.println(SimilarityUtils.editDistance("kaushuk chadhui", "caushik chakrabar"));
+//		System.out.println(SimilarityUtils.isLessThanDistanceImprovement1("kaushuk chadhui", "caushik chakrabar", 8));
+		
+		TimeWatch tw = TimeWatch.start();
+		System.out.println(SimilarityUtils.editDistance("kaushuk chadhui", "caushik chakrabar"));
+		System.out.println(tw.time());
+		tw.reset();
+		System.out.println(SimilarityUtils.isLessThanDistanceImprovement1("kaushuk chadhui", "caushik chakrabar", 8));
+		System.out.println(tw.time());
+		tw.reset();
+		System.out.println(SimilarityUtils.isLessThanDistance("kaushuk chadhui", "caushik chakrabar", 10));
+		System.out.println(tw.time());
 		
 		
 //		RandomSet<Pair<String,Integer>> matchedSegments = new RandomSet<Pair<String,Integer>>();

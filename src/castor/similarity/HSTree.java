@@ -100,13 +100,18 @@ public class HSTree {
 					}
 				}
 				
-				// Verify each candidate	
+				// Verify each candidate
 				for (Integer matchStringIndex : candidateStringIndexes) {
-					int editDistance = SimilarityUtils.editDistance(strings.get(matchStringIndex), query);
-					//TODO currently computing edit distance
-					if (editDistance <= maxDistance) {
-//						if (SimilarityUtils.isLessThanDistance(strings.get(matchStringIndex), query, maxDistance)) {
-//						if (hsSearchFilter(query, maxDistance, maxLevel, matchStringIndex, matchedSegmentsForString.get(matchStringIndex), minSegments)) {
+					// Option 1
+//					int editDistance = SimilarityUtils.editDistance(strings.get(matchStringIndex), query);
+//					if (editDistance <= maxDistance) {
+//						matchingStrings.add(new SimilarValue(strings.get(matchStringIndex), editDistance));
+//					}
+					
+					// Option 2
+					if (SimilarityUtils.isLessThanDistance(strings.get(matchStringIndex), query, maxDistance)) {
+//					if (hsSearchFilter(query, maxDistance, maxLevel, matchStringIndex, matchedSegmentsForString.get(matchStringIndex), minSegments)) {
+						int editDistance = SimilarityUtils.editDistance(strings.get(matchStringIndex), query);
 						matchingStrings.add(new SimilarValue(strings.get(matchStringIndex), editDistance));
 					}
 				}
