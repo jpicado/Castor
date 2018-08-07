@@ -355,7 +355,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 				for (int i=0; i < recall; i++) {
 					SimilarValue element = heap.poll();
 					if (element == null)
-						break; 
+						break;
 					else
 						similarValues.add(element);
 				}

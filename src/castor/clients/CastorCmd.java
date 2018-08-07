@@ -349,7 +349,7 @@ public class CastorCmd {
 							this.dataModel, this.parameters);
 				} else if (groundSaturation) {
 					// GROUND BOTTOM CLAUSE
-					BottomClauseUtil.generateGroundBottomClauseForExample(genericDAO, bottomClauseConstructionDAO, saturator,
+					BottomClauseUtil.generateGroundBottomClauseForExample(genericDAO, bottomClauseConstructionDAO, coverageEngineSaturator,
 							coverageEngine.getAllPosExamples().get(this.exampleForSaturation), this.schema,
 							this.dataModel, this.parameters);
 				}
