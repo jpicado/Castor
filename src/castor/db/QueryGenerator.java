@@ -582,8 +582,7 @@ public class QueryGenerator {
 						}
 					}
 				}
-				//fill queryJoinMap
-				queryJoinMap.put(predicateAlias, predicateName + " AS " + predicateAlias + " ");
+				
 				firstLiteral = false;
 			} else {
 				for (int i = 0; i < literal.getAtomicSentence().getArgs().size(); i++) {
@@ -618,54 +617,66 @@ public class QueryGenerator {
 						}
 					}
 				}
-				//fill queryJoinMap
-				queryJoinMap.put(predicateAlias, predicateName + " AS " + predicateAlias + " ");
+			}
+			
+			//Fill queryJoinMap
+			String predicateNameAndAlias = predicateName + " AS " + predicateAlias + " ";
+			queryJoinMap.put(predicateAlias, predicateNameAndAlias);
+			
+			// If size is 1, simply add predicate to join list
+			if (clause.getNumberNegativeLiterals() == 1) {
+				joinConditionList.add(predicateNameAndAlias);
 			}
 		}
-
-		//Bug fix for incorrect join order
-		//visitedJoins stores all the visited joinTerms
-		Map<String,String> visitedJoins = new HashMap<>();
-		//Loop until all the Join conditions in joinConditionMap are not used. This is to handle special condition #1
-		int lastSize = 0;
-		while(!joinConditionList.isEmpty()) {
-			Iterator<String> it = joinConditionList.iterator();
-			while (it.hasNext()) {
-				String entry = it.next();
-				String entryStripped = entry.replaceAll("\\s+","");
-				String [] joinCondition = entryStripped.split("=");
-				String[] joinCondition1 = joinCondition[0].split("\\.");
-				String[] joinCondition2 = joinCondition[1].split("\\.");
-				String joinTerm1 = joinCondition1[0];
-				String joinTerm2 = joinCondition2[0];
-
-				if (visitedJoins.isEmpty()) {
-					queryJoin.append(queryJoinMap.get(joinTerm1) + "JOIN " + queryJoinMap.get(joinTerm2) + "ON " + entry);
-					visitedJoins.put(joinTerm1,joinTerm1);
-					visitedJoins.put(joinTerm2,joinTerm2);
-					it.remove();
-				} else if (visitedJoins.containsKey(joinTerm1) && !visitedJoins.containsKey(joinTerm2)) {
-					queryJoin.append("JOIN " + queryJoinMap.get(joinTerm2) + "ON " + entry);
-					visitedJoins.put(joinTerm2,joinTerm2);
-					it.remove();
-				} else if (!visitedJoins.containsKey(joinTerm1) && visitedJoins.containsKey(joinTerm2)) {
-					queryJoin.append("JOIN " + queryJoinMap.get(joinTerm1) + "ON " + entry);
-					visitedJoins.put(joinTerm1,joinTerm1);
-					it.remove();
-				}else if(visitedJoins.containsKey(joinTerm1) && visitedJoins.containsKey(joinTerm2)){
-					queryJoin.append("AND " + entry);
-					it.remove();
+		
+		if (clause.getNumberNegativeLiterals() == 1) {
+			// If size is 1, simply add predicate to queryJoin
+			queryJoin.append(joinConditionList.get(0));
+		} else {
+			//Bug fix for incorrect join order
+			//visitedJoins stores all the visited joinTerms
+			Set<String> visitedJoins = new HashSet<>();
+			//Loop until all the Join conditions in joinConditionMap are not used. This is to handle special condition #1
+			int lastSize = 0;
+			while(!joinConditionList.isEmpty()) {
+				Iterator<String> it = joinConditionList.iterator();
+				while (it.hasNext()) {
+					String entry = it.next();
+					String entryStripped = entry.replaceAll("\\s+","");
+					String [] joinCondition = entryStripped.split("=");
+					String[] joinCondition1 = joinCondition[0].split("\\.");
+					String[] joinCondition2 = joinCondition[1].split("\\.");
+					String joinTerm1 = joinCondition1[0];
+					String joinTerm2 = joinCondition2[0];
+	
+					if (visitedJoins.isEmpty()) {
+						queryJoin.append(queryJoinMap.get(joinTerm1) + "JOIN " + queryJoinMap.get(joinTerm2) + "ON " + entry);
+						visitedJoins.add(joinTerm1);
+						visitedJoins.add(joinTerm2);
+						it.remove();
+					} else if (visitedJoins.contains(joinTerm1) && !visitedJoins.contains(joinTerm2)) {
+						queryJoin.append("JOIN " + queryJoinMap.get(joinTerm2) + "ON " + entry);
+						visitedJoins.add(joinTerm2);
+						it.remove();
+					} else if (!visitedJoins.contains(joinTerm1) && visitedJoins.contains(joinTerm2)) {
+						queryJoin.append("JOIN " + queryJoinMap.get(joinTerm1) + "ON " + entry);
+						visitedJoins.add(joinTerm1);
+						it.remove();
+					}else if(visitedJoins.contains(joinTerm1) && visitedJoins.contains(joinTerm2)){
+						queryJoin.append("AND " + entry);
+						it.remove();
+					}
+					//#1 - Special condition if both the terms are new in join i.e both are not in vistedJoinsList then simply keep it. In next iteration it will be processed.
+					else if(!visitedJoins.contains(joinTerm1) && !visitedJoins.contains(joinTerm2)){
+						continue;
+					}
 				}
-				//#1 - Special condition if both the terms are new in join i.e both are not in vistedJoinsList then simply keep it. In next iteration it will be processed.
-				else if(!visitedJoins.containsKey(joinTerm1) && !visitedJoins.containsKey(joinTerm2)){
-					continue;
+				//This is to make sure that loop doesn't run infinitely
+				if(joinConditionList.size()==lastSize){
+					break;
 				}
+				lastSize = joinConditionList.size();
 			}
-			//This is to make sure that loop doesn't run infinitely
-			if(joinConditionList.size()==lastSize){
-				break;
-			}
-			lastSize = joinConditionList.size();
 		}
 
 		// Add projections
