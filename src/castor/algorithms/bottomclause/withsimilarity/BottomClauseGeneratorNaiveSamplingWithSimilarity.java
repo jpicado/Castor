@@ -1,4 +1,4 @@
-package castor.algorithms.bottomclause;
+package castor.algorithms.bottomclause.withsimilarity;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,6 +20,7 @@ import aima.core.logic.fol.parsing.ast.Constant;
 import aima.core.logic.fol.parsing.ast.Predicate;
 import aima.core.logic.fol.parsing.ast.Term;
 import aima.core.logic.fol.parsing.ast.Variable;
+import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.dataaccess.db.BottomClauseConstructionDAO;
 import castor.dataaccess.db.GenericDAO;
 import castor.dataaccess.db.GenericTableObject;

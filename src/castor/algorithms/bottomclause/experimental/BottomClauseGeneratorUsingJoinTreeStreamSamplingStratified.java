@@ -1,4 +1,4 @@
-package castor.algorithms.bottomclause;
+package castor.algorithms.bottomclause.experimental;
 
 import java.util.ArrayList;
 import java.util.List;

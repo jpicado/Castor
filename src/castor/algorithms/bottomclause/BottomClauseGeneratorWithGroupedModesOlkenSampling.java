@@ -1,3 +1,8 @@
+/*
+ * Bottom-clause construction using Olken sampling.
+ * Queries database only once per relation.
+ * Fixes problem in BottomClauseGeneratorOlkenSampling of giving higher inclusion probabilities to some tuples. 
+ */
 package castor.algorithms.bottomclause;
 
 import java.util.HashSet;

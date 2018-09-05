@@ -1,4 +1,7 @@
-//TODO must add application of INDs
+/*
+ * Bottom clause generation as described in original algorithm, except that it only does one query to the DB per relation (even for different input attributes).
+ * DOES NOT HANDLE INDS (CANNOT BE USED FOR SCHEMA INDEPENDENCE).
+ */
 package castor.algorithms.bottomclause;
 
 import java.util.ArrayList;
@@ -123,14 +126,6 @@ public abstract class BottomClauseGeneratorWithGroupedModes implements BottomCla
 				modeH, true, inTerms, previousIterationsInTerms, distinctTerms);
 		clause.addPositiveLiteral(headLiteral);
 		
-		// Update previousIterationsInTerms
-//		for (String key : inTerms.keySet()) {
-//			if (!previousIterationsInTerms.containsKey(key)) {
-//				previousIterationsInTerms.put(key, new HashSet<String>());
-//			}
-//			previousIterationsInTerms.get(key).addAll(inTerms.get(key));
-//		}
-
 		// Group modes by relation name
 		Map<String, List<Mode>> groupedModes = new LinkedHashMap<String, List<Mode>>();
 		for (Mode mode : modesB) {

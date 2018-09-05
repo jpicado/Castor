@@ -1,4 +1,8 @@
-package castor.algorithms.bottomclause;
+/*
+ * Bottom clause generation as described in original algorithm, except that it only does one query to the DB per relation (even for different input attributes).
+ * Advantages or disadvantages compared to BottomClauseGeneratorNaiveSampling?
+ */
+package castor.algorithms.bottomclause.experimental;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -8,6 +12,7 @@ import java.util.Random;
 import java.util.Set;
 
 import aima.core.logic.fol.parsing.ast.Predicate;
+import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModes;
 import castor.dataaccess.db.GenericDAO;
 import castor.dataaccess.db.GenericTableObject;
 import castor.hypotheses.MyClause;

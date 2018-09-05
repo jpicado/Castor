@@ -1,4 +1,9 @@
-package castor.algorithms.bottomclause;
+/*
+ * Bottom-clause construction using Olken sampling.
+ * Queries database only once per relation-input_attribute.
+ * NOTE - INCORRECT ALGORITHM: A tuple may be considered more than once (for two different relation-input_attribute pairs). Therefore, this tuple would have higher inclusion probability, which is incorrect. 
+ */
+package castor.algorithms.bottomclause.experimental;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -9,6 +14,7 @@ import java.util.Set;
 
 import aima.core.logic.fol.parsing.ast.Predicate;
 import aima.core.util.datastructure.Pair;
+import castor.algorithms.bottomclause.BottomClauseGeneratorOriginalAlgorithm;
 import castor.dataaccess.db.GenericDAO;
 import castor.dataaccess.db.GenericTableObject;
 import castor.hypotheses.MyClause;

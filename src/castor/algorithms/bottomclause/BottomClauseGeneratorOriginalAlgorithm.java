@@ -1,3 +1,7 @@
+/*
+ * Bottom clause generation as described in original algorithm.
+ * Queries database only once per relation-input_attribute.
+ */
 package castor.algorithms.bottomclause;
 
 import java.util.ArrayList;
@@ -8,8 +12,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Map.Entry;
+import java.util.Random;
 import java.util.Set;
 
 import aima.core.logic.fol.parsing.ast.Constant;
@@ -200,16 +204,6 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 				}
 			}
 			
-			// Add new terms to inTerms
-//			Iterator<Map.Entry<String, Set<String>>> newInTermsIterator = newInTerms.entrySet().iterator();
-//			while (newInTermsIterator.hasNext()) {
-//				Map.Entry<String, Set<String>> pair = (Map.Entry<String, Set<String>>) newInTermsIterator.next();
-//				String variableType = pair.getKey();
-//				if (!inTerms.containsKey(variableType)) {
-//					inTerms.put(variableType, new HashSet<String>());
-//				}
-//				inTerms.get(variableType).addAll(newInTerms.get(variableType));
-//			}
 			inTerms.clear();
 			inTerms.putAll(newInTerms);
 			
@@ -421,200 +415,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 	}
 	
 	/*
-	 * Bottom clause generation as described in original algorithm, except that it only does one query to the DB per relation (even for different input attributes).
-	 * COPIED TO BottomClauseGeneratorWithGroupedModes
-	 * DOES NOT HANDLE INDS (CANNOT BE USED FOR SCHEMA INDEPENDENCE)
-	 */
-	private MyClause generateBottomClauseOneQueryPerRelation(GenericDAO genericDAO,
-			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant, Tuple exampleTuple,
-			Schema schema, Mode modeH, List<Mode> modesB, int iterations, int recall, boolean applyInds, int maxTerms, boolean ground) {
-
-		// Check that arities of example and modeH match
-		if (modeH.getArguments().size() != exampleTuple.getValues().size()) {
-			throw new IllegalArgumentException("Example arity does not match modeH arity.");
-		}
-		
-		MyClause clause = new MyClause();
-		
-		// If sampling is turned off, set recall to max value
-//		if (!this.sample) {
-//			recall = Integer.MAX_VALUE;
-//		}
-		
-		// Known terms for a data type
-		Map<String, Set<String>> inTerms = new HashMap<String, Set<String>>();
-		
-		// Keep track of all used variables and constants in clause
-		Set<String> distinctTerms = new HashSet<String>();
-
-		// Create head literal
-		varCounter = 0;
-		if (ground) {
-			modeH = modeH.toGroundMode();
-		}
-		Predicate headLiteral = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, exampleTuple,
-				modeH, true, inTerms, distinctTerms);
-		clause.addPositiveLiteral(headLiteral);
-
-		// Group modes by relation name
-		Map<String, List<Mode>> groupedModes = new LinkedHashMap<String, List<Mode>>();
-		for (Mode mode : modesB) {
-			if (!groupedModes.containsKey(mode.getPredicateName())) {
-				groupedModes.put(mode.getPredicateName(), new LinkedList<Mode>());
-			}
-			groupedModes.get(mode.getPredicateName()).add(mode);
-		}
-		
-		// Create body literals
-		for (int j = 0; j < iterations; j++) {
-			// Group the expressions of each mode
-			Map<String, List<String>> relationsExpressions = new LinkedHashMap<String, List<String>>();
-			Set<Pair<String,Integer>> seenModesInputAttribute = new HashSet<Pair<String,Integer>>();
-			
-			for (Mode mode : modesB) {
-				int inputVarPosition = 0;
-				for (int i = 0; i < mode.getArguments().size(); i++) {
-					if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.INPUT)) {
-						inputVarPosition = i;
-						break;
-					}
-				}
-				
-				Pair<String,Integer> relationInputAttribute = new Pair<String,Integer>(mode.getPredicateName(), inputVarPosition);
-				if (!seenModesInputAttribute.contains(relationInputAttribute)) {
-					String expression = computeExpression(mode, schema, inTerms);
-					if (!expression.isEmpty()) {
-						if (!relationsExpressions.containsKey(mode.getPredicateName())) {
-							relationsExpressions.put(mode.getPredicateName(), new LinkedList<String>());
-						}
-						relationsExpressions.get(mode.getPredicateName()).add(expression);
-					}
-					
-					seenModesInputAttribute.add(relationInputAttribute);
-				}
-			}
-			
-			// Create new inTerms to hold terms for this iteration
-			Map<String, Set<String>> newInTerms = new HashMap<String, Set<String>>();
-			
-			Iterator<Entry<String, List<String>>> expressionsIterator = relationsExpressions.entrySet().iterator();
-			while (expressionsIterator.hasNext()) {
-				Map.Entry<String, List<String>> pair = (Map.Entry<String, List<String>>) expressionsIterator.next();
-				String relation = pair.getKey();
-				List<String> expressions = pair.getValue();
-
-				// Create query
-				// USING OR
-//				StringBuilder queryBuilder = new StringBuilder();
-//				queryBuilder.append("SELECT * FROM " + relation + " WHERE ");
-//				for (int i = 0; i < expressions.size(); i++) {
-//					queryBuilder.append(expressions.get(i));
-//					if (i < expressions.size() - 1) {
-//						queryBuilder.append(" OR ");
-//					}
-//				}
-//				queryBuilder.append(";");
-//				String query = queryBuilder.toString();
-				// USING UNION
-				StringBuilder queryBuilder = new StringBuilder();
-				for (int i = 0; i < expressions.size(); i++) {
-					queryBuilder.append(expressions.get(i));
-					if (i < expressions.size() - 1) {
-						queryBuilder.append(" UNION ");
-					}
-				}
-				queryBuilder.append(";");
-				String query = queryBuilder.toString();
-
-				// Run query
-				GenericTableObject result = genericDAO.executeQuery(query);
-
-				if (result != null) {
-					List<Predicate> newLiterals = new LinkedList<Predicate>();
-					
-					Set<String> usedModes = new HashSet<String>();
-					for (Mode mode : groupedModes.get(relation)) {
-						if (ground) {
-							if (usedModes.contains(mode.toGroundModeString())) {
-								continue;
-							}
-							else {
-								mode = mode.toGroundMode();
-								usedModes.add(mode.toGroundModeString());
-							}
-						}
-						int solutionsCounter = 0;
-						for (Tuple tuple : result.getTable()) {
-							if (solutionsCounter >= recall)
-								break;
-
-							Predicate literal = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, tuple,
-									mode, false, newInTerms, distinctTerms);
-							
-							// Do not add literal if it's exactly the same as head literal
-							if (!literal.equals(clause.getPositiveLiterals().get(0).getAtomicSentence())) {
-								addNotRepeated(newLiterals, literal);
-								solutionsCounter++;
-							}
-						}
-					}
-					
-					// Apply INDs
-//					if (applyInds) {
-//						followIndChain(genericDAO, schema, clause, newLiterals, hashConstantToVariable,
-//								hashVariableToConstant, newInTerms, distinctTerms, groupedModes, recall, relation,
-//								new HashSet<String>(), ground);
-//					}
-					for (Predicate literal : newLiterals) {
-						clause.addNegativeLiteral(literal);
-					}
-				}
-			}
-			
-			inTerms.clear();
-			inTerms.putAll(newInTerms);
-			
-			// Stopping condition: check number of distinct terms
-		    if (distinctTerms.size() >= maxTerms) {
-		    		break;
-		    }
-		}
-
-		return clause;
-	}
-	
-	/*
-	 * Compute expression to be used in an SQL query
-	 */
-	private String computeExpression(Mode mode, Schema schema, Map<String, Set<String>> inTerms) {
-		String expression = "";
-
-		int inputVarPosition = 0;
-		for (int i = 0; i < mode.getArguments().size(); i++) {
-			if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.INPUT)) {
-				inputVarPosition = i;
-				break;
-			}
-		}
-
-		String attributeName = schema.getRelations().get(mode.getPredicateName().toUpperCase()).getAttributeNames()
-				.get(inputVarPosition);
-		String attributeType = mode.getArguments().get(inputVarPosition).getType();
-
-		// If there is no list of known terms for attributeType, skip mode
-		if (inTerms.containsKey(attributeType)) {
-			String knownTerms = toListString(inTerms.get(attributeType));
-			// USING OR
-//			expression = attributeName + " IN " + knownTerms;
-			
-			// USING UNION
-			expression = String.format(SELECTIN_SQL_STATEMENT, mode.getPredicateName(), attributeName, knownTerms);
-		}
-		return expression;
-	}
-
-	/*
-	 * Bottom clause generation as described in original algorith.
+	 * Bottom clause generation as described in original algorithm.
 	 * Assumes that exampleTuple is for relation with same name as modeH.
 	 * Makes a DB call for each mode, instead of grouping them
 	 */
