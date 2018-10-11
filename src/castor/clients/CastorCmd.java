@@ -303,10 +303,20 @@ public class CastorCmd {
 			} else {
 				if (parameters.isAllowSimilarity()) {
 					saturator = getNewCoverageEngineWithSimilarity(genericDAO, true);
-					coverageEngineSaturator = getNewCoverageEngineWithSimilarity(genericDAO, parameters.isSampleGroundBottomClauses());
+					if (parameters.isSampleGroundBottomClauses()) {
+						coverageEngineSaturator = saturator;
+//						coverageEngineSaturator = getNewCoverageEngineWithSimilarity(genericDAO, parameters.isSampleGroundBottomClauses());
+					} else {
+						coverageEngineSaturator = getNewCoverageEngineWithSimilarity(genericDAO, parameters.isSampleGroundBottomClauses());
+					}
 				} else {
 					saturator = getNewCoverageEngineWithoutSimilarity(genericDAO, true);
-					coverageEngineSaturator = getNewCoverageEngineWithoutSimilarity(genericDAO, parameters.isSampleGroundBottomClauses());
+					if (parameters.isSampleGroundBottomClauses()) {
+						coverageEngineSaturator = saturator;
+//						coverageEngineSaturator = getNewCoverageEngineWithoutSimilarity(genericDAO, parameters.isSampleGroundBottomClauses());
+					} else {
+						coverageEngineSaturator = getNewCoverageEngineWithoutSimilarity(genericDAO, parameters.isSampleGroundBottomClauses());
+					}
 				}
 			}
 			NumbersKeeper.preprocessingTime = tw.time();

@@ -34,8 +34,10 @@ import castor.similarity.HSTree;
 import castor.similarity.HSTreeCreator;
 import castor.similarity.SimilarValue;
 import castor.utils.Commons;
+import castor.utils.NumbersKeeper;
 import castor.utils.Pair;
 import castor.utils.RandomSet;
+import castor.utils.TimeWatch;
 
 public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements BottomClauseGenerator {
 
@@ -140,10 +142,10 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 
 		// Create head literal
 		Mode modeH = dataModel.getModeH();
-		if (ground) {
-			modeH = modeH.toGroundMode();
-		}
-		Predicate headLiteral = createLiteralFromTuple(hashConstantToVariable, exampleTuple, modeH, true);
+//		if (ground) {
+//			modeH = modeH.toGroundMode();
+//		}
+		Predicate headLiteral = createLiteralFromTuple(hashConstantToVariable, exampleTuple, modeH, true, ground);
 		clause.addPositiveLiteral(headLiteral);
 
 		// For each attribute, get relations that have attributes with same type, and call stratifiedSamplingRecursive
@@ -246,7 +248,9 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 						} else {
 							distance = maxDistanceForMDs.get(keyForMDsSource).intValue();
 						}
+						TimeWatch tw = TimeWatch.start();
 						Set<SimilarValue> similarValues = hsTrees.get(keyForTrees).hsSearch(value, distance);
+						NumbersKeeper.similaritySearchTime += tw.time();
 						
 						if (similarValues.isEmpty())
 							continue;
@@ -379,21 +383,21 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 			String sourceValue = pair.getSecond();
 			Set<String> usedModes = new HashSet<String>();
 			for (Mode mode : groupedModesByRelation.get(relationName)) {
-				if (ground) {
-					if (usedModes.contains(mode.toGroundModeString())) {
-						continue;
-					} else {
-						mode = mode.toGroundMode();
-						usedModes.add(mode.toGroundModeString());
-					}
-				}
+//				if (ground) {
+//					if (usedModes.contains(mode.toGroundModeString())) {
+//						continue;
+//					} else {
+//						mode = mode.toGroundMode();
+//						usedModes.add(mode.toGroundModeString());
+//					}
+//				}
 				
-				Predicate newLiteral = createLiteralFromTuple(hashConstantToVariable, tuple, mode, false);
+				Predicate newLiteral = createLiteralFromTuple(hashConstantToVariable, tuple, mode, false, ground);
 				clause.addNegativeLiteral(newLiteral);
 				
 				// Create similarity literals
 				if (!sourceValue.equals("") && !sourceValue.startsWith(NULL_PREFIX)) {
-					Predicate similarityLiteral = createSimilarityLiteralForTuple(mode, hashConstantToVariable, sourceValue, inputAttributePosition, tuple.getValues().get(inputAttributePosition).toString());
+					Predicate similarityLiteral = createSimilarityLiteralForTuple(mode, hashConstantToVariable, sourceValue, inputAttributePosition, tuple.getValues().get(inputAttributePosition).toString(), ground);
 					clause.addNegativeLiteral(similarityLiteral);
 				}
 			}
@@ -539,7 +543,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 	 * Creates a literal from a tuple and a mode.
 	 */
 	protected Predicate createLiteralFromTuple(Map<String, String> hashConstantToVariable, Tuple tuple, Mode mode,
-			boolean headMode) {
+			boolean headMode, boolean ground) {
 		List<Term> terms = new ArrayList<Term>();
 		for (int i = 0; i < mode.getArguments().size(); i++) {
 			String value;
@@ -551,17 +555,21 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 				nullCounter++;
 			}
 
-			if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
+			if (ground) {
 				terms.add(new Constant("\"" + value + "\""));
 			} else {
-				// INPUT or OUTPUT type
-				if (!hashConstantToVariable.containsKey(value)) {
-					String var = Commons.newVariable(varCounter);
-					varCounter++;
-
-					hashConstantToVariable.put(value, var);
+				if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
+					terms.add(new Constant("\"" + value + "\""));
+				} else {
+					// INPUT or OUTPUT type
+					if (!hashConstantToVariable.containsKey(value)) {
+						String var = Commons.newVariable(varCounter);
+						varCounter++;
+	
+						hashConstantToVariable.put(value, var);
+					}
+					terms.add(new Variable(hashConstantToVariable.get(value)));
 				}
-				terms.add(new Variable(hashConstantToVariable.get(value)));
 			}
 		}
 
@@ -570,29 +578,34 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 	}
 	
 	private Predicate createSimilarityLiteralForTuple(Mode mode, Map<String, String> hashConstantToVariable, 
-			String sourceValue, int similarAttributeInTuplePosition, String valueInTupleString) {
+			String sourceValue, int similarAttributeInTuplePosition, String valueInTupleString, boolean ground) {
 		Term similarValueTerm;
 		Term valueInTupleTerm;
 		
-		// Create similarity predicate containing constants or variables
-		if (mode.getArguments().get(similarAttributeInTuplePosition).getIdentifierType()
-				.equals(IdentifierType.CONSTANT)) {
+		if (ground) {
 			similarValueTerm = new Constant("\"" + sourceValue + "\"");
 			valueInTupleTerm = new Constant("\"" + valueInTupleString + "\"");
 		} else {
-			if (!hashConstantToVariable.containsKey(sourceValue)) {
-				String var = Commons.newVariable(varCounter);
-				varCounter++;
-				hashConstantToVariable.put(sourceValue, var);
+			// Create similarity predicate containing constants or variables
+			if (mode.getArguments().get(similarAttributeInTuplePosition).getIdentifierType()
+					.equals(IdentifierType.CONSTANT)) {
+				similarValueTerm = new Constant("\"" + sourceValue + "\"");
+				valueInTupleTerm = new Constant("\"" + valueInTupleString + "\"");
+			} else {
+				if (!hashConstantToVariable.containsKey(sourceValue)) {
+					String var = Commons.newVariable(varCounter);
+					varCounter++;
+					hashConstantToVariable.put(sourceValue, var);
+				}
+				if (!hashConstantToVariable.containsKey(valueInTupleString)) {
+					String var = Commons.newVariable(varCounter);
+					varCounter++;
+					hashConstantToVariable.put(valueInTupleString, var);
+				}
+				
+				similarValueTerm = new Variable(hashConstantToVariable.get(sourceValue));
+				valueInTupleTerm = new Variable(hashConstantToVariable.get(valueInTupleString));
 			}
-			if (!hashConstantToVariable.containsKey(valueInTupleString)) {
-				String var = Commons.newVariable(varCounter);
-				varCounter++;
-				hashConstantToVariable.put(valueInTupleString, var);
-			}
-			
-			similarValueTerm = new Variable(hashConstantToVariable.get(sourceValue));
-			valueInTupleTerm = new Variable(hashConstantToVariable.get(valueInTupleString));
 		}
 
 		// Order of terms depends on lexicographic order

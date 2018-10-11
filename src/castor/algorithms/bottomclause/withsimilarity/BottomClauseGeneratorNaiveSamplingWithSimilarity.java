@@ -175,11 +175,11 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 		// Create head literal
 		varCounter = 0;
 		nullCounter = 0;
-		if (ground) {
-			modeH = modeH.toGroundMode();
-		}
+//		if (ground) {
+//			modeH = modeH.toGroundMode();
+//		}
 		Predicate headLiteral = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, exampleTuple,
-				modeH, true, inTerms, inTermsForMDs, maxDistanceForMDs);
+				modeH, true, inTerms, inTermsForMDs, maxDistanceForMDs, ground);
 		clause.addPositiveLiteral(headLiteral);
 
 		Map<String, List<Mode>> groupedModesByRelation = new LinkedHashMap<String, List<Mode>>();
@@ -242,7 +242,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 			}
 			
 			// OPERATION BASED ON MATCHING DEPENDENCIES
-			for (Pair<String, Integer> key : newInTermsForMDs.keySet()) {
+			for (Pair<String, Integer> key : inTermsForMDs.keySet()) {
 				if (!relationAttributesUsed.contains(key)) {
 					String relationName = key.getFirst();
 					int inputVarPosition = key.getSecond();
@@ -265,7 +265,19 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 				}
 			}
 
-			// Add new terms to inTerms
+			// Clean newInTerms and newInTermsForMDs by removing values that we searched for before (in inTerms and inTermsForMDs)
+//			for (String key: inTerms.keySet()) {
+//				if (newInTerms.containsKey(key)) {
+//					newInTerms.get(key).removeAll(inTerms.get(key));
+//				}
+//			}
+//			for (Pair<String,Integer> key: inTermsForMDs.keySet()) {
+//				if (newInTermsForMDs.containsKey(key)) {
+//					newInTermsForMDs.get(key).removeAll(inTermsForMDs.get(key));
+//				}
+//			}
+			
+			// Add new terms to inTerms and inTermsForMDs
 			inTerms.clear();
 			inTerms.putAll(newInTerms);
 			inTermsForMDs.clear();
@@ -365,7 +377,6 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 
 				// Create query and run
 				String query = String.format(SELECTIN_SQL_STATEMENT, relationName, attributeName, knownTerms);
-//				System.out.println(query);
 				GenericTableObject result = genericDAO.executeQuery(query);
 				if (result != null) {
 					for (Tuple tuple : result.getTable()) {
@@ -437,17 +448,17 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 			boolean createSimilarityPredicate, String sourceValue, int similarAttributeInTuplePosition) {
 		Set<String> usedModes = new HashSet<String>();
 		for (Mode mode : relationAttributeModes) {
-			if (ground) {
-				if (usedModes.contains(mode.toGroundModeString())) {
-					continue;
-				} else {
-					mode = mode.toGroundMode();
-					usedModes.add(mode.toGroundModeString());
-				}
-			}
+//			if (ground) {
+//				if (usedModes.contains(mode.toGroundModeString())) {
+//					continue;
+//				} else {
+////					mode = mode.toGroundMode();
+//					usedModes.add(mode.toGroundModeString());
+//				}
+//			}
 
 			Predicate literal = createLiteralFromTuple(hashConstantToVariable, hashVariableToConstant, tuple, mode,
-					false, newInTerms, newInTermsForMDs, maxDistanceForMDs);
+					false, newInTerms, newInTermsForMDs, maxDistanceForMDs, ground);
 
 			// Do not add literal if it's exactly the same as head literal
 			if (!literal.equals(clause.getPositiveLiterals().get(0).getAtomicSentence())) {
@@ -460,13 +471,13 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 					currentLiterals.add((Predicate)lit.getAtomicSentence());
 				}
 				currentLiterals.addAll(newLiterals);
-				List<Predicate> similarityLiterals = createSimilarityPredicatesForLiterals(currentLiterals, literal, hashConstantToVariable, hashVariableToConstant, mode);
+				List<Predicate> similarityLiterals = createSimilarityPredicatesForLiterals(currentLiterals, literal, hashConstantToVariable, hashVariableToConstant, mode, ground);
 				addNotRepeated(newLiterals, similarityLiterals);
 				
 				// Create similarity predicate between source value and value in new literal
 				if (createSimilarityPredicate && !sourceValue.startsWith(NULL_PREFIX)) {
 					String valueInTupleString = tuple.getValues().get(similarAttributeInTuplePosition).toString();
-					Predicate similarityLiteral = createSimilarityLiteralForTuple(mode, hashConstantToVariable, sourceValue, similarAttributeInTuplePosition, valueInTupleString);
+					Predicate similarityLiteral = createSimilarityLiteralForTuple(mode, hashConstantToVariable, sourceValue, similarAttributeInTuplePosition, valueInTupleString, ground);
 					addNotRepeated(newLiterals, similarityLiteral);
 				}
 			}
@@ -479,7 +490,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 	private Predicate createLiteralFromTuple(Map<String, String> hashConstantToVariable,
 			Map<String, String> hashVariableToConstant, Tuple tuple, Mode mode, boolean headMode,
 			Map<String, Set<String>> inTerms, Map<Pair<String, Integer>, Set<String>> inTermsForMDs,
-			Map<Pair<String, Integer>, Double> maxDistanceForMDs) {
+			Map<Pair<String, Integer>, Double> maxDistanceForMDs, boolean ground) {
 		List<Term> terms = new ArrayList<Term>();
 		for (int i = 0; i < mode.getArguments().size(); i++) {
 			//TODO default value for nulls? distinct value?
@@ -492,19 +503,24 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 				nullCounter++;
 			}
 			
-			if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
+			if(ground) {
 				terms.add(new Constant("\"" + value + "\""));
 			} else {
-				// INPUT or OUTPUT type
-				if (!hashConstantToVariable.containsKey(value)) {
-					String var = Commons.newVariable(varCounter);
-					varCounter++;
+				if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
+					terms.add(new Constant("\"" + value + "\""));
+				} else {
+					// INPUT or OUTPUT type
+					if (!hashConstantToVariable.containsKey(value)) {
+						String var = Commons.newVariable(varCounter);
+						varCounter++;
 
-					hashConstantToVariable.put(value, var);
-					hashVariableToConstant.put(var, value);
+						hashConstantToVariable.put(value, var);
+						hashVariableToConstant.put(var, value);
+					}
+					terms.add(new Variable(hashConstantToVariable.get(value)));
 				}
-				terms.add(new Variable(hashConstantToVariable.get(value)));
 			}
+			
 			// Add constants to inTerms
 			if (headMode || mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.OUTPUT)
 					|| mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
@@ -540,18 +556,23 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 	}
 	
 	private Predicate createSimilarityLiteralForTuple(Mode mode, Map<String, String> hashConstantToVariable, 
-			String sourceValue, int similarAttributeInTuplePosition, String valueInTupleString) {
+			String sourceValue, int similarAttributeInTuplePosition, String valueInTupleString, boolean ground) {
 		Term similarValueTerm;
 		Term valueInTupleTerm;
 		
-		// Create similarity predicate containing constants or variables
-		if (mode.getArguments().get(similarAttributeInTuplePosition).getIdentifierType()
-				.equals(IdentifierType.CONSTANT)) {
+		if (ground) {
 			similarValueTerm = new Constant("\"" + sourceValue + "\"");
 			valueInTupleTerm = new Constant("\"" + valueInTupleString + "\"");
 		} else {
-			similarValueTerm = new Variable(hashConstantToVariable.get(sourceValue));
-			valueInTupleTerm = new Variable(hashConstantToVariable.get(valueInTupleString));
+			// Create similarity predicate containing constants or variables
+			if (mode.getArguments().get(similarAttributeInTuplePosition).getIdentifierType()
+					.equals(IdentifierType.CONSTANT)) {
+				similarValueTerm = new Constant("\"" + sourceValue + "\"");
+				valueInTupleTerm = new Constant("\"" + valueInTupleString + "\"");
+			} else {
+				similarValueTerm = new Variable(hashConstantToVariable.get(sourceValue));
+				valueInTupleTerm = new Variable(hashConstantToVariable.get(valueInTupleString));
+			}
 		}
 
 		// Order of terms depends on lexicographic order
@@ -586,7 +607,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 	 * (join inside iteration)
 	 */
 	private List<Predicate> createSimilarityPredicatesForLiterals(List<Predicate> literals, Predicate newLiteral,
-			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant, Mode mode) {
+			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant, Mode mode, boolean ground) {
 		List<Predicate> similarityLiterals = new ArrayList<Predicate>();
 		
 		// Check every attribute in newLiteral
@@ -625,7 +646,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 									distance = (int)md.getMaxDistance();
 								}
 								if (SimilarityUtils.isLessThanDistance(valueInNewLiteral, valueInLiteral, distance)) {
-									Predicate similarityLiteral = createSimilarityLiteralForTuple(mode, hashConstantToVariable, valueInLiteral, attributePosition, valueInNewLiteral);
+									Predicate similarityLiteral = createSimilarityLiteralForTuple(mode, hashConstantToVariable, valueInLiteral, attributePosition, valueInNewLiteral, ground);
 									similarityLiterals.add(similarityLiteral);
 								}
 							}
@@ -667,7 +688,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 									distance = (int)md.getMaxDistance();
 								}
 								if (SimilarityUtils.isLessThanDistance(valueInNewLiteral, valueInLiteral, distance)) {
-									Predicate similarityLiteral = createSimilarityLiteralForTuple(mode, hashConstantToVariable, valueInLiteral, md.getRightAttributeNumber(), valueInNewLiteral);
+									Predicate similarityLiteral = createSimilarityLiteralForTuple(mode, hashConstantToVariable, valueInLiteral, md.getRightAttributeNumber(), valueInNewLiteral, ground);
 									similarityLiterals.add(similarityLiteral);
 								}
 							}
