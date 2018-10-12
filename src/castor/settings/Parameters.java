@@ -1,5 +1,6 @@
 package castor.settings;
 
+import castor.algorithms.clauseevaluation.EvaluationFunctions;
 import castor.algorithms.transformations.ReductionMethods;
 
 public class Parameters {
@@ -31,6 +32,7 @@ public class Parameters {
 	private boolean shuffleExamples = false;
 	private boolean randomizeRecall = false;
 	private boolean allowSimilarity = false;
+	private EvaluationFunctions.FUNCTION evalfn = EvaluationFunctions.FUNCTION.COVERAGE;
 	
 	public boolean isCreateStoredProcedure() {
 		return createStoredProcedure;
@@ -207,6 +209,22 @@ public class Parameters {
 	}
 	public void setAllowSimilarity(boolean allowSimilarity) {
 		this.allowSimilarity = allowSimilarity;
+	}
+	public EvaluationFunctions.FUNCTION getEvalfn() {
+		return evalfn;
+	}
+	public void setEvalfn(String evalfn) {
+		if (evalfn.equals("coverage")) {
+			this.evalfn = EvaluationFunctions.FUNCTION.COVERAGE;
+		} else if (evalfn.equals("precision")) {
+			this.evalfn = EvaluationFunctions.FUNCTION.PRECISION;
+		} else if (evalfn.equals("recall")) {
+			this.evalfn = EvaluationFunctions.FUNCTION.RECALL;
+		} else if (evalfn.equals("f1")) {
+			this.evalfn = EvaluationFunctions.FUNCTION.F1;
+		} else {
+			throw new IllegalArgumentException("Unknown evaluation function.");
+		}
 	}
 	@Override
 	public String toString() {

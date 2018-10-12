@@ -452,12 +452,16 @@ public class CastorLearner implements Learner {
 						// Perform ARMG
 						ClauseInfo newClauseInfo = armg(schema, clauseInfo, tuple, posExamplesRelation);
 
-						if (isSafeClause(newClauseInfo.getClause())) {
-							// Keep clause only if its score is better than current best score
-							double score = this.computeScore(schema, uncoveredPosExamples, posExamplesRelation,
-									negExamplesRelation, newClauseInfo);
-							if (score > bestScore) {
-								newARMGs.add(newClauseInfo);
+						// Consider new clause only if it's different from previous clause
+						if (!clauseInfo.getClause().equals(newClauseInfo.getClause())) {
+							// Consider new clause only if it's safe
+							if (isSafeClause(newClauseInfo.getClause())) {
+								// Keep clause only if its score is better than current best score
+								double score = this.computeScore(schema, uncoveredPosExamples, posExamplesRelation,
+										negExamplesRelation, newClauseInfo);
+								if (score >= bestScore) {
+									newARMGs.add(newClauseInfo);
+								}
 							}
 						}
 					}
@@ -869,8 +873,10 @@ public class CastorLearner implements Learner {
 			Relation negExamplesRelation, ClauseInfo clauseInfo) {
 		double score;
 		if (clauseInfo.getScore() == null) {
+//			score = evaluator.computeScore(genericDAO, coverageEngine, schema, remainingPosExamples,
+//					posExamplesRelation, negExamplesRelation, clauseInfo, EvaluationFunctions.FUNCTION.COVERAGE);
 			score = evaluator.computeScore(genericDAO, coverageEngine, schema, remainingPosExamples,
-					posExamplesRelation, negExamplesRelation, clauseInfo, EvaluationFunctions.FUNCTION.COVERAGE);
+					posExamplesRelation, negExamplesRelation, clauseInfo, parameters.getEvalfn());
 		} else {
 			score = clauseInfo.getScore();
 		}
@@ -878,7 +884,7 @@ public class CastorLearner implements Learner {
 	}
 
 	/*
-	 * Check if a clause entials an example
+	 * Check if a clause entails an example
 	 */
 	private boolean entails(GenericDAO genericDAO, CoverageEngine coverageEngine, Schema schema, ClauseInfo clauseInfo,
 			Tuple exampleTuple, Relation posExamplesRelation) {
