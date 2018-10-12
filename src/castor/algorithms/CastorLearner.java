@@ -416,8 +416,8 @@ public class CastorLearner implements Learner {
 		logger.info("Generalizing clause...");
 
 		List<ClauseInfo> bestARMGs = new LinkedList<ClauseInfo>();
-		bestARMGs.add(new ClauseInfo(bottomClause, this.coverageEngine.getAllPosExamples().size(),
-				this.coverageEngine.getAllNegExamples().size()));
+		ClauseInfo bottomClauseInfo = new ClauseInfo(bottomClause, this.coverageEngine.getAllPosExamples().size(), this.coverageEngine.getAllNegExamples().size());
+		bestARMGs.add(bottomClauseInfo);
 		
 		boolean createdNewARMGS = true;
 		int iters = 0;
@@ -483,7 +483,7 @@ public class CastorLearner implements Learner {
 		}
 
 		// Get highest scoring clause from bestARMGs
-		ClauseInfo bestClauseInfo = null;
+		ClauseInfo bestClauseInfo = bottomClauseInfo;
 		double bestScore = Double.NEGATIVE_INFINITY;
 		for (ClauseInfo clauseInfo : bestARMGs) {
 			double score = this.computeScore(schema, uncoveredPosExamples, posExamplesRelation, negExamplesRelation,

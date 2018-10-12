@@ -474,6 +474,14 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 				List<Predicate> similarityLiterals = createSimilarityPredicatesForLiterals(currentLiterals, literal, hashConstantToVariable, hashVariableToConstant, mode, ground);
 				addNotRepeated(newLiterals, similarityLiterals);
 				
+				
+				////
+				//TODO: TEMPORAL, TO BE REMOVED
+//				List<Predicate> diffLiterals = createDiffPredicatesForLiterals(currentLiterals, literal, hashConstantToVariable, hashVariableToConstant, mode, ground);
+//				addNotRepeated(newLiterals, diffLiterals);
+				////
+				
+				
 				// Create similarity predicate between source value and value in new literal
 				if (createSimilarityPredicate && !sourceValue.startsWith(NULL_PREFIX)) {
 					String valueInTupleString = tuple.getValues().get(similarAttributeInTuplePosition).toString();
@@ -601,6 +609,140 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 		}
 		return values;
 	}
+	
+	////
+	//TODO: TEMPORAL, TO BE REMOVED
+//	private List<Predicate> createDiffPredicatesForLiterals(List<Predicate> literals, Predicate newLiteral,
+//			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant, Mode mode, boolean ground) {
+//		List<Predicate> diffLiterals = new ArrayList<Predicate>();
+//		
+//		String relationName = "PaperAuthor_noauthor";
+//		int attributePostition = 0;
+//		
+//		if (newLiteral.getPredicateName().equals(relationName)) {
+//		
+//			String valueInNewLiteral;
+//			if (Commons.isVariable(newLiteral.getTerms().get(attributePostition))) {
+//				valueInNewLiteral = hashVariableToConstant.get(newLiteral.getTerms().get(attributePostition).getSymbolicName());
+//			} else {
+//				valueInNewLiteral = newLiteral.getTerms().get(attributePostition).getSymbolicName().replaceAll("\"(.+)\"", "$1");
+//			}
+//			
+//			for (Predicate literal : literals) {
+//				if (literal.getPredicateName().equals(relationName)) {
+//					// Get string value of attribute in newLiteral
+//					String valueInLiteral;
+//					if (Commons.isVariable(literal.getTerms().get(attributePostition))) {
+//						valueInLiteral = hashVariableToConstant.get(literal.getTerms().get(attributePostition).getSymbolicName());
+//					} else {
+//						valueInLiteral = literal.getTerms().get(attributePostition).getSymbolicName().replaceAll("\"(.+)\"", "$1");
+//					}
+//					
+//					if (!valueInNewLiteral.equals(valueInLiteral)) {
+//						Term similarValueTerm;
+//						Term valueInTupleTerm;
+//						
+//						if (ground) {
+//							similarValueTerm = new Constant("\"" + valueInLiteral + "\"");
+//							valueInTupleTerm = new Constant("\"" + valueInNewLiteral + "\"");
+//						} else {
+//							// Create similarity predicate containing constants or variables
+//							if (mode.getArguments().get(0).getIdentifierType()
+//									.equals(IdentifierType.CONSTANT)) {
+//								similarValueTerm = new Constant("\"" + valueInLiteral + "\"");
+//								valueInTupleTerm = new Constant("\"" + valueInNewLiteral + "\"");
+//							} else {
+//								similarValueTerm = new Variable(hashConstantToVariable.get(valueInLiteral));
+//								valueInTupleTerm = new Variable(hashConstantToVariable.get(valueInNewLiteral));
+//							}
+//						}
+//		
+//						// Order of terms depends on lexicographic order
+//						List<Term> terms = new ArrayList<Term>();
+//						if (valueInLiteral.compareTo(valueInNewLiteral) <= 0) {
+//							terms.add(similarValueTerm);
+//							terms.add(valueInTupleTerm);
+//						} else {
+//							terms.add(valueInTupleTerm);
+//							terms.add(similarValueTerm);
+//						}
+//						Predicate diffLiteral = new Predicate("diff", terms);
+//						diffLiterals.add(diffLiteral);
+//					}
+//				}
+//			}
+//		}
+//		
+//		return diffLiterals;
+//	}
+	
+//	private List<Predicate> createDiffPredicatesForLiterals(List<Predicate> literals, Predicate newLiteral,
+//			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant, Mode mode, boolean ground) {
+//		List<Predicate> diffLiterals = new ArrayList<Predicate>();
+//		
+//		// Check every attribute in newLiteral
+//		for (int attributePosition = 0 ; attributePosition < newLiteral.getArgs().size(); attributePosition++) {
+//			// Get string value of attribute in newLiteral
+//			String valueInNewLiteral;
+//			if (Commons.isVariable(newLiteral.getTerms().get(attributePosition))) {
+//				valueInNewLiteral = hashVariableToConstant.get(newLiteral.getTerms().get(attributePosition).getSymbolicName());
+//			} else {
+//				valueInNewLiteral = newLiteral.getTerms().get(attributePosition).getSymbolicName().replaceAll("\"(.+)\"", "$1");
+//			}
+//			
+//			if (!valueInNewLiteral.startsWith(NULL_PREFIX)) {
+//				// Compare against all other existing literals
+//				for (Predicate literal : literals) {
+//					for (int otherLiteralAttributePosition = 0 ; otherLiteralAttributePosition < literal.getArgs().size(); otherLiteralAttributePosition++) {
+//						// Get string value of attribute in newLiteral
+//						String valueInLiteral;
+//						if (Commons.isVariable(literal.getTerms().get(otherLiteralAttributePosition))) {
+//							valueInLiteral = hashVariableToConstant.get(literal.getTerms().get(otherLiteralAttributePosition).getSymbolicName());
+//						} else {
+//							valueInLiteral = literal.getTerms().get(otherLiteralAttributePosition).getSymbolicName().replaceAll("\"(.+)\"", "$1");
+//						}
+//						
+//						if (!valueInNewLiteral.equals(valueInLiteral)) {
+//							
+//							Term similarValueTerm;
+//							Term valueInTupleTerm;
+//							
+//							if (ground) {
+//								similarValueTerm = new Constant("\"" + valueInLiteral + "\"");
+//								valueInTupleTerm = new Constant("\"" + valueInNewLiteral + "\"");
+//							} else {
+//								// Create similarity predicate containing constants or variables
+//								if (mode.getArguments().get(attributePosition).getIdentifierType()
+//										.equals(IdentifierType.CONSTANT)) {
+//									similarValueTerm = new Constant("\"" + valueInLiteral + "\"");
+//									valueInTupleTerm = new Constant("\"" + valueInNewLiteral + "\"");
+//								} else {
+//									similarValueTerm = new Variable(hashConstantToVariable.get(valueInLiteral));
+//									valueInTupleTerm = new Variable(hashConstantToVariable.get(valueInNewLiteral));
+//								}
+//							}
+//
+//							// Order of terms depends on lexicographic order
+//							List<Term> terms = new ArrayList<Term>();
+//							if (valueInLiteral.compareTo(valueInNewLiteral) <= 0) {
+//								terms.add(similarValueTerm);
+//								terms.add(valueInTupleTerm);
+//							} else {
+//								terms.add(valueInTupleTerm);
+//								terms.add(similarValueTerm);
+//							}
+//							Predicate diffLiteral = new Predicate("diff", terms);
+//							diffLiterals.add(diffLiteral);
+//
+//						}
+//					}
+//				}
+//			}
+//		}
+//		
+//		return diffLiterals;
+//	}
+	////
 
 	/*
 	 * Given newLiteral and list of existing literals, create all similarity predicates between attributes in newLiteral and attributes in existing literals 
