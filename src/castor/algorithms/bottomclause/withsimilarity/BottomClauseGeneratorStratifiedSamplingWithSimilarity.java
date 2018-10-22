@@ -156,15 +156,16 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 
 			// For each relation that have attributes with same type, call stratifiedSamplingRecursive
 			// EXACT SEARCH
-			for (Pair<String, Integer> relationInputAttributePair : groupedRelationsByAttributeType
-					.get(attributeType)) {
-				String relationName = relationInputAttributePair.getFirst();
-				int inputAttributePosition = relationInputAttributePair.getSecond();
-
-				stratifiedSamplingRecursive(genericDAO, schema, groupedModesByRelation, groupedModesByRelationAttribute, groupedRelationsByAttributeType,
-						hashConstantToVariable, modeH.getPredicateName(), i, relationName, inputAttributePosition, values,
-						parameters.getIterations(), 1, sampleSize, ground, clause, randomGenerator,
-						maxDistanceForMDs);
+			if (groupedRelationsByAttributeType.containsKey(attributeType)) {
+				for (Pair<String, Integer> relationInputAttributePair : groupedRelationsByAttributeType.get(attributeType)) {
+					String relationName = relationInputAttributePair.getFirst();
+					int inputAttributePosition = relationInputAttributePair.getSecond();
+	
+					stratifiedSamplingRecursive(genericDAO, schema, groupedModesByRelation, groupedModesByRelationAttribute, groupedRelationsByAttributeType,
+							hashConstantToVariable, modeH.getPredicateName(), i, relationName, inputAttributePosition, values,
+							parameters.getIterations(), 1, sampleSize, ground, clause, randomGenerator,
+							maxDistanceForMDs);
+				}
 			}
 			
 			// SIMILARITY SEARCH
