@@ -530,8 +530,8 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 			}
 			
 			// Add constants to inTerms
-			if (headMode || mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.OUTPUT)
-					|| mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
+//			if (headMode || mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.OUTPUT)
+//					|| mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
 				String variableType = mode.getArguments().get(i).getType();
 				if (!inTerms.containsKey(variableType)) {
 					inTerms.put(variableType, new HashSet<String>());
@@ -556,7 +556,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 						maxDistanceForMDs.put(rightKey, maxDistance);
 					}
 				}
-			}
+//			}
 		}
 
 		Predicate literal = new Predicate(mode.getPredicateName(), terms);

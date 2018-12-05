@@ -260,15 +260,15 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 				terms.add(new Variable(hashConstantToVariable.get(value)));
 			}
 			// Add constants to inTerms
-			if (headMode ||
-					mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.OUTPUT) ||
-					mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
+//			if (headMode ||
+//					mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.OUTPUT) ||
+//					mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
 				String variableType = mode.getArguments().get(i).getType();
 				if (!inTerms.containsKey(variableType)) {
 					inTerms.put(variableType, new HashSet<String>());
 				}
 				inTerms.get(variableType).add(value);
-			}
+//			}
 		}
 		
 		Predicate literal = new Predicate(mode.getPredicateName(), terms);
