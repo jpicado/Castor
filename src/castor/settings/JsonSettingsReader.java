@@ -25,7 +25,13 @@ public class JsonSettingsReader {
 	 */
 	public static Parameters readParameters(JsonObject parametersJson) {
 		Parameters parameters = new Parameters();
-			
+
+		if (parametersJson.get("estimationSample") != null) {
+			parameters.setEstimationSample(parametersJson.get("estimationSample").getAsDouble());
+		}
+		if (parametersJson.get("generalizationMethod") != null) {
+			parameters.setGeneralizationMethod(parametersJson.get("generalizationMethod").getAsString());
+		}
 		if (parametersJson.get("createStoredProcedure") != null) {
 			parameters.setCreateStoredProcedure(parametersJson.get("createStoredProcedure").getAsBoolean());
 		}
