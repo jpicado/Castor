@@ -104,6 +104,9 @@ public class JsonSettingsReader {
 		if (parametersJson.get("allowSimilarity") != null) {
 			parameters.setAllowSimilarity(parametersJson.get("allowSimilarity").getAsBoolean());
 		}
+		if (parametersJson.get("evalfn") != null) {
+			parameters.setEvalfn(parametersJson.get("evalfn").getAsString());
+		}
 		
 		return parameters;
 	}
