@@ -418,8 +418,8 @@ public class CastorLearner implements Learner {
 		logger.info("Generalizing clause...");
 
 		List<ClauseInfo> bestARMGs = new LinkedList<ClauseInfo>();
-		bestARMGs.add(new ClauseInfo(bottomClause, this.coverageEngine.getAllPosExamples().size(),
-				this.coverageEngine.getAllNegExamples().size()));
+		ClauseInfo bottomClauseInfo = new ClauseInfo(bottomClause, this.coverageEngine.getAllPosExamples().size(), this.coverageEngine.getAllNegExamples().size());
+		bestARMGs.add(bottomClauseInfo);
 		
 		boolean createdNewARMGS = true;
 		int iters = 0;
@@ -454,12 +454,16 @@ public class CastorLearner implements Learner {
 						// Perform ARMG
 						ClauseInfo newClauseInfo = armg(schema, clauseInfo, tuple, posExamplesRelation);
 
-						if (isSafeClause(newClauseInfo.getClause())) {
-							// Keep clause only if its score is better than current best score
-							double score = this.computeScore(schema, uncoveredPosExamples, posExamplesRelation,
-									negExamplesRelation, newClauseInfo);
-							if (score > bestScore) {
-								newARMGs.add(newClauseInfo);
+						// Consider new clause only if it's different from previous clause
+						if (!clauseInfo.getClause().equals(newClauseInfo.getClause())) {
+							// Consider new clause only if it's safe
+							if (isSafeClause(newClauseInfo.getClause())) {
+								// Keep clause only if its score is better than current best score
+								double score = this.computeScore(schema, uncoveredPosExamples, posExamplesRelation,
+										negExamplesRelation, newClauseInfo);
+								if (score >= bestScore) {
+									newARMGs.add(newClauseInfo);
+								}
 							}
 						}
 					}
@@ -481,7 +485,7 @@ public class CastorLearner implements Learner {
 		}
 
 		// Get highest scoring clause from bestARMGs
-		ClauseInfo bestClauseInfo = null;
+		ClauseInfo bestClauseInfo = bottomClauseInfo;
 		double bestScore = Double.NEGATIVE_INFINITY;
 		for (ClauseInfo clauseInfo : bestARMGs) {
 			double score = this.computeScore(schema, uncoveredPosExamples, posExamplesRelation, negExamplesRelation,
@@ -871,8 +875,10 @@ public class CastorLearner implements Learner {
 			Relation negExamplesRelation, ClauseInfo clauseInfo) {
 		double score;
 		if (clauseInfo.getScore() == null) {
+//			score = evaluator.computeScore(genericDAO, coverageEngine, schema, remainingPosExamples,
+//					posExamplesRelation, negExamplesRelation, clauseInfo, EvaluationFunctions.FUNCTION.COVERAGE);
 			score = evaluator.computeScore(genericDAO, coverageEngine, schema, remainingPosExamples,
-					posExamplesRelation, negExamplesRelation, clauseInfo, EvaluationFunctions.FUNCTION.COVERAGE);
+					posExamplesRelation, negExamplesRelation, clauseInfo, parameters.getEvalfn());
 		} else {
 			score = clauseInfo.getScore();
 		}
@@ -880,7 +886,7 @@ public class CastorLearner implements Learner {
 	}
 
 	/*
-	 * Check if a clause entials an example
+	 * Check if a clause entails an example
 	 */
 	private boolean entails(GenericDAO genericDAO, CoverageEngine coverageEngine, Schema schema, ClauseInfo clauseInfo,
 			Tuple exampleTuple, Relation posExamplesRelation) {

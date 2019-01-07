@@ -278,14 +278,14 @@ public class $name$ extends VoltProcedure {
     			}
 
     			// If OUTPUT variable, add constants to inTerms
-    			if (getArgumentIdentifierType(modeBArguments[i]).equals(TYPE_OUTPUT) ||
-    					getArgumentIdentifierType(modeBArguments[i]).equals(TYPE_CONSTANT)) {
+//    			if (getArgumentIdentifierType(modeBArguments[i]).equals(TYPE_OUTPUT) ||
+//    					getArgumentIdentifierType(modeBArguments[i]).equals(TYPE_CONSTANT)) {
     				String variableType = getArgumentType(modeBArguments[i]);
     				if(!newInTerms.containsKey(variableType)) {
     					newInTerms.put(variableType, new HashSet<String>());
     				}
     				newInTerms.get(variableType).add(value);
-    			}
+//    			}
     		}
 //        	String literal = modeBPredicate + "(" + String.join(",", terms) + ")";
 //    		literals.add(literal);

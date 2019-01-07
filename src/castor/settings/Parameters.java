@@ -1,5 +1,6 @@
 package castor.settings;
 
+import castor.algorithms.clauseevaluation.EvaluationFunctions;
 import castor.algorithms.transformations.ReductionMethods;
 
 public class Parameters {
@@ -33,6 +34,7 @@ public class Parameters {
 	private boolean shuffleExamples = false;
 	private boolean randomizeRecall = false;
 	private boolean allowSimilarity = false;
+	private EvaluationFunctions.FUNCTION evalfn = EvaluationFunctions.FUNCTION.COVERAGE;
 	
 	public boolean isCreateStoredProcedure() {
 		return createStoredProcedure;
@@ -225,17 +227,34 @@ public class Parameters {
 	public void setGeneralizationMethod(String generalizationMethod) {
 		this.generalizationMethod = generalizationMethod;
 	}
+	public EvaluationFunctions.FUNCTION getEvalfn() {
+		return evalfn;
+	}
+	public void setEvalfn(String evalfn) {
+		if (evalfn.equals("coverage")) {
+			this.evalfn = EvaluationFunctions.FUNCTION.COVERAGE;
+		} else if (evalfn.equals("precision")) {
+			this.evalfn = EvaluationFunctions.FUNCTION.PRECISION;
+		} else if (evalfn.equals("recall")) {
+			this.evalfn = EvaluationFunctions.FUNCTION.RECALL;
+		} else if (evalfn.equals("f1")) {
+			this.evalfn = EvaluationFunctions.FUNCTION.F1;
+		} else {
+			throw new IllegalArgumentException("Unknown evaluation function.");
+		}
+	}
 	@Override
 	public String toString() {
 		return "Parameters [createStoredProcedure=" + createStoredProcedure + ", useStoredProcedure="
-				+ useStoredProcedure +", estimationSample=" + estimationSample +", generalizationMethod="+ generalizationMethod +", minPrecision=" + minPrecision + ", minRecall=" + minRecall + ", minPos="
-				+ minPos + ", maxNoise=" + maxNoise + ", sample=" + sample + ", beam=" + beam + ", threads=" + threads
-				+ ", minimizeBottomClause=" + minimizeBottomClause + ", reductionMethod=" + reductionMethod
-				+ ", iterations=" + iterations + ", recall=" + recall + ", groundRecall=" + groundRecall + ", maxterms="
-				+ maxterms + ", useInds=" + useInds + ", dbURL=" + dbURL + ", port=" + port + ", randomSeed="
-				+ randomSeed + ", samplingMethod=" + samplingMethod + ", sampleInTesting=" + sampleInTesting
+				+ useStoredProcedure + ", estimationSample=" + estimationSample + ", minPrecision=" + minPrecision
+				+ ", minRecall=" + minRecall + ", minPos=" + minPos + ", maxNoise=" + maxNoise + ", sample=" + sample
+				+ ", beam=" + beam + ", threads=" + threads + ", minimizeBottomClause=" + minimizeBottomClause
+				+ ", reductionMethod=" + reductionMethod + ", iterations=" + iterations + ", recall=" + recall
+				+ ", groundRecall=" + groundRecall + ", maxterms=" + maxterms + ", useInds=" + useInds + ", dbURL="
+				+ dbURL + ", port=" + port + ", randomSeed=" + randomSeed + ", samplingMethod=" + samplingMethod
+				+ ", generalizationMethod=" + generalizationMethod + ", sampleInTesting=" + sampleInTesting
 				+ ", sampleGroundBottomClauses=" + sampleGroundBottomClauses + ", sampleInCoveringApproach="
 				+ sampleInCoveringApproach + ", shuffleExamples=" + shuffleExamples + ", randomizeRecall="
-				+ randomizeRecall + ", allowSimilarity=" + allowSimilarity + "]";
+				+ randomizeRecall + ", allowSimilarity=" + allowSimilarity + ", evalfn=" + evalfn + "]";
 	}
 }

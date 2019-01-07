@@ -24,6 +24,8 @@ public class NumbersKeeper {
 	
 	public static long computeJoinSizesTime = 0;
 	
+	public static long similaritySearchTime = 0;
+	
 	public static void reset() {
 		totalTime = 0;
 		learningTime = 0;

@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Map.Entry;
 
 import org.apache.commons.math3.util.CombinatoricsUtils;
 
@@ -68,7 +67,8 @@ public class HSTree {
 			
 			if (invertedIndex.containsKey(l) &&
 					invertedIndex.get(l).containsKey(maxLevel)) {
-				 
+				
+				Set<Integer> candidateStringIndexes = new HashSet<Integer>();
 				for (int j=1; j <= Math.pow(2, maxLevel); j++) {
 					if (invertedIndex.get(l).get(maxLevel).containsKey(j)) {
 						// Generate substrings of query
@@ -89,26 +89,30 @@ public class HSTree {
 										matchedSegmentsForString.put(matchStringIndex, new RandomSet<Pair<String,Integer>>());
 										matchedSegmentsForString.get(matchStringIndex).add(substringPositionPair);
 									}
+									
+									// Check if string is candidate
+									if (matchedSegmentsCountForString.get(matchStringIndex) >= minSegments) {
+										candidateStringIndexes.add(matchStringIndex);
+									}
 								}
 							}
 						}
 					}
 				}
 				
-				// For each string, check if matched segments >= minSegments
-				for (Entry<Integer,Integer> entry : matchedSegmentsCountForString.entrySet()) {
-					Integer matchStringIndex = entry.getKey();
-					Integer count = entry.getValue();
+				// Verify each candidate
+				for (Integer matchStringIndex : candidateStringIndexes) {
+					// Option 1
+//					int editDistance = SimilarityUtils.editDistance(strings.get(matchStringIndex), query);
+//					if (editDistance <= maxDistance) {
+//						matchingStrings.add(new SimilarValue(strings.get(matchStringIndex), editDistance));
+//					}
 					
-					// If count of matched segments >= minSegments, it is a candidate
-					if (count >= minSegments) {
+					// Option 2
+					if (SimilarityUtils.isLessThanDistance(strings.get(matchStringIndex), query, maxDistance)) {
+//					if (hsSearchFilter(query, maxDistance, maxLevel, matchStringIndex, matchedSegmentsForString.get(matchStringIndex), minSegments)) {
 						int editDistance = SimilarityUtils.editDistance(strings.get(matchStringIndex), query);
-						//TODO currently compuyting edit distance
-						if (editDistance <= maxDistance) {
-//						if (SimilarityUtils.isLessThanDistance(strings.get(matchStringIndex), query, maxDistance)) {
-//						if (hsSearchFilter(query, maxDistance, maxLevel, matchStringIndex, matchedSegmentsForString.get(matchStringIndex), minSegments)) {
-							matchingStrings.add(new SimilarValue(strings.get(matchStringIndex), editDistance));
-						}
+						matchingStrings.add(new SimilarValue(strings.get(matchStringIndex), editDistance));
 					}
 				}
 			}
@@ -292,46 +296,74 @@ public class HSTree {
 	}
 	
 	/*
-	 * Generate substrings of query based on input and using filters 
+	 * Generate substrings of query based on input and using filters
+	 * Return: set of substrings of query of length segmentLength (computed inside function)
 	 */
 	private List<Pair<String,Integer>> generateSubstrings(String query, int l, int i, int j, int maxDistance) {
 		List<Pair<String,Integer>> substrings = new ArrayList<Pair<String,Integer>>();
 		
-		String someSegment = invertedIndex.get(l).get(i).get(j).keySet().iterator().next();
-		String someString = strings.get(invertedIndex.get(l).get(i).get(j).get(someSegment).get(0));
-		int segmentLength = someSegment.length();
-		int fromIndex = (int)(Math.floor(l / Math.pow(2, i)) * (j-1));
-		int segmentStartPosition = someString.indexOf(someSegment, fromIndex);
-		int lengthDifference = Math.abs(query.length() - someString.length());
+		// All segments in this node have the same length; so get the first segment's length
+		int segmentLength = invertedIndex.get(l).get(i).get(j).keySet().iterator().next().length();
+		int lengthDifference = Math.abs(query.length() - l);
+		
+		// Method 1 to calculate segmentStartPosition
+//		String someString = strings.get(invertedIndex.get(l).get(i).get(j).get(someSegment).get(0));
+//		int fromIndex = (int)(Math.floor(l / Math.pow(2, i)) * (j-1));
+//		int segmentStartPosition = someString.indexOf(someSegment, fromIndex);
+		
+		// Method 2 to calculate segmentStartPosition
+		int segmentStartPosition = 1;// with index starting on 1 because formulas are based on index starting on 1
+		if (j > 0) {
+			for (int k=1; k<j; k++) {
+				segmentStartPosition += invertedIndex.get(l).get(i).get(k).keySet().iterator().next().length();
+			}
+		}
 		
 		//TODO currently using position-aware method because other methods have bugs
 		
+		// NO OPTIMIZATION
+//		int lowerBound = 0;
+//		int upperBound = query.length();
+		
+		// PASSJOIN METHODS
 		// Shift-based method
-//		int lowerBound = Math.max(0, segmentStartPosition - maxDistance);
-//		int upperBound = Math.min(query.length() - segmentLength, segmentStartPosition + maxDistance);
+//		int lowerBound = Math.max(1, segmentStartPosition - maxDistance) - 1;
+//		int upperBound = Math.min(query.length() - segmentLength, segmentStartPosition + maxDistance) - 1;
 		
 		// Position-aware method
-		int lowerBound = Math.max(0, segmentStartPosition - (int)Math.floor(Math.abs(maxDistance - lengthDifference) / 2));
-		int upperBound = Math.min(query.length() - segmentLength, segmentStartPosition + (int)Math.floor(Math.abs(maxDistance + lengthDifference) / 2));
+//		int lowerBound = Math.max(1, segmentStartPosition - (int)Math.floor(Math.abs(maxDistance - lengthDifference) / 2)) - 1;
+//		int upperBound = Math.min(query.length() - segmentLength + 1, segmentStartPosition + (int)Math.floor(Math.abs(maxDistance + lengthDifference) / 2)) - 1;
 		
-		// Multi-match-aware left-side perspective
-//		int lowerBound = Math.max(0, segmentStartPosition - (j - 1));
-//		int lowerBound = Math.max(0, segmentStartPosition - Math.abs(maxDistance - lengthDifference));
-//		int upperBound = Math.min(query.length() - segmentLength, segmentStartPosition + (j - 1));
-//		int upperBound = Math.min(query.length() - segmentLength, segmentStartPosition + maxDistance - lengthDifference);
+//		// Multi-match-aware left-side perspective 
+		int lowerBound = Math.max(1, segmentStartPosition - (j - 1)) - 1;
+		int upperBound = Math.min(query.length() - segmentLength + 1, segmentStartPosition + (j - 1)) - 1;
 		
 		// Multi-match-aware right-side perspective
-//		int lowerBound = Math.max(0, segmentStartPosition + lengthDifference - (maxDistance + 1 - j));
-//		int upperBound = Math.min(query.length() - segmentLength, segmentStartPosition + lengthDifference + (maxDistance + 1 - j));
+		//TODO There's a bug here
+//		int lowerBound = Math.max(1, segmentStartPosition + lengthDifference - (maxDistance + 1 - j)) - 1;
+//		int upperBound = Math.min(query.length() - segmentLength + 1, segmentStartPosition + lengthDifference + (maxDistance + 1 - j)) - 1;
 		
 		// Multi-match-aware method
-//		int lowerBound = Math.max(0, Math.max(segmentStartPosition - (j - 1), segmentStartPosition + lengthDifference - (maxDistance + 1 - j)));
-//		int upperBound = Math.min(query.length() - segmentLength, Math.min(segmentStartPosition + (j - 1), segmentStartPosition + lengthDifference + (maxDistance + 1 - j)));
+		//TODO There's a bug here
+//		int lowerBound = Math.max(1, Math.max(segmentStartPosition - (j - 1), segmentStartPosition + lengthDifference - (maxDistance + 1 - j))) - 1;
+//		int upperBound = Math.min(query.length() - segmentLength + 1, Math.min(segmentStartPosition + (j - 1), segmentStartPosition + lengthDifference + (maxDistance + 1 - j))) - 1;
+		
+		// TWO BIRDS WITH ONE STONE METHODS
+		
+		// Position filter
+//		int lowerBound = Math.max(1, segmentStartPosition - (int)Math.floor(Math.abs(maxDistance - lengthDifference))) - 1;
+//		int upperBound = Math.min(query.length() - segmentLength + 1, segmentStartPosition + (int)Math.floor(Math.abs(maxDistance + lengthDifference))) - 1;
+		
+		// Position filter, left-side and right-side perspectives
+		//TODO There's a bug in these
+//		int lowerBound = Math.max(1, 
+//				Math.max(segmentStartPosition - (j - 1), segmentStartPosition + lengthDifference - (maxDistance + 1 - j))) - 1;
+//		int upperBound = Math.min(l - segmentLength + 1, 
+//				Math.min(segmentStartPosition + (j - 1), segmentStartPosition + lengthDifference + (maxDistance + 1 - j))) - 1;
 		
 		for (int p = lowerBound; p <= upperBound && p + segmentLength <= query.length(); p++) {
 			substrings.add(new Pair<String,Integer>(query.substring(p, p + segmentLength), p));
 		}
-		
 		return substrings;
 	}
 	

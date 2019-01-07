@@ -41,4 +41,9 @@ public class SimilarValue {
     public int hashCode() {
         return Objects.hash(value, distance);
     }
+	
+	@Override
+	public String toString() {
+		return "SimilarValue [value=" + value + ", distance=" + distance + "]";
+	}
 }
