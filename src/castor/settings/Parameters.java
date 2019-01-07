@@ -8,6 +8,7 @@ public class Parameters {
 	// Default values for parameters
 	private boolean createStoredProcedure = true;
 	private boolean useStoredProcedure = true;
+	private double estimationSample = 1.0;
 	private double minPrecision = 0.5;
 	private double minRecall = 0;
 	private int minPos = 2;
@@ -26,6 +27,7 @@ public class Parameters {
 	private String port = "21212";
 	private int randomSeed = 1;
 	private String samplingMethod = SamplingMethods.NAIVE;
+	private String generalizationMethod = GeneralizationMethods.NAIVE;
 	private boolean sampleInTesting = false;
 	private boolean sampleGroundBottomClauses = false;
 	private boolean sampleInCoveringApproach = false;
@@ -210,6 +212,21 @@ public class Parameters {
 	public void setAllowSimilarity(boolean allowSimilarity) {
 		this.allowSimilarity = allowSimilarity;
 	}
+	public double getEstimationSample() {
+		return estimationSample;
+	}
+
+	public void setEstimationSample(double estimationSample) {
+		this.estimationSample = estimationSample;
+	}
+
+	public String getGeneralizationMethod() {
+		return generalizationMethod;
+	}
+
+	public void setGeneralizationMethod(String generalizationMethod) {
+		this.generalizationMethod = generalizationMethod;
+	}
 	public EvaluationFunctions.FUNCTION getEvalfn() {
 		return evalfn;
 	}
@@ -229,14 +246,15 @@ public class Parameters {
 	@Override
 	public String toString() {
 		return "Parameters [createStoredProcedure=" + createStoredProcedure + ", useStoredProcedure="
-				+ useStoredProcedure + ", minPrecision=" + minPrecision + ", minRecall=" + minRecall + ", minPos="
-				+ minPos + ", maxNoise=" + maxNoise + ", sample=" + sample + ", beam=" + beam + ", threads=" + threads
-				+ ", minimizeBottomClause=" + minimizeBottomClause + ", reductionMethod=" + reductionMethod
-				+ ", iterations=" + iterations + ", recall=" + recall + ", groundRecall=" + groundRecall + ", maxterms="
-				+ maxterms + ", useInds=" + useInds + ", dbURL=" + dbURL + ", port=" + port + ", randomSeed="
-				+ randomSeed + ", samplingMethod=" + samplingMethod + ", sampleInTesting=" + sampleInTesting
+				+ useStoredProcedure + ", estimationSample=" + estimationSample + ", minPrecision=" + minPrecision
+				+ ", minRecall=" + minRecall + ", minPos=" + minPos + ", maxNoise=" + maxNoise + ", sample=" + sample
+				+ ", beam=" + beam + ", threads=" + threads + ", minimizeBottomClause=" + minimizeBottomClause
+				+ ", reductionMethod=" + reductionMethod + ", iterations=" + iterations + ", recall=" + recall
+				+ ", groundRecall=" + groundRecall + ", maxterms=" + maxterms + ", useInds=" + useInds + ", dbURL="
+				+ dbURL + ", port=" + port + ", randomSeed=" + randomSeed + ", samplingMethod=" + samplingMethod
+				+ ", generalizationMethod=" + generalizationMethod + ", sampleInTesting=" + sampleInTesting
 				+ ", sampleGroundBottomClauses=" + sampleGroundBottomClauses + ", sampleInCoveringApproach="
 				+ sampleInCoveringApproach + ", shuffleExamples=" + shuffleExamples + ", randomizeRecall="
-				+ randomizeRecall + ", allowSimilarity=" + allowSimilarity + "]";
+				+ randomizeRecall + ", allowSimilarity=" + allowSimilarity + ", evalfn=" + evalfn + "]";
 	}
 }

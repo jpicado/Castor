@@ -51,14 +51,16 @@ public class CastorLearner implements Learner {
 
 	private static Logger logger = Logger.getLogger(CastorLearner.class);
 
-	private Parameters parameters;
-	private GenericDAO genericDAO;
-	private BottomClauseConstructionDAO bottomClauseConstructionDAO;
-	private CoverageEngine coverageEngine;
-	private CoverageEngine coverageEngineForCoveringApproach;
-	private Random randomGenerator;
-	private ClauseEvaluator evaluator;
-	private BottomClauseGenerator saturator;
+	protected Parameters parameters;
+	protected GenericDAO genericDAO;
+	protected BottomClauseConstructionDAO bottomClauseConstructionDAO;
+	protected CoverageEngine coverageEngine;
+	protected CoverageEngine coverageEngineForCoveringApproach;
+	protected Random randomGenerator;
+	protected ClauseEvaluator evaluator;
+	protected BottomClauseGenerator saturator;
+
+	public CastorLearner(){}
 
 	public CastorLearner(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseContructionDAO, BottomClauseGenerator saturator,
 			CoverageEngine coverageEngine, CoverageEngine coverageEngineForCoveringApproach, Parameters parameters, Schema schema) {
@@ -347,7 +349,7 @@ public class CastorLearner implements Learner {
 	/*
 	 * Check if given the numbers, the minimum conditions are satisfied
 	 */
-	private boolean satisfiesConditions(int truePositive, int falsePositive, int trueNegative, int falseNegative,
+	protected boolean satisfiesConditions(int truePositive, int falsePositive, int trueNegative, int falseNegative,
 			int newPosCoveredCount, double precision, double recall) {
 		boolean satisfiesPrecision = true;
 		if (precision < parameters.getMinPrecision())
@@ -502,7 +504,7 @@ public class CastorLearner implements Learner {
 	/*
 	 * Reorder clause so that all literals in same inclusion chain are together
 	 */
-	private MyClause reorderAccordingToINDs(Schema schema, MyClause clause) {
+	protected MyClause reorderAccordingToINDs(Schema schema, MyClause clause) {
 		List<Literal> newLiterals = new LinkedList<Literal>();
 
 		for (Literal literal : clause.getNegativeLiterals()) {
@@ -523,7 +525,7 @@ public class CastorLearner implements Learner {
 	/*
 	 * Transform a clause: minimization, reordering, etc.
 	 */
-	private MyClause transform(Schema schema, MyClause clause) {
+	protected MyClause transform(Schema schema, MyClause clause) {
 		// Minimize using theta-transformation
 		clause = ClauseTransformations.minimize(clause);
 		// Reorder to delay cartesian products
@@ -532,7 +534,7 @@ public class CastorLearner implements Learner {
 		return clause;
 	}
 
-	private ClauseInfo transform(Schema schema, ClauseInfo clauseInfo) {
+	protected ClauseInfo transform(Schema schema, ClauseInfo clauseInfo) {
 		// Minimize using theta-transformation
 		// Uses version that allows head variables to be substituted by some value (and
 		// saves the substitutions in clauseInfo)
@@ -543,7 +545,7 @@ public class CastorLearner implements Learner {
 	 * Get a list of the N highest scoring clauses from a list of clauses, using the
 	 * given evaluation function
 	 */
-	private List<ClauseInfo> getHighestScoring(List<ClauseInfo> clausesInfos, int beamWidth, Schema schema,
+	protected List<ClauseInfo> getHighestScoring(List<ClauseInfo> clausesInfos, int beamWidth, Schema schema,
 			List<Tuple> uncoveredPosExamples, Relation posExamplesRelation, Relation negExamplesRelation) {
 		List<ClauseInfo> bestClauses = new LinkedList<ClauseInfo>();
 		Double[] clausesScores = new Double[clausesInfos.size()];
@@ -588,7 +590,7 @@ public class CastorLearner implements Learner {
 	/*
 	 * Select K random examples from the given relation
 	 */
-	private List<Tuple> selectRandomExamples(int sampleSize) {
+	protected List<Tuple> selectRandomExamples(int sampleSize) {
 		List<Tuple> examples = new LinkedList<Tuple>();
 		Set<Integer> randomPositions = generateListOfRandomNumbers(this.coverageEngine.getAllPosExamples().size(),
 				sampleSize);
@@ -601,7 +603,7 @@ public class CastorLearner implements Learner {
 	/*
 	 * Generate a list of random numbers of the given size
 	 */
-	private Set<Integer> generateListOfRandomNumbers(int max, int size) {
+	protected Set<Integer> generateListOfRandomNumbers(int max, int size) {
 		Set<Integer> generated = new TreeSet<Integer>();
 		if (size > max) {
 			for (int i = 0; i < max; i++) {
@@ -620,7 +622,7 @@ public class CastorLearner implements Learner {
 	 * ARMG construction algorithm Assumes that the example tuple corresponds to a
 	 * relation that matches the head predicate of the clause
 	 */
-	private ClauseInfo armg(Schema schema, ClauseInfo clauseInfo, Tuple exampleTuple, Relation posExamplesRelation) {
+	protected ClauseInfo armg(Schema schema, ClauseInfo clauseInfo, Tuple exampleTuple, Relation posExamplesRelation) {
 		ClauseInfo newClauseInfo = new ClauseInfo(clauseInfo.getClause(), clauseInfo.getPosExamplesCovered().clone(),
 				clauseInfo.getNegExamplesCovered().clone(), clauseInfo.getPosExamplesEvaluated().clone(),
 				clauseInfo.getNegExamplesEvaluated().clone());
@@ -843,7 +845,7 @@ public class CastorLearner implements Learner {
 	/*
 	 * Returns true if clause is safe: all head variables appear in body
 	 */
-	private boolean isSafeClause(MyClause clause) {
+	protected boolean isSafeClause(MyClause clause) {
 		// Get head variables
 		List<Term> headVariables = new LinkedList<Term>();
 		for (Term term : clause.getPositiveLiterals().get(0).getAtomicSentence().getArgs()) {

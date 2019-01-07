@@ -18,6 +18,8 @@ import org.kohsuke.args4j.spi.StringArrayOptionHandler;
 import com.google.gson.JsonObject;
 
 import castor.algorithms.CastorLearner;
+import castor.algorithms.CastorLearnerBatchGeneralization;
+import castor.algorithms.CastorLearnerRandomSampleGeneralization;
 import castor.algorithms.Golem;
 import castor.algorithms.Learner;
 import castor.algorithms.ProGolem;
@@ -53,6 +55,7 @@ import castor.sampling.SamplingUtils;
 import castor.sampling.StatisticsExtractor;
 import castor.sampling.StatisticsOlkenSampling;
 import castor.settings.DataModel;
+import castor.settings.GeneralizationMethods;
 import castor.settings.JsonSettingsReader;
 import castor.settings.Parameters;
 import castor.settings.SamplingMethods;
@@ -368,10 +371,17 @@ public class CastorCmd {
 			} else {
 				// LEARN
 				logger.info("Learning...");
-				Learner learner;
+				Learner learner = null;
 				if (this.algorithm.equals(ALGORITHM_CASTOR)) {
-					learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, saturator, coverageEngine, coverageEngineForCoveringApproach, parameters, schema);
-				} else if (this.algorithm.equals(ALGORITHM_GOLEM)) {
+					if(parameters.getGeneralizationMethod().equals(GeneralizationMethods.NAIVE)) {
+						learner = new CastorLearner(genericDAO, bottomClauseConstructionDAO, saturator, coverageEngine, coverageEngineForCoveringApproach, parameters, schema);
+					}else if(parameters.getGeneralizationMethod().equals(GeneralizationMethods.BATCH)){
+						learner = new CastorLearnerBatchGeneralization(genericDAO, bottomClauseConstructionDAO, saturator, coverageEngine, coverageEngineForCoveringApproach, parameters, schema);
+					}else if(parameters.getGeneralizationMethod().equals(GeneralizationMethods.RANDOMSAMPLE)){
+						learner = new CastorLearnerRandomSampleGeneralization(genericDAO, bottomClauseConstructionDAO, saturator, coverageEngine, coverageEngineForCoveringApproach, parameters, schema);
+					}
+				}
+				else if (this.algorithm.equals(ALGORITHM_GOLEM)) {
 					learner = new Golem(genericDAO, bottomClauseConstructionDAO, saturator, coverageEngine, parameters);
 				} else if (this.algorithm.equals(ALGORITHM_PROGOLEM)) {
 					learner = new ProGolem(genericDAO, bottomClauseConstructionDAO, saturator, coverageEngine, parameters);
@@ -480,7 +490,7 @@ public class CastorCmd {
 					testEvaluationResult = learner.evaluate(testCoverageEngine, this.schema, definition, posTest, negTest);
 				}
 				
-				logger.info("Total time: " + NumbersKeeper.totalTime);
+				logger.info("Total time: " + NumbersKeeper.totalTime + " Minutes : "+(NumbersKeeper.totalTime*1.0)/(60000*1.0));
 				logger.info("Creating coverage engine time: " + NumbersKeeper.creatingCoverageTime);
 				logger.info("Learning time: " + NumbersKeeper.learningTime);
 				logger.info("Bottom-clause construction time: " + NumbersKeeper.bottomClauseConstructionTime);
