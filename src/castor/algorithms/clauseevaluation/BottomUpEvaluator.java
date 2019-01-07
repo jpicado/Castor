@@ -148,6 +148,11 @@ public class BottomUpEvaluator implements ClauseEvaluator {
 		return clauseInfo.getScore();
 	}
 
+	/*
+	* computeBatchScore method is introduced for CastorLearnerBatchGeneralization flow.
+	* it uses following score computation formula:
+	* clause score = previous score of clause + current score
+	*/
 	public double computeBatchScore(GenericDAO genericDAO, CoverageEngine coverageEngine, Schema schema, List<Tuple> samplePosExamples, Relation posExamplesRelation, Relation negExamplesRelation, ClauseInfo clauseInfo, EvaluationFunctions.FUNCTION evaluationFunction) {
 		TimeWatch tw = TimeWatch.start();
 
@@ -265,6 +270,10 @@ public class BottomUpEvaluator implements ClauseEvaluator {
 		return clauseInfo.getScore();
 	}
 
+	/*
+	* computeRandomSampleScore method is introduced for CastorLearnerRandomSampleGeneralization flow.
+	* It uses the sample of both positive and negative example to compute the score
+	*/
 	public double computeRandomSampleScore(GenericDAO genericDAO, CoverageEngine coverageEngine, Schema schema, List<Tuple> samplePosExamples, List<Tuple> sampleNegExamples, Relation posExamplesRelation, Relation negExamplesRelation, ClauseInfo clauseInfo, EvaluationFunctions.FUNCTION evaluationFunction) {
 		TimeWatch tw = TimeWatch.start();
 

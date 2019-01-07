@@ -1,51 +1,46 @@
 /*
- * CastorLearner: Castor learning algorithm. Similar to ProGolem, but uses inclusion dependencies and some optimizations.
- * -Uses inclusion dependencies to be schema independent.
- * -Optimization:
- * --Reuse coverage testing: uses BottomUpEvaluator.
- * --If run on VoltDB, uses bottom-clause construction inside a stored procedure.
- * --Minimizes bottom-clauses.
+ * CastorLearnerRandomSampleGeneralization: This class is extended version of the base class: "CastorLearner"
+ * In the CastorLearner, during generalization, the score of a clause is computed using all
+ * the examples in the training set.
+ *
+ * In CastorLearnerRandomSampleGeneralization, the score will be calculated using random sampling technique.
+ * The number of random examples selected will be based on the given sample size.
+ *
+ * Modifications:
+ * learnUsingCovering and learnClause methods are modified to accept new parameter: estimationSample
+ * -estimationSample - New parameter is introduced to specify batch size
+ * learnClause - It is modified to call computeRandomSampleScore method. It is also modified to create sample of
+ * of random examples for score computation.
  */
+
 package castor.algorithms;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.log4j.Logger;
-
-import aima.core.logic.fol.kb.data.Literal;
-import aima.core.logic.fol.parsing.ast.Term;
 import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.algorithms.clauseevaluation.BottomUpEvaluator;
-import castor.algorithms.clauseevaluation.ClauseEvaluator;
 import castor.algorithms.clauseevaluation.EvaluationFunctions;
 import castor.algorithms.coverageengines.CoverageEngine;
 import castor.algorithms.transformations.CastorReducer;
 import castor.algorithms.transformations.ClauseTransformations;
-import castor.algorithms.transformations.DataDependenciesUtils;
 import castor.algorithms.transformations.ReductionMethods;
 import castor.dataaccess.db.BottomClauseConstructionDAO;
 import castor.dataaccess.db.GenericDAO;
 import castor.hypotheses.ClauseInfo;
 import castor.hypotheses.MyClause;
-import castor.language.InclusionDependency;
 import castor.language.Relation;
 import castor.language.Schema;
 import castor.language.Tuple;
 import castor.settings.DataModel;
 import castor.settings.Parameters;
-import castor.utils.Commons;
 import castor.utils.Formatter;
 import castor.utils.NumbersKeeper;
 import castor.utils.TimeWatch;
-import castor.wrappers.EvaluationResult;
+import org.apache.log4j.Logger;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 public class CastorLearnerRandomSampleGeneralization extends CastorLearner {
 
