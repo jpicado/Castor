@@ -248,16 +248,17 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 				distinctTerms.add(value);
 			} else {
 				// INPUT or OUTPUT type
-				if (!hashConstantToVariable.containsKey(value)) {
+				String valueWithSuffix = value + "_" + mode.getArguments().get(i).getType();
+				if (!hashConstantToVariable.containsKey(valueWithSuffix)) {
 					String var = Commons.newVariable(varCounter);
 					varCounter++;
 
-					hashConstantToVariable.put(value, var);
+					hashConstantToVariable.put(valueWithSuffix, var);
 					hashVariableToConstant.put(var, value);
 					
 					distinctTerms.add(var);
 				}
-				terms.add(new Variable(hashConstantToVariable.get(value)));
+				terms.add(new Variable(hashConstantToVariable.get(valueWithSuffix)));
 			}
 			// Add constants to inTerms
 //			if (headMode ||

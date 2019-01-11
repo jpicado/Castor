@@ -34,13 +34,17 @@ import castor.utils.Commons;
 
 public abstract class BottomClauseGeneratorWithGroupedModes implements BottomClauseGenerator {
 
+	private static final String NULL_PREFIX = "null";
+	
 	protected static final String SELECTIN_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s";
 
 	protected int varCounter;
+	private int nullCounter;
 	protected int seed;
 
 	public BottomClauseGeneratorWithGroupedModes(int seed) {
 		varCounter = 0;
+		nullCounter = 0;
 		this.seed = seed;
 	}
 
@@ -197,23 +201,32 @@ public abstract class BottomClauseGeneratorWithGroupedModes implements BottomCla
 			Map<String, Set<String>> inTerms, Map<String, Set<String>> previousIterationsInTerms, Set<String> distinctTerms) {
 		List<Term> terms = new ArrayList<Term>();
 		for (int i = 0; i < mode.getArguments().size(); i++) {
-			String value = tuple.getValues().get(i).toString();
+			//TODO default value for nulls? distinct value?
+			String value;
+			if (tuple.getValues().get(i) != null) {
+				value = tuple.getValues().get(i).toString();
+			}
+			else {
+				value = NULL_PREFIX+nullCounter;
+				nullCounter++;
+			}
 
 			if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
 				terms.add(new Constant("\"" + value + "\""));
 				distinctTerms.add(value);
 			} else {
 				// INPUT or OUTPUT type
-				if (!hashConstantToVariable.containsKey(value)) {
+				String valueWithSuffix = value + "_" + mode.getArguments().get(i).getType();
+				if (!hashConstantToVariable.containsKey(valueWithSuffix)) {
 					String var = Commons.newVariable(varCounter);
 					varCounter++;
 
-					hashConstantToVariable.put(value, var);
+					hashConstantToVariable.put(valueWithSuffix, var);
 					hashVariableToConstant.put(var, value);
 					
 					distinctTerms.add(var);
 				}
-				terms.add(new Variable(hashConstantToVariable.get(value)));
+				terms.add(new Variable(hashConstantToVariable.get(valueWithSuffix)));
 			}
 			// Add constants to inTerms
 //			if (headMode ||

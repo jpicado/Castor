@@ -563,13 +563,14 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 					terms.add(new Constant("\"" + value + "\""));
 				} else {
 					// INPUT or OUTPUT type
-					if (!hashConstantToVariable.containsKey(value)) {
+					String valueWithSuffix = value + "_" + mode.getArguments().get(i).getType();
+					if (!hashConstantToVariable.containsKey(valueWithSuffix)) {
 						String var = Commons.newVariable(varCounter);
 						varCounter++;
 	
-						hashConstantToVariable.put(value, var);
+						hashConstantToVariable.put(valueWithSuffix, var);
 					}
-					terms.add(new Variable(hashConstantToVariable.get(value)));
+					terms.add(new Variable(hashConstantToVariable.get(valueWithSuffix)));
 				}
 			}
 		}
@@ -710,8 +711,18 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 			boolean keep = true;
 			for (Pair<Integer,Object> selectCondition : selectConditions) {
 				int attributePosition = selectCondition.getFirst();
+				
+				Object value;
+				if (tuple.getValues().get(attributePosition) != null) {
+					value = tuple.getValues().get(attributePosition);
+				}
+				else {
+					value = NULL_PREFIX+nullCounter;
+					nullCounter++;
+				}
+				
 				Object desiredValue = selectCondition.getSecond();
-				if (!tuple.getValues().get(attributePosition).equals(desiredValue)) {
+				if (!value.equals(desiredValue)) {
 					keep = false;
 					break;
 				}

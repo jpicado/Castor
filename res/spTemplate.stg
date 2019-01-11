@@ -40,11 +40,13 @@ public class $name$ extends VoltProcedure {
 	public final String TYPE_OUTPUT = "-";
 	public final String TYPE_CONSTANT = "#";
 	
-	public static final String VARIABLE_PREFIX = "$variablePrefix$"; 
+	public static final String VARIABLE_PREFIX = "$variablePrefix$";
+	private static final String NULL_PREFIX = "null"; 
 
 	$sqlStatements$
 
 	private int varCounter = 0;
+	private int nullCounter = 0;
 
 	public VoltTable[] run(String exampleTuple, int iterations, int recall, int maxTerms) throws VoltAbortException {
 		Set<Literal> clauseLiterals = new LinkedHashSet<Literal>();
@@ -59,6 +61,7 @@ public class $name$ extends VoltProcedure {
 
 		// Initialize variable counter, which is used to create new variables
 		varCounter = 0;
+		nullCounter = 0;
 
 		// Divide example tuple into attributes
 		//String[] exampleAttributes = exampleTuple.split(",|\\\\s+");
@@ -258,23 +261,33 @@ public class $name$ extends VoltProcedure {
 		while(table.advanceRow() && solutionsCounter < recall) {
         	List<String> terms = new ArrayList<String>();
         	for (int i = 0; i < modeBArguments.length; i++) {
-        		String value = table.get(i, table.getColumnType(i)).toString();
+        		//String value = table.get(i, table.getColumnType(i)).toString();
+        		//TODO default value for nulls? distinct value?
+				String value;
+				if (table.get(i, table.getColumnType(i)) != null) {
+					value = table.get(i, table.getColumnType(i)).toString();
+				}
+				else {
+					value = NULL_PREFIX+nullCounter;
+					nullCounter++;
+				}
 
         		if (getArgumentIdentifierType(modeBArguments[i]).equals(TYPE_CONSTANT)) {
         			terms.add('"'+value+'"');
         			knownTerms.add(value);
         		} else {
     				// INPUT or OUTPUT type
-    				if(!hashConstantToVariable.containsKey(value)) {
+    				String valueWithSuffix = value + "_" + getArgumentType(modeBArguments[i]);
+    				if(!hashConstantToVariable.containsKey(valueWithSuffix)) {
     					String var = newVariable(varCounter);
     					varCounter++;
     					
-    					hashConstantToVariable.put(value, var);
+    					hashConstantToVariable.put(valueWithSuffix, var);
     					hashVariableToConstant.put(var, value);
     					
     					knownTerms.add(var);
     				}
-    				terms.add(hashConstantToVariable.get(value));
+    				terms.add(hashConstantToVariable.get(valueWithSuffix));
     			}
 
     			// If OUTPUT variable, add constants to inTerms

@@ -34,16 +34,20 @@ import castor.utils.RandomSet;
 
 public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGenerator {
 
+	private static final String NULL_PREFIX = "null";
+	
 	private static final String SELECTIN_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s";
 	private static final String SELECTIN_TWOATTRIBUTES_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s AND %s IN %s";
 	private static final String PROJET_SELECTIN_SQL_STATEMENT = "SELECT DISTINCT(%s) FROM %s WHERE %s IN %s";
 	private static final String SELECT_GROUPBY_SQL_STATEMENT = "SELECT %s FROM %s WHERE %s IN %s GROUP BY %s";
 
 	private int varCounter;
+	private int nullCounter;
 	private int seed;
 
 	public BottomClauseGeneratorStratifiedSampling(int seed) {
 		this.varCounter = 0;
+		this.nullCounter = 0;
 		this.seed = seed;
 	}
 
@@ -354,19 +358,28 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 			boolean headMode) {
 		List<Term> terms = new ArrayList<Term>();
 		for (int i = 0; i < mode.getArguments().size(); i++) {
-			String value = tuple.getValues().get(i).toString();
+			//TODO default value for nulls? distinct value?
+			String value;
+			if (tuple.getValues().get(i) != null) {
+				value = tuple.getValues().get(i).toString();
+			}
+			else {
+				value = NULL_PREFIX+nullCounter;
+				nullCounter++;
+			}
 
 			if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
 				terms.add(new Constant("\"" + value + "\""));
 			} else {
 				// INPUT or OUTPUT type
-				if (!hashConstantToVariable.containsKey(value)) {
+				String valueWithSuffix = value + "_" + mode.getArguments().get(i).getType();
+				if (!hashConstantToVariable.containsKey(valueWithSuffix)) {
 					String var = Commons.newVariable(varCounter);
 					varCounter++;
 
-					hashConstantToVariable.put(value, var);
+					hashConstantToVariable.put(valueWithSuffix, var);
 				}
-				terms.add(new Variable(hashConstantToVariable.get(value)));
+				terms.add(new Variable(hashConstantToVariable.get(valueWithSuffix)));
 			}
 		}
 
@@ -509,8 +522,18 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 			boolean keep = true;
 			for (Pair<Integer,Object> selectCondition : selectConditions) {
 				int attributePosition = selectCondition.getFirst();
+				
+				Object value;
+				if (tuple.getValues().get(attributePosition) != null) {
+					value = tuple.getValues().get(attributePosition);
+				}
+				else {
+					value = NULL_PREFIX+nullCounter;
+					nullCounter++;
+				}
+				
 				Object desiredValue = selectCondition.getSecond();
-				if (!tuple.getValues().get(attributePosition).equals(desiredValue)) {
+				if (!value.equals(desiredValue)) {
 					keep = false;
 					break;
 				}
