@@ -169,7 +169,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 				.get(new Pair<String, Integer>(relationName, inputAttributePosition));
 		String inputAttributeName = schema.getRelations().get(relationName.toUpperCase()).getAttributeNames()
 				.get(inputAttributePosition);
-		String inputAttributeKnownTerms = toListString(inputAttributeValues);
+		String inputAttributeKnownTerms = collectionToString(inputAttributeValues);
 
 		List<List<Tuple>> strata = computeStrata(genericDAO, schema, relationName, inputAttributeName,
 				inputAttributeKnownTerms, relationAttributeModes, Integer.MAX_VALUE);
@@ -238,9 +238,9 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 									currentIteration + 1, sampleSize, ground, clause, randomGenerator);
 
 							// Get tuples in relation that join with returnTuples
-							List<String> joinAttributeValues = projectFromTuples(returnedTuples, joinAttributePosition);
+							Set<String> joinAttributeValues = projectFromTuples(returnedTuples, joinAttributePosition);
 							if (joinAttributeValues.size() > 0) {
-								String joinAttributeKnownTerms = toListString(joinAttributeValues);
+								String joinAttributeKnownTerms = collectionToString(joinAttributeValues);
 								String joinQuery = String.format(SELECTIN_TWOATTRIBUTES_SQL_STATEMENT, relationName,
 										inputAttributeName, inputAttributeKnownTerms, joinAttributeName,
 										joinAttributeKnownTerms);
@@ -343,8 +343,8 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 	/*
 	 * Project a column from list of tuples.
 	 */
-	private List<String> projectFromTuples(List<Tuple> tuples, int projectPosition) {
-		List<String> values = new ArrayList<String>();
+	private Set<String> projectFromTuples(List<Tuple> tuples, int projectPosition) {
+		Set<String> values = new HashSet<String>();
 		for (Tuple tuple : tuples) {
 			values.add(tuple.getStringValues().get(projectPosition));
 		}
@@ -775,7 +775,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 
 		// If there is no list of known terms for attributeType, skip mode
 		if (inTerms.containsKey(attributeType)) {
-			String knownTerms = toListString(inTerms.get(attributeType));
+			String knownTerms = collectionToString(inTerms.get(attributeType));
 			// USING OR
 			// expression = attributeName + " IN " + knownTerms;
 
@@ -788,7 +788,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 	/*
 	 * Convert set to string "('item1','item2',...)"
 	 */
-	private String toListString(Collection<String> terms) {
+	private String collectionToString(Collection<String> terms) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("(");
 		int counter = 0;

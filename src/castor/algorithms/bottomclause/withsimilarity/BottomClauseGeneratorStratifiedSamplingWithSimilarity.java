@@ -427,7 +427,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 				maxDistanceForMDs);
 
 		// Get tuples in relation that join with returnTuples
-		List<Pair<String,String>> joinAttributeValuesWithSource = projectFromTuples(returnedTuples, joinAttributePosition);
+		Set<Pair<String,String>> joinAttributeValuesWithSource = projectFromTuples(returnedTuples, joinAttributePosition);
 		if (joinAttributeValuesWithSource.size() > 0) {
 			List<String> joinAttributeValuesFromExact = new ArrayList<String>();
 
@@ -530,8 +530,8 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 	/*
 	 * Project a column from list of tuples.
 	 */
-	private List<Pair<String,String>> projectFromTuples(List<Pair<Tuple,String>> tuplesWithSource, int projectPosition) {
-		List<Pair<String,String>> valuesWithSource = new ArrayList<Pair<String,String>>();
+	private Set<Pair<String,String>> projectFromTuples(List<Pair<Tuple,String>> tuplesWithSource, int projectPosition) {
+		Set<Pair<String,String>> valuesWithSource = new HashSet<Pair<String,String>>();
 		for (Pair<Tuple,String> pair : tuplesWithSource) {
 			String value = pair.getFirst().getStringValues().get(projectPosition);
 			String source = pair.getSecond();
