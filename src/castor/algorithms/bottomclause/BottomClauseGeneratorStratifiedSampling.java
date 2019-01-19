@@ -369,7 +369,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 			}
 
 			if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
-				terms.add(new Constant("\"" + value + "\""));
+				terms.add(new Constant("\"" + Commons.escapeMetaCharacters(value) + "\""));
 			} else {
 				// INPUT or OUTPUT type
 				String valueWithSuffix = value + "_" + mode.getArguments().get(i).getType();

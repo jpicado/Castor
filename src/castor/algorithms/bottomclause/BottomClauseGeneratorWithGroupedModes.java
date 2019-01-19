@@ -212,7 +212,7 @@ public abstract class BottomClauseGeneratorWithGroupedModes implements BottomCla
 			}
 
 			if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
-				terms.add(new Constant("\"" + value + "\""));
+				terms.add(new Constant("\"" + Commons.escapeMetaCharacters(value) + "\""));
 				distinctTerms.add(value);
 			} else {
 				// INPUT or OUTPUT type

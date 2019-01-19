@@ -152,7 +152,7 @@ public abstract class BottomClauseGeneratorUsingJoinTree implements BottomClause
 			String value = tuple.getValues().get(i).toString();
 
 			if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
-				terms.add(new Constant("\"" + value + "\""));
+				terms.add(new Constant("\"" + Commons.escapeMetaCharacters(value) + "\""));
 			} else {
 				// INPUT or OUTPUT type
 				if (!hashConstantToVariable.containsKey(value)) {

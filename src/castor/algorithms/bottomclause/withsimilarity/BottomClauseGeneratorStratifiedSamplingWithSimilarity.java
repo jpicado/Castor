@@ -557,10 +557,10 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 			}
 
 			if (ground) {
-				terms.add(new Constant("\"" + value + "\""));
+				terms.add(new Constant("\"" + Commons.escapeMetaCharacters(value) + "\""));
 			} else {
 				if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
-					terms.add(new Constant("\"" + value + "\""));
+					terms.add(new Constant("\"" + Commons.escapeMetaCharacters(value) + "\""));
 				} else {
 					// INPUT or OUTPUT type
 					String valueWithSuffix = value + "_" + mode.getArguments().get(i).getType();
@@ -585,14 +585,14 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 		Term valueInTupleTerm;
 		
 		if (ground) {
-			similarValueTerm = new Constant("\"" + sourceValue + "\"");
-			valueInTupleTerm = new Constant("\"" + valueInTupleString + "\"");
+			similarValueTerm = new Constant("\"" + Commons.escapeMetaCharacters(sourceValue) + "\"");
+			valueInTupleTerm = new Constant("\"" + Commons.escapeMetaCharacters(valueInTupleString) + "\"");
 		} else {
 			// Create similarity predicate containing constants or variables
 			if (mode.getArguments().get(similarAttributeInTuplePosition).getIdentifierType()
 					.equals(IdentifierType.CONSTANT)) {
-				similarValueTerm = new Constant("\"" + sourceValue + "\"");
-				valueInTupleTerm = new Constant("\"" + valueInTupleString + "\"");
+				similarValueTerm = new Constant("\"" + Commons.escapeMetaCharacters(sourceValue) + "\"");
+				valueInTupleTerm = new Constant("\"" + Commons.escapeMetaCharacters(valueInTupleString) + "\"");
 			} else {
 				if (!hashConstantToVariable.containsKey(sourceValue)) {
 					String var = Commons.newVariable(varCounter);
