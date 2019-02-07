@@ -539,6 +539,7 @@ public class CastorCmd {
 			if (parameters.getSamplingMethod().equals(SamplingMethods.NAIVE)) {
 				saturator = new BottomClauseGeneratorNaiveSampling(true, parameters.getRandomSeed());
 //				saturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(true);
+//				saturator = new BottomClauseGeneratorNaiveSamplingTupleByTuple(true, parameters.getRandomSeed());
 			} else if (parameters.getSamplingMethod().equals(SamplingMethods.OLKEN))  {
 				logger.info("Use Olken sampling. Extracting statistics from database instance...");
 				StatisticsOlkenSampling statistics = StatisticsExtractor.extractStatisticsForOlkenSampling(genericDAO, schema);
