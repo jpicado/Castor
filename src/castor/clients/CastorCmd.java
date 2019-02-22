@@ -35,6 +35,7 @@ import castor.algorithms.bottomclause.experimental.BottomClauseGeneratorUsingJoi
 import castor.algorithms.bottomclause.withsimilarity.BottomClauseGeneratorNaiveSamplingWithSimilarity;
 import castor.algorithms.bottomclause.withsimilarity.BottomClauseGeneratorStratifiedSamplingWithSimilarity;
 import castor.algorithms.coverageengines.CoverageBySubsumptionParallel;
+import castor.algorithms.coverageengines.CoverageBySubsumptionParallelAlternativeCoverage;
 import castor.algorithms.coverageengines.CoverageEngine;
 import castor.dataaccess.db.BottomClauseConstructionDAO;
 import castor.dataaccess.db.DAOFactory;
@@ -305,20 +306,20 @@ public class CastorCmd {
 				}
 			} else {
 				if (parameters.isAllowSimilarity()) {
-					saturator = getNewCoverageEngineWithSimilarity(genericDAO, true);
+					saturator = getNewSaturatorWithSimilarity(genericDAO, true);
 					if (parameters.isSampleGroundBottomClauses()) {
 						coverageEngineSaturator = saturator;
 //						coverageEngineSaturator = getNewCoverageEngineWithSimilarity(genericDAO, parameters.isSampleGroundBottomClauses());
 					} else {
-						coverageEngineSaturator = getNewCoverageEngineWithSimilarity(genericDAO, parameters.isSampleGroundBottomClauses());
+						coverageEngineSaturator = getNewSaturatorWithSimilarity(genericDAO, parameters.isSampleGroundBottomClauses());
 					}
 				} else {
-					saturator = getNewCoverageEngineWithoutSimilarity(genericDAO, true);
+					saturator = getNewSaturatorWithoutSimilarity(genericDAO, true);
 					if (parameters.isSampleGroundBottomClauses()) {
 						coverageEngineSaturator = saturator;
 //						coverageEngineSaturator = getNewCoverageEngineWithoutSimilarity(genericDAO, parameters.isSampleGroundBottomClauses());
 					} else {
-						coverageEngineSaturator = getNewCoverageEngineWithoutSimilarity(genericDAO, parameters.isSampleGroundBottomClauses());
+						coverageEngineSaturator = getNewSaturatorWithoutSimilarity(genericDAO, parameters.isSampleGroundBottomClauses());
 					}
 				}
 			}
@@ -328,9 +329,17 @@ public class CastorCmd {
 			tw.reset();
 			logger.info("Creating coverage engine...");
 			boolean createFullCoverageEngine = !saturation && !groundSaturation;
-			CoverageEngine coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, coverageEngineSaturator,
-					posTrain, negTrain, this.schema, this.dataModel, this.parameters, createFullCoverageEngine,
-					examplesSource, posTrainExamplesFile, negTrainExamplesFile);
+			
+			CoverageEngine coverageEngine;
+			if (parameters.isAllStableCoverageInTraining()) {
+				coverageEngine = new CoverageBySubsumptionParallelAlternativeCoverage(genericDAO, bottomClauseConstructionDAO, coverageEngineSaturator,
+						posTrain, negTrain, this.schema, this.dataModel, this.parameters, createFullCoverageEngine,
+						examplesSource, posTrainExamplesFile, negTrainExamplesFile);
+			} else {
+				coverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, coverageEngineSaturator,
+						posTrain, negTrain, this.schema, this.dataModel, this.parameters, createFullCoverageEngine,
+						examplesSource, posTrainExamplesFile, negTrainExamplesFile);
+			}
 			
 			// Create CoverageEngine for covering approach: used if sampling is true for ground bottom clauses but false for covering approach; or vice versa. 
 			logger.info("Creating coverage engine for covering approach...");
@@ -484,9 +493,17 @@ public class CastorCmd {
 					}
 					
 					logger.info("Evaluating on testing data...");
-					CoverageEngine testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, testSaturator, 
-							posTest, negTest, this.schema, this.dataModel, this.parameters, true,
-							examplesSourceTest, posTestExamplesFile, negTestExamplesFile);
+					
+					CoverageEngine testCoverageEngine;
+					if (parameters.isAllStableCoverageInTesting()) {
+						testCoverageEngine = new CoverageBySubsumptionParallelAlternativeCoverage(genericDAO, bottomClauseConstructionDAO, testSaturator, 
+								posTest, negTest, this.schema, this.dataModel, this.parameters, true,
+								examplesSourceTest, posTestExamplesFile, negTestExamplesFile);
+					} else {
+						testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, testSaturator, 
+								posTest, negTest, this.schema, this.dataModel, this.parameters, true,
+								examplesSourceTest, posTestExamplesFile, negTestExamplesFile);
+					}					
 					testEvaluationResult = learner.evaluate(testCoverageEngine, this.schema, definition, posTest, negTest);
 				}
 				
@@ -530,7 +547,7 @@ public class CastorCmd {
 	/*
 	 * Create a new coverage engine based on parameters
 	 */
-	private BottomClauseGenerator getNewCoverageEngineWithoutSimilarity(GenericDAO genericDAO, boolean sample) {
+	private BottomClauseGenerator getNewSaturatorWithoutSimilarity(GenericDAO genericDAO, boolean sample) {
 		//TODO Note that BottomClauseGeneratorWithGrouped does not use inclusion dependencies; not schema independent
 		BottomClauseGenerator saturator;
 		if (sample == false) {
@@ -566,7 +583,7 @@ public class CastorCmd {
 		return saturator;
 	}
 	
-	private BottomClauseGenerator getNewCoverageEngineWithSimilarity(GenericDAO genericDAO, boolean sample) {
+	private BottomClauseGenerator getNewSaturatorWithSimilarity(GenericDAO genericDAO, boolean sample) {
 		BottomClauseGenerator saturator;
 		if (sample == false) {
 			saturator = new BottomClauseGeneratorNaiveSamplingWithSimilarity(genericDAO, schema, false, parameters.getRandomSeed());

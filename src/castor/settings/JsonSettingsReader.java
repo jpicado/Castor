@@ -113,6 +113,15 @@ public class JsonSettingsReader {
 		if (parametersJson.get("evalfn") != null) {
 			parameters.setEvalfn(parametersJson.get("evalfn").getAsString());
 		}
+		if (parametersJson.get("allStableCoverageInTraining") != null) {
+			parameters.setAllStableCoverageInTraining(parametersJson.get("allStableCoverageInTraining").getAsBoolean());
+		}
+		if (parametersJson.get("allStableCoverageInTesting") != null) {
+			parameters.setAllStableCoverageInTesting(parametersJson.get("allStableCoverageInTesting").getAsBoolean());
+		}
+		if (parametersJson.get("matchingLiteralPrefix") != null) {
+			parameters.setMatchingLiteralPrefix(parametersJson.get("matchingLiteralPrefix").getAsString());
+		}
 		
 		return parameters;
 	}

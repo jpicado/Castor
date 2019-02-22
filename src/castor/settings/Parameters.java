@@ -35,6 +35,9 @@ public class Parameters {
 	private boolean randomizeRecall = false;
 	private boolean allowSimilarity = false;
 	private EvaluationFunctions.FUNCTION evalfn = EvaluationFunctions.FUNCTION.COVERAGE;
+	private String matchingLiteralPrefix = "m_";
+	private boolean allStableCoverageInTraining = false;
+	private boolean allStableCoverageInTesting = false;
 	
 	public boolean isCreateStoredProcedure() {
 		return createStoredProcedure;
@@ -215,15 +218,12 @@ public class Parameters {
 	public double getEstimationSample() {
 		return estimationSample;
 	}
-
 	public void setEstimationSample(double estimationSample) {
 		this.estimationSample = estimationSample;
 	}
-
 	public String getGeneralizationMethod() {
 		return generalizationMethod;
 	}
-
 	public void setGeneralizationMethod(String generalizationMethod) {
 		this.generalizationMethod = generalizationMethod;
 	}
@@ -243,6 +243,24 @@ public class Parameters {
 			throw new IllegalArgumentException("Unknown evaluation function.");
 		}
 	}
+	public String getMatchingLiteralPrefix() {
+		return matchingLiteralPrefix;
+	}
+	public void setMatchingLiteralPrefix(String matchingLiteralPrefix) {
+		this.matchingLiteralPrefix = matchingLiteralPrefix;
+	}
+	public boolean isAllStableCoverageInTraining() {
+		return allStableCoverageInTraining;
+	}
+	public void setAllStableCoverageInTraining(boolean allStableCoverageInTraining) {
+		this.allStableCoverageInTraining = allStableCoverageInTraining;
+	}
+	public boolean isAllStableCoverageInTesting() {
+		return allStableCoverageInTesting;
+	}
+	public void setAllStableCoverageInTesting(boolean allStableCoverageInTesting) {
+		this.allStableCoverageInTesting = allStableCoverageInTesting;
+	}
 	@Override
 	public String toString() {
 		return "Parameters [createStoredProcedure=" + createStoredProcedure + ", useStoredProcedure="
@@ -255,6 +273,8 @@ public class Parameters {
 				+ ", generalizationMethod=" + generalizationMethod + ", sampleInTesting=" + sampleInTesting
 				+ ", sampleGroundBottomClauses=" + sampleGroundBottomClauses + ", sampleInCoveringApproach="
 				+ sampleInCoveringApproach + ", shuffleExamples=" + shuffleExamples + ", randomizeRecall="
-				+ randomizeRecall + ", allowSimilarity=" + allowSimilarity + ", evalfn=" + evalfn + "]";
+				+ randomizeRecall + ", allowSimilarity=" + allowSimilarity + ", evalfn=" + evalfn
+				+ ", matchingLiteralPrefix=" + matchingLiteralPrefix + ", allStableCoverageInTraining="
+				+ allStableCoverageInTraining + ", allStableCoverageInTesting=" + allStableCoverageInTesting + "]";
 	}
 }

@@ -40,18 +40,18 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 		FILE, DB
 	}
 
-	private int threads;
+	protected int threads;
 
-	private List<Tuple> allPosExamples;
-	private List<Tuple> allNegExamples;
+	protected List<Tuple> allPosExamples;
+	protected List<Tuple> allNegExamples;
 
-	private Map<Integer, Integer> posExamplesIndexes;
-	private Map<Integer, Integer> negExamplesIndexes;
+	protected Map<Integer, Integer> posExamplesIndexes;
+	protected Map<Integer, Integer> negExamplesIndexes;
 
-	private Matching[] positiveMatchings;
-	private Matching[] negativeMatchings;
-	int posExamplesPerMatching;
-	int negExamplesPerMatching;
+	protected Matching[] positiveMatchings;
+	protected Matching[] negativeMatchings;
+	protected int posExamplesPerMatching;
+	protected int negExamplesPerMatching;
 
 	public CoverageBySubsumptionParallel(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, BottomClauseGenerator saturator,
 			Relation posExamplesRelation, Relation negExamplesRelation, Schema schema, DataModel dataModel, Parameters parameters, boolean withMatchings,
@@ -64,7 +64,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 			initWithoutMatchings(genericDAO, posExamplesRelation, negExamplesRelation, parameters, examplesSource, posExamplesFile, negExamplesFile);
 	}
 
-	private void initWithoutMatchings(GenericDAO genericDAO,
+	protected void initWithoutMatchings(GenericDAO genericDAO,
 			Relation posExamplesRelation, Relation negExamplesRelation, Parameters parameters,
 			CoverageBySubsumptionParallel.EXAMPLES_SOURCE examplesSource, String posExamplesFile, String negExamplesFile) {
 
@@ -93,7 +93,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 		}
 	}
 
-	private void initWithMatchings(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, BottomClauseGenerator saturator,
+	protected void initWithMatchings(GenericDAO genericDAO, BottomClauseConstructionDAO bottomClauseConstructionDAO, BottomClauseGenerator saturator,
 			Relation posExamplesRelation, Relation negExamplesRelation, Schema schema, DataModel dataModel, Parameters parameters,
 			CoverageBySubsumptionParallel.EXAMPLES_SOURCE examplesSource, String posExamplesFile, String negExamplesFile) {
 
@@ -688,7 +688,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 		return coveredExamplesTuples;
 	}
 
-	private Pair<Integer, Integer> getMatchingAndIndex(int index, boolean isPositive) {
+	protected Pair<Integer, Integer> getMatchingAndIndex(int index, boolean isPositive) {
 		int examplesPerMatching;
 		if (isPositive)
 			examplesPerMatching = this.posExamplesPerMatching;
@@ -703,7 +703,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 	/*
 	 * Compute theta-subsumption coverage by using matching
 	 */
-	private int[] clauseCoverage(MyClause clause, boolean[] undecided, boolean isPositiveRelation) {
+	protected int[] clauseCoverage(MyClause clause, boolean[] undecided, boolean isPositiveRelation) {
 		TimeWatch tw = TimeWatch.start();
 
 		int nExamples = undecided.length;
@@ -772,10 +772,10 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 		return subsumptionResult;
 	}
 
-	private static class Result {
-		private final int[] subsumptionResult;
-		private final int start;
-		private final int end;
+	protected static class Result {
+		protected final int[] subsumptionResult;
+		protected final int start;
+		protected final int end;
 
 		public Result(int[] subsumptionResult, int start, int end) {
 			this.subsumptionResult = subsumptionResult;
@@ -784,7 +784,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 		}
 	}
 
-	private class Evaluator implements Callable<Result> {
+	protected class Evaluator implements Callable<Result> {
 		private final Matching matching;
 		private final Clause clause;
 		private final boolean[] undecided;
