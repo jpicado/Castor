@@ -47,8 +47,6 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 	
 	@Override
 	protected int[] clauseCoverage(MyClause clause, boolean[] undecided, boolean isPositiveRelation) {
-//		System.out.println("*********");
-//		System.out.println(Formatter.prettyPrint(clause));
 		// Check coverage of original clause. If original clause covers an example, any stable clause derived from original clause also covers the example.
 		int[] subsumptionResult = clauseCoverageAux(clause, undecided, isPositiveRelation);
 		
@@ -89,7 +87,6 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 			
 			// Remove non-head-connected literals
 			newClause = removeNotHeadConnectedLiterals(newClause);
-//			System.out.println(Formatter.prettyPrint(newClause));
 			
 			// Remove conflicting literals from remaining literals
 			Set<Literal> newRemainingLiterals = new HashSet<Literal>(state.remainingLiterals);
@@ -108,10 +105,9 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 				// If no remaining literals, evaluate clause
 				if (!evaluatedClauses.contains(newClause)) {
 					int[] subsumptionResultLocal = clauseCoverageAux(newClause, undecided, isPositiveRelation);
-					subsumptionResult = updateSubsumptionResult(subsumptionResultLocal, subsumptionResultLocal);
+					subsumptionResult = updateSubsumptionResult(subsumptionResultLocal, subsumptionResult);
 					undecided = updateUndecided(subsumptionResult, undecided);
 					evaluatedClauses.add(newClause);
-//					System.out.println("SC:"+Formatter.prettyPrint(newClause));
 				}
 			} else {
 				// For each remaining literals, create a new state
