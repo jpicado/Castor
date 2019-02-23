@@ -47,14 +47,21 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 	
 	@Override
 	protected int[] clauseCoverage(MyClause clause, boolean[] undecided, boolean isPositiveRelation) {
+//		System.out.println(Formatter.prettyPrint(clause));
 		// Check coverage of original clause. If original clause covers an example, any stable clause derived from original clause also covers the example.
 		int[] subsumptionResult = clauseCoverageAux(clause, undecided, isPositiveRelation);
+		
+		// If checking coverage on positive examples, return subsumption result
+		// The stable clauses derived from the clause may cover more examples than what is reported in subsumptionResult. However, those examples may not be covered by all stable clauses.
+		if (isPositiveRelation)
+			return subsumptionResult;
 		
 		// Use undecided to avoid checking coverage of an example if it's already covered
 		undecided = updateUndecided(subsumptionResult, undecided);
 		
 		Stack<State> stack = new Stack<State>();
 		Set<MyClause> evaluatedClauses = new HashSet<MyClause>();
+		evaluatedClauses.add(clause);
 		
 		// Get the set of matching literals
 		Set<Literal> matchingLiterals = new HashSet<Literal>();
@@ -63,6 +70,10 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 				matchingLiterals.add(literal);
 			}
 		}
+		
+		// If there is only matching literal, there is only one stable clause
+		if (matchingLiterals.size() == 1)
+			return subsumptionResult;
 		
 		// Add states to stack
 		for (Literal literal : matchingLiterals) {
@@ -86,7 +97,9 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 			}
 			
 			// Remove non-head-connected literals
-			newClause = removeNotHeadConnectedLiterals(newClause);
+			// NOTE: if I use order-dependent method, I may remove literals that should stay in clause
+//			newClause = removeNotHeadConnectedLiterals(newClause);
+			newClause = removeNotHeadConnectedLiteralsOrderAgnostic(newClause);
 			
 			// Remove conflicting literals from remaining literals
 			Set<Literal> newRemainingLiterals = new HashSet<Literal>(state.remainingLiterals);
@@ -108,6 +121,8 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 					subsumptionResult = updateSubsumptionResult(subsumptionResultLocal, subsumptionResult);
 					undecided = updateUndecided(subsumptionResult, undecided);
 					evaluatedClauses.add(newClause);
+					
+//					System.out.println("GC:"+Formatter.prettyPrint(newClause));
 				}
 			} else {
 				// For each remaining literals, create a new state
@@ -125,7 +140,7 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 
 	/*
 	 * Remove literals that are not head-connected from clause
-	 * NOTE: considers two literals connected if they share a variable (not a constant)
+	 * NOTE: is not order dependent
 	 */
 	private MyClause removeNotHeadConnectedLiteralsOrderAgnostic(MyClause clause) {
 		Set<Term> seenTerms = new HashSet<Term>();
@@ -178,7 +193,6 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 	
 	/*
 	 * Remove literals that are not head-connected from clause
-	 * NOTE: considers two literals connected if they share a variable (not a constant)
 	 * NOTE: considers the order-dependent definition of head-connected
 	 */
 	private MyClause removeNotHeadConnectedLiterals(MyClause clause) {
@@ -211,6 +225,7 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 	
 	//TODO: remove getVariablesTerms in previous functions???
 	private List<Term> getVariableTerms(List<Term> terms) {
+		return terms;
 //		List<Term> variables = new ArrayList<Term>();
 //		
 //		for (Term term : terms) {
@@ -219,8 +234,6 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 //		}
 //		
 //		return variables;
-		
-		return terms;
 	}
 
 	private Set<Literal> getConflictingLiterals(Set<Literal> remainingLiterals, Literal literal) {

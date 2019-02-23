@@ -286,11 +286,14 @@ public class CastorLearner implements Learner {
 				logger.debug("After minimization:\n" + Formatter.prettyPrint(clauseInfo));
 
 				// Get new positive examples covered
-				// Adding 1 to count seed example
 				newPosCoveredCount = coverageEngine.countCoveredExamplesFromList(genericDAO, schema, clauseInfo,
 						uncoveredPosExamples, posExamplesRelation, true);
 				allPosCoveredCount = coverageEngine.countCoveredExamplesFromRelation(genericDAO, schema, clauseInfo,
 						posExamplesRelation, true);
+				
+				// Get new negative examples covered
+				allNegCoveredCount = coverageEngine.countCoveredExamplesFromRelation(genericDAO, schema, clauseInfo,
+						negExamplesRelation, false);
 
 				// Compute statistics
 				// For remaining positive examples

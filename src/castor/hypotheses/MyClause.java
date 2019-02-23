@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import aima.core.logic.fol.kb.data.Literal;
@@ -176,30 +177,27 @@ public class MyClause {
 		return sb.toString();
 	}
 
-//	@Override
-//	public int hashCode() {
-//		return equalityIdentity.hashCode();
-//	}
-//
-//	@Override
-//	public boolean equals(Object othObj) {
-//		if (null == othObj) {
-//			return false;
-//		}
-//		if (this == othObj) {
-//			return true;
-//		}
-//		if (!(othObj instanceof MyClause)) {
-//			return false;
-//		}
-//		MyClause othClause = (MyClause) othObj;
-//
-//		return equalityIdentity.equals(othClause.equalityIdentity);
-//	}
-//
-//	public String getEqualityIdentity() {
-//		return equalityIdentity;
-//	}
+	@Override
+	public int hashCode() {
+		return Objects.hash(literals);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		MyClause other = (MyClause) obj;
+		if (literals == null) {
+			if (other.literals != null)
+				return false;
+		} else if (!literals.equals(other.literals))
+			return false;
+		return true;
+	}
 }
 
 class MyLiteralsSorter implements Comparator<Literal> {

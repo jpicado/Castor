@@ -43,47 +43,62 @@ public class BottomClauseGeneratorNaiveSamplingTupleByTuple extends BottomClause
 		}
 		
 		if (randomizeRecall == false) {
-			throw new IllegalArgumentException("This bottom-clause construction method only works if randomizeRecall = true.");
-		}
-		
-		List<Tuple> reservoir = new ArrayList<Tuple>();
-		double totalWeight = 0;
-		for (String knownTerm : knownTermsSet) {
 			// Create query and run
-			knownTerm = knownTerm.replace("'", "''");
-			String query = String.format(SELECTIN_SQL_STATEMENT, relationName, attributeName, "'" + knownTerm + "'");
+			String knownTerms = toListString(knownTermsSet);
+			String query = String.format(SELECTIN_SQL_STATEMENT, relationName, attributeName, knownTerms);
 			GenericTableObject result = genericDAO.executeQuery(query);
 			
 			if (result != null) {
+				// Get first tuples from result
+				int solutionsCounter = 0;
 				for (Tuple tuple : result.getTable()) {
-					// Only keep unique tuples
-					if (!reservoir.contains(tuple)) {
-						// Calculate tuple's weight and add to total weight
-						double tupleWeight = 1.0 / (double)(knownTermsSet.size() + tuple.getValues().size());
-						totalWeight += tupleWeight;
-						
-						if (reservoir.size() < recall) {
-							// If there is space in reservoir, keep tuple
-							reservoir.add(tuple);
-						} else {
-							// Otherwise, accept with some probability
-							double probabilityAccept = tupleWeight / totalWeight;
-							for (int i=0; i<reservoir.size(); i++) {
-								if (randomGenerator.nextDouble() < probabilityAccept) {
-									reservoir.set(i, tuple);
-									// Only allow tuple to be added to reservoir once
-									break;
+					if (solutionsCounter >= recall)
+						break;
+					
+					modeOperationsForTuple(tuple, newLiterals, clause, hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, relationAttributeModes, ground);
+					solutionsCounter++;
+				}
+			}
+		} else {
+			List<Tuple> reservoir = new ArrayList<Tuple>();
+			double totalWeight = 0;
+			for (String knownTerm : knownTermsSet) {
+				// Create query and run
+				knownTerm = knownTerm.replace("'", "''");
+				String query = String.format(SELECTIN_SQL_STATEMENT, relationName, attributeName, "'" + knownTerm + "'");
+				GenericTableObject result = genericDAO.executeQuery(query);
+				
+				if (result != null) {
+					for (Tuple tuple : result.getTable()) {
+						// Only keep unique tuples
+						if (!reservoir.contains(tuple)) {
+							// Calculate tuple's weight and add to total weight
+							double tupleWeight = 1.0 / (double)(knownTermsSet.size() + tuple.getValues().size());
+							totalWeight += tupleWeight;
+							
+							if (reservoir.size() < recall) {
+								// If there is space in reservoir, keep tuple
+								reservoir.add(tuple);
+							} else {
+								// Otherwise, accept with some probability
+								double probabilityAccept = tupleWeight / totalWeight;
+								for (int i=0; i<reservoir.size(); i++) {
+									if (randomGenerator.nextDouble() < probabilityAccept) {
+										reservoir.set(i, tuple);
+										// Only allow tuple to be added to reservoir once
+										break;
+									}
 								}
 							}
 						}
 					}
 				}
 			}
-		}
-		
-		// For each tuple in reservoir, create a new literal and add to newLiterals
-		for (Tuple tuple : reservoir) {
-			modeOperationsForTuple(tuple, newLiterals, clause, hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, relationAttributeModes, ground);
+			
+			// For each tuple in reservoir, create a new literal and add to newLiterals
+			for (Tuple tuple : reservoir) {
+				modeOperationsForTuple(tuple, newLiterals, clause, hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, relationAttributeModes, ground);
+			}
 		}
 
 		return newLiterals;
