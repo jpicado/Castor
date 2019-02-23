@@ -20,7 +20,8 @@ import castor.utils.RandomSet;
 
 public class BottomClauseGeneratorNaiveSamplingTupleByTuple extends BottomClauseGeneratorOriginalAlgorithm {
 
-	private static final String SELECTIN_SQL_STATEMENT = "SELECT * FROM %s WHERE %s = %s";
+	protected static final String SELECTIN_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s";
+	private static final String SELECT_SQL_STATEMENT = "SELECT * FROM %s WHERE %s = %s";
 	
 	private boolean sample;
 	
@@ -65,7 +66,7 @@ public class BottomClauseGeneratorNaiveSamplingTupleByTuple extends BottomClause
 			for (String knownTerm : knownTermsSet) {
 				// Create query and run
 				knownTerm = knownTerm.replace("'", "''");
-				String query = String.format(SELECTIN_SQL_STATEMENT, relationName, attributeName, "'" + knownTerm + "'");
+				String query = String.format(SELECT_SQL_STATEMENT, relationName, attributeName, "'" + knownTerm + "'");
 				GenericTableObject result = genericDAO.executeQuery(query);
 				
 				if (result != null) {
