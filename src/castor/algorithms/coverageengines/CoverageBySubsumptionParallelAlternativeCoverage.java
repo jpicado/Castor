@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.Callable;
@@ -63,6 +64,8 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 		Set<MyClause> evaluatedClauses = new HashSet<MyClause>();
 		evaluatedClauses.add(clause);
 		
+		Set<State> exploredStates = new HashSet<State>();
+		
 		// Get the set of matching literals
 		Set<Literal> matchingLiterals = new HashSet<Literal>();
 		for (Literal literal : clause.getNegativeLiterals()) {
@@ -85,6 +88,7 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 		
 		while (!stack.isEmpty()) {
 			State state = stack.pop();
+			exploredStates.add(state);
 			
 			Set<Literal> conflictingLiterals = getConflictingLiterals(state.remainingLiterals, state.literal);
 			
@@ -130,7 +134,9 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 					Set<Literal> remainingLiterals = new HashSet<Literal>(newRemainingLiterals);
 					remainingLiterals.remove(literal);
 					State newState = new State(newClause, literal, remainingLiterals);
-					stack.push(newState);
+					
+					if (!exploredStates.contains(newState)) 
+						stack.push(newState);
 				}
 			}
 		}
@@ -340,6 +346,38 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 			this.clause = clause;
 			this.literal = literal;
 			this.remainingLiterals = remainingLiterals;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(clause, literal, remainingLiterals);
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			State other = (State) obj;
+			if (clause == null) {
+				if (other.clause != null)
+					return false;
+			} else if (!clause.equals(other.clause))
+				return false;
+			if (literal == null) {
+				if (other.literal != null)
+					return false;
+			} else if (!literal.equals(other.literal))
+				return false;
+			if (remainingLiterals == null) {
+				if (other.remainingLiterals != null)
+					return false;
+			} else if (!remainingLiterals.equals(other.remainingLiterals))
+				return false;
+			return true;
 		}
 	}
 }
