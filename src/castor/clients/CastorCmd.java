@@ -26,6 +26,7 @@ import castor.algorithms.ProGolem;
 import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
 import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSampling;
+import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSamplingTupleByTuple;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSampling;
 import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesOlkenSampling;
 import castor.algorithms.bottomclause.BottomClauseUtil;
@@ -554,9 +555,9 @@ public class CastorCmd {
 			saturator = new BottomClauseGeneratorNaiveSampling(false, parameters.getRandomSeed());
 		} else {
 			if (parameters.getSamplingMethod().equals(SamplingMethods.NAIVE)) {
-				saturator = new BottomClauseGeneratorNaiveSampling(true, parameters.getRandomSeed());
+//				saturator = new BottomClauseGeneratorNaiveSampling(true, parameters.getRandomSeed());
 //				saturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(true);
-//				saturator = new BottomClauseGeneratorNaiveSamplingTupleByTuple(true, parameters.getRandomSeed());
+				saturator = new BottomClauseGeneratorNaiveSamplingTupleByTuple(true, parameters.getRandomSeed());
 			} else if (parameters.getSamplingMethod().equals(SamplingMethods.OLKEN))  {
 				logger.info("Use Olken sampling. Extracting statistics from database instance...");
 				StatisticsOlkenSampling statistics = StatisticsExtractor.extractStatisticsForOlkenSampling(genericDAO, schema);

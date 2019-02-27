@@ -2,10 +2,12 @@ package castor.algorithms.coverageengines;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.Stack;
@@ -74,8 +76,12 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 			}
 		}
 		
+		// Keep only literals that will be conflicting with other literals
+		//TODO is this right?
+		matchingLiterals = getConflictingLiterals(matchingLiterals);
+		
 		// If there is only matching literal, there is only one stable clause
-		if (matchingLiterals.size() == 1)
+		if (matchingLiterals.size() <= 1)
 			return subsumptionResult;
 		
 		// Add states to stack
@@ -90,12 +96,12 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 			State state = stack.pop();
 			exploredStates.add(state);
 			
-			Set<Literal> conflictingLiterals = getConflictingLiterals(state.remainingLiterals, state.literal);
+			Set<Literal> conflictingLiteralsWithLiteral = getConflictingLiteralsWithLiteral(state.remainingLiterals, state.literal);
 			
 			// Create new clause without conflicting literals
 			MyClause newClause = new MyClause(state.clause.getPositiveLiterals());
 			for (Literal literal : state.clause.getNegativeLiterals()) {
-				if (!conflictingLiterals.contains(literal)) {
+				if (!conflictingLiteralsWithLiteral.contains(literal)) {
 					newClause.addLiteral(literal);
 				}
 			}
@@ -107,7 +113,7 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 			
 			// Remove conflicting literals from remaining literals
 			Set<Literal> newRemainingLiterals = new HashSet<Literal>(state.remainingLiterals);
-			newRemainingLiterals.removeAll(conflictingLiterals);
+			newRemainingLiterals.removeAll(conflictingLiteralsWithLiteral);
 			
 			// Remove literals in remaining literals that are not in newClause
 			Iterator<Literal> iterator = newRemainingLiterals.iterator();
@@ -117,6 +123,10 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 					iterator.remove();
 				}
 			}
+			
+			// Keep only literals that will be conflicting with other literals
+			//TODO is this right?
+			newRemainingLiterals = getConflictingLiterals(newRemainingLiterals);
 			
 			if (newRemainingLiterals.isEmpty()) {
 				// If no remaining literals, evaluate clause
@@ -143,7 +153,7 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 		
 		return subsumptionResult;
 	}
-
+	
 	/*
 	 * Remove literals that are not head-connected from clause
 	 * NOTE: is not order dependent
@@ -242,13 +252,35 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 //		return variables;
 	}
 
-	private Set<Literal> getConflictingLiterals(Set<Literal> remainingLiterals, Literal literal) {
+	private Set<Literal> getConflictingLiteralsWithLiteral(Set<Literal> remainingLiterals, Literal literal) {
 		Set<Literal> conflictingLiterals = new HashSet<Literal>();
 		for (Literal potentialLiteral : remainingLiterals) {
 			if (!Collections.disjoint(literal.getAtomicSentence().getArgs(), potentialLiteral.getAtomicSentence().getArgs())) {
 				conflictingLiterals.add(potentialLiteral);
 			}
 		}
+		return conflictingLiterals;
+	}
+	
+	private Set<Literal> getConflictingLiterals(Set<Literal> literals) {
+		Set<Literal> conflictingLiterals = new HashSet<Literal>();
+		
+		Map<Term,Set<Literal>> termToLiterals = new HashMap<Term,Set<Literal>>();
+		for (Literal literal : literals) {
+			for (Term term : literal.getAtomicSentence().getArgs()) {
+				if (!termToLiterals.containsKey(term)) {
+					termToLiterals.put(term, new HashSet<Literal>());
+				}
+				termToLiterals.get(term).add(literal);
+			}
+		}
+		
+		for (Term term : termToLiterals.keySet()) {
+			if (termToLiterals.get(term).size() > 1) {
+				conflictingLiterals.addAll(termToLiterals.get(term));
+			}
+		}
+		
 		return conflictingLiterals;
 	}
 

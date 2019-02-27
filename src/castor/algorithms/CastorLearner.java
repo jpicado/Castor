@@ -254,7 +254,6 @@ public class CastorLearner implements Learner {
 
 				if (!reductionMethod.equals(ReductionMethods.NEGATIVE_REDUCTION_NONE)) {
 					// Compute negative based reduction
-					// Add 1 to scores to count seed example, which is not in remainingPosExamples
 					double beforeReduceScore = this.computeScore(schema, uncoveredPosExamples, posExamplesRelation,
 							negExamplesRelation, clauseInfo);
 					logger.info("Before reduction - NumLits:" + clauseInfo.getClause().getNumberLiterals() + ", Score:"
@@ -426,7 +425,6 @@ public class CastorLearner implements Learner {
 		
 		boolean createdNewARMGS = true;
 		int iters = 0;
-		// Add 1 to scores to count seed example, which is not in remainingPosExamples
 		double clauseScore = this.computeScore(schema, uncoveredPosExamples, posExamplesRelation, negExamplesRelation,
 				bestARMGs.get(0));
 		
