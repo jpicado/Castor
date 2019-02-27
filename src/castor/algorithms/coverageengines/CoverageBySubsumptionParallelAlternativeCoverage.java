@@ -93,6 +93,9 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 		}
 		
 		while (!stack.isEmpty()) {
+			if (allDecided(undecided)) 
+				break;
+			
 			State state = stack.pop();
 			exploredStates.add(state);
 			
@@ -153,7 +156,7 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 		
 		return subsumptionResult;
 	}
-	
+
 	/*
 	 * Remove literals that are not head-connected from clause
 	 * NOTE: is not order dependent
@@ -290,6 +293,14 @@ public class CoverageBySubsumptionParallelAlternativeCoverage extends CoverageBy
 				undecided[i] = false;
 		}
 		return undecided;
+	}
+	
+	private boolean allDecided(boolean[] undecided) {
+		for (int i = 0; i < undecided.length; i++) {
+			if (undecided[i])
+				return false;
+		}
+		return true;
 	}
 	
 	private int[] updateSubsumptionResult(int[] subsumptionResultLocal, int[] subsumptionResult) {
