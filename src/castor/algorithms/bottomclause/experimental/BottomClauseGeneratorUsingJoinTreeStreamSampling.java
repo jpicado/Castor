@@ -30,7 +30,7 @@ public abstract class BottomClauseGeneratorUsingJoinTreeStreamSampling extends B
 	 * Implements idea of Acyclic-Stream-Sample for bottom-clause construction.
 	 * Gets only one sample from each relation.
 	 */
-	private void generateBottomClauseAux(GenericDAO genericDAO, Schema schema, 
+	protected void generateBottomClauseAux(GenericDAO genericDAO, Schema schema, 
 			Tuple tuple, JoinEdge joinEdge, 
 			Map<String, List<Mode>> groupedModes, Map<String, String> hashConstantToVariable, 
 			Random randomGenerator, MyClause clause, boolean ground,
@@ -136,8 +136,11 @@ public abstract class BottomClauseGeneratorUsingJoinTreeStreamSampling extends B
 			} else if (result.getTable().size() == 1) {
 				// only one tuple
 				joinTuples.add(result.getTable().get(0));
+			} else if (result.getTable().size() <= sampleSize) {
+				// add all tuples
+				joinTuples.addAll(result.getTable());
 			} else {
-				// add copies of first sample
+				// create dummy tuples
 				for (int i = 0; i < sampleSize; i++) {
 					//joinTuples.add(result.getTable().get(0));
 					joinTuples.add(null);
@@ -147,6 +150,7 @@ public abstract class BottomClauseGeneratorUsingJoinTreeStreamSampling extends B
 				long weightSummed = 0;
 				for (Tuple tupleInJoin : result.getTable()) {
 					TimeWatch tw = TimeWatch.start();
+//					long weight = SamplingUtils.computeJoinPathSizeFromTupleWithQueries(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode());
 					long weight = SamplingUtils.computeJoinPathSizeFromTuple(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode(), depth, joinPathSizes);
 					NumbersKeeper.computeJoinSizesTime += tw.time();
 					
@@ -172,49 +176,6 @@ public abstract class BottomClauseGeneratorUsingJoinTreeStreamSampling extends B
 		for (JoinEdge childJoinEdge : joinEdge.getJoinNode().getEdges()) {
 			generateBottomClauseAux(genericDAO, schema, joinTuples, childJoinEdge, 
 					groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, depth+1, sampleSize);
-		}
-	}
-	
-	//TODO delete
-	private void acyclicStreamSample(GenericDAO genericDAO, Schema schema, Tuple tuple, JoinEdge joinEdge, Random randomGenerator, List<Tuple> sample) {
-		String relation = joinEdge.getJoinNode().getNodeRelation().getRelation().toUpperCase();
-		String attributeName = schema.getRelations().get(relation).getAttributeNames().get(joinEdge.getRightJoinAttribute());
-		String query = String.format(SELECT_WHERE_SQL_STATEMENT, relation, attributeName, "'"+tuple.getValues().get(joinEdge.getLeftJoinAttribute()).toString()+"'");
-		
-		// Run query to get all tuples in join
-		GenericTableObject result = genericDAO.executeQuery(query);
-		
-		// Get one tuple to add to sample
-		Tuple joinTuple = null;
-		if (result != null) {
-			if (result.getTable().size() == 0) {
-				// no tuples
-				return;
-			} else if (result.getTable().size() == 1) {
-				// only one tuple
-				joinTuple = result.getTable().get(0);
-			} else {
-				// sample a tuple using reservoir sampling (reservoir is joinTuple)
-				long weightSummed = 0;
-				while (joinTuple == null) {
-					for (Tuple tupleInJoin : result.getTable()) {
-						long size = SamplingUtils.computeJoinPathSizeFromTupleWithQueries(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode());
-						weightSummed += size;
-						double p = (double)size / (double)weightSummed;
-						if (randomGenerator.nextDouble() < p) {
-							joinTuple = tupleInJoin;
-						}
-					}
-				}
-			}
-		}
-		
-		// Add tuple to sample
-		sample.add(joinTuple);
-		
-		// Recursive call on node's children
-		for (JoinEdge childJoinEdge : joinEdge.getJoinNode().getEdges()) {
-			acyclicStreamSample(genericDAO, schema, joinTuple, childJoinEdge, randomGenerator, sample);
 		}
 	}
 }

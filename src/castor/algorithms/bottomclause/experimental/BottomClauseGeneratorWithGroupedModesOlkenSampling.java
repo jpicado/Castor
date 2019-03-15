@@ -3,7 +3,7 @@
  * Queries database only once per relation.
  * Fixes problem in BottomClauseGeneratorOlkenSampling of giving higher inclusion probabilities to some tuples. 
  */
-package castor.algorithms.bottomclause;
+package castor.algorithms.bottomclause.experimental;
 
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -200,6 +200,9 @@ public class BottomClauseGeneratorWithGroupedModesOlkenSampling extends BottomCl
 							Pair<String,String> key = new Pair<String, String>(relationName.toUpperCase(), inputAttributeName.toUpperCase());
 							double p = (double)cardinality / (double)statistics.getMaximumFrequencyOnAttribute().get(key);
 							probabilitySum += p;
+							//TODO: I THINK THAT THIS WAY OF COMPUTING PROBABILITY IS WRONG
+							//1) DENOMINATOR SHOULD BE BASED ON THE TUPLES THAT CAN BE JOINED, NOT ON ALL TUPLES IN RELATION
+							//2) IS IT OK TO SIMPLY SUM UP PROBABILITIES FOR EACH ATTRIBUTE?
 						}
 					}
 				}

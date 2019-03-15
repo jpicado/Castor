@@ -12,7 +12,6 @@ import java.util.Random;
 import java.util.Set;
 
 import aima.core.logic.fol.parsing.ast.Predicate;
-import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModes;
 import castor.dataaccess.db.GenericDAO;
 import castor.dataaccess.db.GenericTableObject;
 import castor.hypotheses.MyClause;

@@ -14,9 +14,9 @@ import castor.sampling.JoinEdge;
 import castor.sampling.JoinNode;
 import castor.utils.Triple;
 
-public class BottomClauseGeneratorUsingJoinTreeOlkenSamplingSemiStratified extends BottomClauseGeneratorUsingJoinTreeOlkenSampling {
+public class BottomClauseGeneratorUsingJoinTreeOlkenSamplingRandom extends BottomClauseGeneratorUsingJoinTreeOlkenSampling {
 
-	public BottomClauseGeneratorUsingJoinTreeOlkenSamplingSemiStratified(int seed, JoinNode joinTree) {
+	public BottomClauseGeneratorUsingJoinTreeOlkenSamplingRandom(int seed, JoinNode joinTree) {
 		super(seed, joinTree);
 	}
 
@@ -27,6 +27,10 @@ public class BottomClauseGeneratorUsingJoinTreeOlkenSamplingSemiStratified exten
 			Random randomGenerator, MyClause clause, boolean ground,
 			Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int sampleSize) {
 		
+		// Approach 1: Get one sample from all relations, multiple times
+		//TODO: implement
+		
+		// Approach 2: Get multiple samples from each relation, instead of calling it multiple times
 		List<Tuple> exampleTupleList = new ArrayList<Tuple>();
 		exampleTupleList.add(exampleTuple);
 		for (JoinEdge joinEdge : joinTree.getEdges()) {

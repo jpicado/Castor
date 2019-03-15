@@ -23,9 +23,6 @@ import castor.utils.Pair;
 import castor.utils.TimeWatch;
 import castor.utils.Triple;
 
-/*
- * This version optimizes V1 by sampling only once per node in join tree.
- */
 public class BottomClauseGeneratorUsingJoinTreeStreamSamplingSemiStratified extends BottomClauseGeneratorUsingJoinTreeStreamSampling {
 	
 	public BottomClauseGeneratorUsingJoinTreeStreamSamplingSemiStratified(int seed, JoinNode joinTree) {
@@ -83,9 +80,6 @@ public class BottomClauseGeneratorUsingJoinTreeStreamSamplingSemiStratified exte
 		
 		// Create reservoir
 		List<Tuple> joinTuples = new ArrayList<Tuple>();
-		for (int i = 0; i < sampleSize; i++) {
-			joinTuples.add(null);
-		}
 		
 		if (result != null) {
 			if (result.getTable().size() == 0) {
@@ -93,8 +87,16 @@ public class BottomClauseGeneratorUsingJoinTreeStreamSamplingSemiStratified exte
 				return;
 			} else if (result.getTable().size() == 1) {
 				// only one tuple
-				joinTuples.set(0, result.getTable().get(0));
+				joinTuples.add(result.getTable().get(0));
+			} else if (result.getTable().size() <= sampleSize) {
+				// add all tuples
+				joinTuples.addAll(result.getTable());
 			} else {
+				// create dummy tuples
+				for (int i = 0; i < sampleSize; i++) {
+					joinTuples.add(null);
+				}
+				
 				// Needed to compute weights later
 				Map<JoinNodeRelation,Long> sizePerRelation = new HashMap<JoinNodeRelation,Long>();
 				Map<Tuple,Integer> relationsJoiningWithTuple = new HashMap<Tuple,Integer>();

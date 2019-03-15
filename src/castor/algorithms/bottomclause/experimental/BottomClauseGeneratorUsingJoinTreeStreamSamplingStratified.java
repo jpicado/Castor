@@ -16,8 +16,12 @@ import castor.sampling.SamplingUtils;
 import castor.utils.Triple;
 
 /*
- * This version computes all join paths, and uses stream sampling for each join path
+ * This version computes all join paths, and uses stream sampling for each join path.
+ * IT HAS THE FOLLOWING PROBLEMS:
+ * 1) SAMPLES FROM SAME RELATION MULTIPLE TIMES.
+ * 2) IT SAMPLES DIFFERENT TUPLES FOR EVERY JOIN PATH. THEREFORE, IT IS UNLIKELY THAT IT CAPTURES TREE-LIKE PATTERNS.
  */
+//TODO: DELETE THIS CLASS, AS IT IS NOT USEFUL?
 public class BottomClauseGeneratorUsingJoinTreeStreamSamplingStratified extends BottomClauseGeneratorUsingJoinTreeStreamSampling {
 	
 	private List<JoinNode> joinPaths;

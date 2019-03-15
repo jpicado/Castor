@@ -2,7 +2,7 @@
  * Bottom clause generation as described in original algorithm, except that it only does one query to the DB per relation (even for different input attributes).
  * DOES NOT HANDLE INDS (CANNOT BE USED FOR SCHEMA INDEPENDENCE).
  */
-package castor.algorithms.bottomclause;
+package castor.algorithms.bottomclause.experimental;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +20,7 @@ import aima.core.logic.fol.parsing.ast.Constant;
 import aima.core.logic.fol.parsing.ast.Predicate;
 import aima.core.logic.fol.parsing.ast.Term;
 import aima.core.logic.fol.parsing.ast.Variable;
+import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.dataaccess.db.BottomClauseConstructionDAO;
 import castor.dataaccess.db.GenericDAO;
 import castor.hypotheses.MyClause;

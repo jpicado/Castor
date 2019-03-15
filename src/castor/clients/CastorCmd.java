@@ -26,11 +26,10 @@ import castor.algorithms.ProGolem;
 import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.algorithms.bottomclause.BottomClauseGeneratorInsideSP;
 import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSampling;
-import castor.algorithms.bottomclause.BottomClauseGeneratorNaiveSamplingTupleByTuple;
 import castor.algorithms.bottomclause.BottomClauseGeneratorStratifiedSampling;
-import castor.algorithms.bottomclause.BottomClauseGeneratorWithGroupedModesOlkenSampling;
 import castor.algorithms.bottomclause.BottomClauseUtil;
 import castor.algorithms.bottomclause.StoredProcedureGeneratorSaturationInsideSP;
+import castor.algorithms.bottomclause.experimental.BottomClauseGeneratorUsingJoinTreeOlkenSamplingRandom;
 import castor.algorithms.bottomclause.experimental.BottomClauseGeneratorUsingJoinTreeStreamSamplingRandom;
 import castor.algorithms.bottomclause.experimental.BottomClauseGeneratorUsingJoinTreeStreamSamplingSemiStratified;
 import castor.algorithms.bottomclause.withsimilarity.BottomClauseGeneratorNaiveSamplingWithSimilarity;
@@ -54,8 +53,6 @@ import castor.language.Schema;
 import castor.mappings.MyClauseToClauseAsString;
 import castor.sampling.JoinNode;
 import castor.sampling.SamplingUtils;
-import castor.sampling.StatisticsExtractor;
-import castor.sampling.StatisticsOlkenSampling;
 import castor.settings.DataModel;
 import castor.settings.GeneralizationMethods;
 import castor.settings.JsonSettingsReader;
@@ -555,13 +552,19 @@ public class CastorCmd {
 			saturator = new BottomClauseGeneratorNaiveSampling(false, parameters.getRandomSeed());
 		} else {
 			if (parameters.getSamplingMethod().equals(SamplingMethods.NAIVE)) {
-//				saturator = new BottomClauseGeneratorNaiveSampling(true, parameters.getRandomSeed());
+				saturator = new BottomClauseGeneratorNaiveSampling(true, parameters.getRandomSeed());
 //				saturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(true);
-				saturator = new BottomClauseGeneratorNaiveSamplingTupleByTuple(true, parameters.getRandomSeed());
+//				saturator = new BottomClauseGeneratorNaiveSamplingTupleByTuple(true, parameters.getRandomSeed());
 			} else if (parameters.getSamplingMethod().equals(SamplingMethods.OLKEN))  {
-				logger.info("Use Olken sampling. Extracting statistics from database instance...");
-				StatisticsOlkenSampling statistics = StatisticsExtractor.extractStatisticsForOlkenSampling(genericDAO, schema);
-				saturator = new BottomClauseGeneratorWithGroupedModesOlkenSampling(parameters.getRandomSeed(), statistics);
+				// Using grouped modes
+				//I think this method is wrong
+//				logger.info("Use Olken sampling. Extracting statistics from database instance...");
+//				StatisticsOlkenSampling statistics = StatisticsExtractor.extractStatisticsForOlkenSampling(genericDAO, schema);
+//				saturator = new BottomClauseGeneratorWithGroupedModesOlkenSampling(parameters.getRandomSeed(), statistics);
+				
+				// Using join tree
+				JoinNode joinTree = SamplingUtils.findJoinTree(dataModel, parameters);
+				saturator = new BottomClauseGeneratorUsingJoinTreeOlkenSamplingRandom(parameters.getRandomSeed(), joinTree);
 			} else if (parameters.getSamplingMethod().equals(SamplingMethods.STREAM)) {
 				JoinNode joinTree = SamplingUtils.findJoinTree(dataModel, parameters);
 				saturator = new BottomClauseGeneratorUsingJoinTreeStreamSamplingRandom(parameters.getRandomSeed(), joinTree);
