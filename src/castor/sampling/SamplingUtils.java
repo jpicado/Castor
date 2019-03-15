@@ -502,10 +502,10 @@ public class SamplingUtils {
 			String rightAttributeName = schema.getRelations().get(joinPathNode.getRightJoinRelation().getRelation().toUpperCase()).getAttributeNames().get(joinPathNode.getRightJoinAttribute());
 			
 			String rightRelationAlias = tableNamePrefix + tableCounter++;
-			sb.append("SELECT " + rightRelationAlias + ".* FROM " + joinPathNode.getRightJoinRelation() + " " + rightRelationAlias + " JOIN (");
+			sb.append("SELECT " + rightRelationAlias + ".* FROM " + joinPathNode.getRightJoinRelation().getRelation() + " " + rightRelationAlias + " JOIN (");
 			
 			if (i == 0) {
-				sb.append("SELECT * FROM " + joinPathNode.getLeftJoinRelation() + " WHERE ");
+				sb.append("SELECT * FROM " + joinPathNode.getLeftJoinRelation().getRelation() + " WHERE ");
 				for (int j=0; j<tuple.getValues().size(); j++) {
 					if (j != 0) {
 						sb.append(" AND ");
@@ -516,7 +516,7 @@ public class SamplingUtils {
 				
 			}
 			
-			sb.append(") " + joinPathNode.getLeftJoinRelation() + " ON " + rightRelationAlias + "." + rightAttributeName + " = " + joinPathNode.getLeftJoinRelation() + "." + leftAttributeName);
+			sb.append(") " + joinPathNode.getLeftJoinRelation().getRelation() + " ON " + rightRelationAlias + "." + rightAttributeName + " = " + joinPathNode.getLeftJoinRelation().getRelation() + "." + leftAttributeName);
 		}
 		
 		sb.append(") " + tableNamePrefix + tableCounter++ + " ");

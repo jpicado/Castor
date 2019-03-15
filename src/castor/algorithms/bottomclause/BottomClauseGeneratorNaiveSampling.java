@@ -1,5 +1,6 @@
 package castor.algorithms.bottomclause;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,6 +46,8 @@ public class BottomClauseGeneratorNaiveSampling extends BottomClauseGeneratorOri
 		String query = String.format(SELECTIN_SQL_STATEMENT, relationName, attributeName, knownTerms);
 		GenericTableObject result = genericDAO.executeQuery(query);
 		
+		// Create reservoir
+		List<Tuple> joinTuples = new ArrayList<Tuple>();
 		if (result != null) {
 			if (!randomizeRecall || result.getTable().size() <= recall) {
 				// Get first tuples from result
@@ -53,10 +56,11 @@ public class BottomClauseGeneratorNaiveSampling extends BottomClauseGeneratorOri
 					if (solutionsCounter >= recall)
 						break;
 					
-					modeOperationsForTuple(tuple, newLiterals, clause, hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, relationAttributeModes, ground);
+					joinTuples.add(tuple);
 					solutionsCounter++;
 				}
 			} else {
+				// Option 1: sample until sample size is reached
 				// Get random tuples from result (without replacement)
 				Set<Integer> usedIndexes = new HashSet<Integer>();
 				int solutionsCounter = 0;
@@ -66,10 +70,35 @@ public class BottomClauseGeneratorNaiveSampling extends BottomClauseGeneratorOri
 						Tuple tuple = result.getTable().get(randomIndex);
 						usedIndexes.add(randomIndex);
 						
-						modeOperationsForTuple(tuple, newLiterals, clause, hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, relationAttributeModes, ground);
+						joinTuples.add(tuple);
 						solutionsCounter++;
 					}
 				}
+				
+				// Option 2: sample by using reservoir sampling
+				// Sample using WR2 (reservoir sampling)
+//				for (int i = 0; i < recall; i++) {
+//					joinTuples.add(null);
+//				}
+//				
+//				// sample tuples using reservoir sampling (reservoir is joinTuples)
+//				long weightSummed = 0;
+//				for (Tuple tupleInJoin : result.getTable()) {
+//					weightSummed += 1;
+//					double p = 1.0 / (double)weightSummed;
+//					for (int i = 0; i < joinTuples.size(); i++) {
+//						if (randomGenerator.nextDouble() < p) {
+//							joinTuples.set(i, tupleInJoin);
+//						}
+//					}
+//				}
+			}
+		}
+		
+		for (Tuple joinTuple : joinTuples) {
+			if (joinTuple != null) {
+				// Apply modes and add literal to clause
+				modeOperationsForTuple(joinTuple, newLiterals, clause, hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, relationAttributeModes, ground);
 			}
 		}
 

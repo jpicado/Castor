@@ -64,9 +64,6 @@ public abstract class BottomClauseGeneratorUsingJoinTreeOlkenSampling extends Bo
 			if (result.getTable().size() == 0) {
 				// no tuples
 				return;
-			} else if (result.getTable().size() == 1) {
-				// only one tuple
-				joinTuples.add(result.getTable().get(0));
 			} else if (result.getTable().size() <= sampleSize) {
 				// add all tuples
 				joinTuples.addAll(result.getTable());

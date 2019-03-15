@@ -133,16 +133,12 @@ public abstract class BottomClauseGeneratorUsingJoinTreeStreamSampling extends B
 			if (result.getTable().size() == 0) {
 				// no tuples
 				return;
-			} else if (result.getTable().size() == 1) {
-				// only one tuple
-				joinTuples.add(result.getTable().get(0));
-			} else if (result.getTable().size() <= sampleSize) {
+			} if (result.getTable().size() <= sampleSize) {
 				// add all tuples
 				joinTuples.addAll(result.getTable());
 			} else {
-				// create dummy tuples
+				// Sample using WR2 (reservoir sampling)
 				for (int i = 0; i < sampleSize; i++) {
-					//joinTuples.add(result.getTable().get(0));
 					joinTuples.add(null);
 				}
 				
