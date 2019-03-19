@@ -152,6 +152,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 				// System.err.println("IDA library failed to parse clause:\n" + groundClause);
 				System.err.println("Positive example " + exampleTuple.getValues().toString()
 						+ " ignored in subsumption. Error: " + e.getMessage());
+				e.printStackTrace();
 			}
 		}
 		counter = 0;
@@ -176,6 +177,7 @@ public class CoverageBySubsumptionParallel implements CoverageEngine {
 				// System.err.println("IDA library failed to parse clause:\n" + groundClause);
 				System.err.println("Negative example " + exampleTuple.getValues().toString()
 						+ " ignored in subsumption. Error: " + e.getMessage());
+				e.printStackTrace();
 			}
 		}
 

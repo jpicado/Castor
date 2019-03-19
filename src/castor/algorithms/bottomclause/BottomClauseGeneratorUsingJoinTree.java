@@ -1,4 +1,4 @@
-package castor.algorithms.bottomclause.experimental;
+package castor.algorithms.bottomclause;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,7 +14,6 @@ import aima.core.logic.fol.parsing.ast.Constant;
 import aima.core.logic.fol.parsing.ast.Predicate;
 import aima.core.logic.fol.parsing.ast.Term;
 import aima.core.logic.fol.parsing.ast.Variable;
-import castor.algorithms.bottomclause.BottomClauseGenerator;
 import castor.dataaccess.db.BottomClauseConstructionDAO;
 import castor.dataaccess.db.GenericDAO;
 import castor.hypotheses.MyClause;
@@ -32,15 +31,18 @@ import castor.utils.Triple;
 public abstract class BottomClauseGeneratorUsingJoinTree implements BottomClauseGenerator {
 
 	protected static final String SELECT_WHERE_SQL_STATEMENT = "SELECT * FROM %s WHERE %s = %s";
+	private static final String NULL_PREFIX = "null";
 	
 	private int varCounter;
 	private int seed;
 	private JoinNode joinTree;
+	private int nullCounter;
 
 	public BottomClauseGeneratorUsingJoinTree(int seed, JoinNode joinTree) {
 		this.seed = seed;
 		this.varCounter = 0;
 		this.joinTree = joinTree;
+		this.nullCounter = 0;
 	}
 	
 	@Override
@@ -149,7 +151,14 @@ public abstract class BottomClauseGeneratorUsingJoinTree implements BottomClause
 	private Predicate createLiteralFromTuple(Map<String, String> hashConstantToVariable, Tuple tuple, Mode mode, boolean headMode) {
 		List<Term> terms = new ArrayList<Term>();
 		for (int i = 0; i < mode.getArguments().size(); i++) {
-			String value = tuple.getValues().get(i).toString();
+			String value;
+			if (tuple.getValues().get(i) != null) {
+				value = tuple.getValues().get(i).toString();
+			}
+			else {
+				value = NULL_PREFIX+nullCounter;
+				nullCounter++;
+			}
 
 			if (mode.getArguments().get(i).getIdentifierType().equals(IdentifierType.CONSTANT)) {
 				terms.add(new Constant("\"" + Commons.escapeMetaCharacters(value) + "\""));

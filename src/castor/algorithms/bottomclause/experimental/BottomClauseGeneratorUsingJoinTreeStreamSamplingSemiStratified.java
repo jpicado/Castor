@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import castor.algorithms.bottomclause.BottomClauseGeneratorUsingJoinTreeStreamSampling;
 import castor.dataaccess.db.GenericDAO;
 import castor.dataaccess.db.GenericTableObject;
 import castor.hypotheses.MyClause;

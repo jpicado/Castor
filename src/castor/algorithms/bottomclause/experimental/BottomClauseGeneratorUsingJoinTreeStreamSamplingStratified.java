@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
+import castor.algorithms.bottomclause.BottomClauseGeneratorUsingJoinTreeStreamSampling;
 import castor.dataaccess.db.GenericDAO;
 import castor.hypotheses.MyClause;
 import castor.language.Mode;

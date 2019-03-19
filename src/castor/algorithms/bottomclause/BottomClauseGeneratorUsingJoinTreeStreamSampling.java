@@ -1,4 +1,4 @@
-package castor.algorithms.bottomclause.experimental;
+package castor.algorithms.bottomclause;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -107,7 +107,7 @@ public abstract class BottomClauseGeneratorUsingJoinTreeStreamSampling extends B
 		String attributeName = schema.getRelations().get(relation.toUpperCase()).getAttributeNames().get(joinEdge.getRightJoinAttribute());
 		Set<String> selectQueries = new HashSet<String>();
 		for (int i = 0; i < tuples.size(); i++) {
-			if (tuples.get(i) != null) {
+			if (tuples.get(i) != null && tuples.get(i).getValues().get(joinEdge.getLeftJoinAttribute()) != null) {
 				String selectQuery = String.format(SELECT_WHERE_SQL_STATEMENT, relation, attributeName, "'"+tuples.get(i).getValues().get(joinEdge.getLeftJoinAttribute()).toString()+"'");
 				
 				for (int attrPos = 0; attrPos < joinEdge.getJoinNode().getNodeRelation().getConstantAttributeNames().size(); attrPos++) {
