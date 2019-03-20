@@ -791,15 +791,19 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 	private String collectionToString(Collection<String> terms) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("(");
+				
 		int counter = 0;
 		for (String term : terms) {
-			// Escape single quotes
-			term = term.replace("'", "''");
-			builder.append("'" + term + "'");
-			if (counter < terms.size() - 1) {
-				builder.append(",");
+			if (term != null) {
+				if (counter > 0) {
+					builder.append(",");
+				}
+				
+				// Escape single quotes
+				term = term.replace("'", "''");
+				builder.append("'" + term + "'");
+				counter++;
 			}
-			counter++;
 		}
 		builder.append(")");
 		return builder.toString();
