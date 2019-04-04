@@ -81,16 +81,17 @@ public class $name$ extends VoltProcedure {
 				distinctTerms.add(value);
 			} else {
 				// INPUT or OUTPUT type
-				if(!hashConstantToVariable.containsKey(value)) {
+				String valueWithSuffix = value + "_" + getArgumentType(modeHArguments[i]);
+				if(!hashConstantToVariable.containsKey(valueWithSuffix)) {
 					String var = newVariable(varCounter);
 					varCounter++;
 					
-					hashConstantToVariable.put(value, var);
+					hashConstantToVariable.put(valueWithSuffix, var);
 					hashVariableToConstant.put(var, value);
 					
 					distinctTerms.add(var);
 				}
-				headTerms.add(hashConstantToVariable.get(value));
+				headTerms.add(hashConstantToVariable.get(valueWithSuffix));
 			}
 			// Add constants to inTerms
 			if (getArgumentIdentifierType(modeHArguments[i]).equals(TYPE_INPUT) ||

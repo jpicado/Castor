@@ -296,8 +296,12 @@ public class CastorCmd {
 					throw new UnsupportedOperationException("Sampling method or similarity not supported inside stored procedure.");
 				} else {
 					if (parameters.getSamplingMethod().equals(SamplingMethods.NAIVE)) {
-						saturator = new BottomClauseGeneratorInsideSP();
-						coverageEngineSaturator = new BottomClauseGeneratorInsideSP();
+						saturator = new BottomClauseGeneratorInsideSP(true);
+						if (parameters.isSampleGroundBottomClauses()) {
+							coverageEngineSaturator = saturator;
+						} else {
+							coverageEngineSaturator = new BottomClauseGeneratorInsideSP(parameters.isSampleGroundBottomClauses());
+						}
 					} else {
 						throw new UnsupportedOperationException("Sampling method not supported inside stored procedure.");
 					}
@@ -346,11 +350,22 @@ public class CastorCmd {
 				coverageEngineForCoveringApproach = coverageEngine;
 			} else {
 				BottomClauseGenerator coverageEngineSaturatorForCoveringApproach;
-				if (parameters.isAllowSimilarity()) {
-					coverageEngineSaturatorForCoveringApproach = new BottomClauseGeneratorNaiveSamplingWithSimilarity(genericDAO, schema, parameters.isSampleInCoveringApproach(), parameters.getRandomSeed());
+				if (parameters.isUseStoredProcedure()) {
+					if (parameters.isAllowSimilarity()) {
+						throw new UnsupportedOperationException("Sampling method or similarity not supported inside stored procedure.");
+					} else {
+						coverageEngineSaturatorForCoveringApproach = new BottomClauseGeneratorInsideSP(parameters.isSampleInCoveringApproach());
+					}
 				} else {
-					coverageEngineSaturatorForCoveringApproach = new BottomClauseGeneratorNaiveSampling(parameters.isSampleInCoveringApproach(), parameters.getRandomSeed());
+					if (parameters.isAllowSimilarity()) {
+//						coverageEngineSaturatorForCoveringApproach = new BottomClauseGeneratorNaiveSamplingWithSimilarity(genericDAO, schema, parameters.isSampleInCoveringApproach(), parameters.getRandomSeed());
+						coverageEngineSaturatorForCoveringApproach = getNewSaturatorWithSimilarity(genericDAO, parameters.isSampleInCoveringApproach());
+					} else {
+//						coverageEngineSaturatorForCoveringApproach = new BottomClauseGeneratorNaiveSampling(parameters.isSampleInCoveringApproach(), parameters.getRandomSeed());
+						coverageEngineSaturatorForCoveringApproach = getNewSaturatorWithoutSimilarity(genericDAO, parameters.isSampleInCoveringApproach());
+					}
 				}
+				
 				coverageEngineForCoveringApproach = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, coverageEngineSaturatorForCoveringApproach,
 						posTrain, negTrain, this.schema, this.dataModel, this.parameters, createFullCoverageEngine,
 						examplesSource, posTrainExamplesFile, negTrainExamplesFile);
@@ -480,7 +495,7 @@ public class CastorCmd {
 						if (parameters.isAllowSimilarity()) {
 							throw new UnsupportedOperationException("Sampling method or simliarity not supported inside stored procedure.");
 						} else {
-							testSaturator = new BottomClauseGeneratorInsideSP();
+							testSaturator = new BottomClauseGeneratorInsideSP(this.parameters.isSampleInTesting());
 						}
 					} else {
 						if (parameters.isAllowSimilarity()) {
@@ -546,7 +561,6 @@ public class CastorCmd {
 	 * Create a new coverage engine based on parameters
 	 */
 	private BottomClauseGenerator getNewSaturatorWithoutSimilarity(GenericDAO genericDAO, boolean sample) {
-		//TODO Note that BottomClauseGeneratorWithGrouped does not use inclusion dependencies; not schema independent
 		BottomClauseGenerator saturator;
 		if (sample == false) {
 			saturator = new BottomClauseGeneratorNaiveSampling(false, parameters.getRandomSeed());
