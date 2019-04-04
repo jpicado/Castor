@@ -225,6 +225,40 @@ public class JsonSettingsReader {
 		return new DataModel(modeH, modesB, modesBMap, spName);
 	}
 
+
+	/*
+* Read Relaxed JSON object for data model and convert to object - HeadMode can be null
+*/
+	public static DataModel readRelaxedDataModel(JsonObject dataModelJson) {
+		List<Mode> modesB;
+		Map<String, List<List<String>>> modesBMap;
+		String spName;
+
+		// Read body modes
+		if (dataModelJson.get("bodyModes") == null) {
+			throw new IllegalArgumentException("Body modes not set in data model json.");
+		} else {
+			modesB = new LinkedList<Mode>();
+			modesBMap = new HashMap<String, List<List<String>>>();
+			JsonArray modesBArray = dataModelJson.get("bodyModes").getAsJsonArray();
+			for (int i = 0; i < modesBArray.size(); i++) {
+				String modebString = modesBArray.get(i).getAsString();
+				modesB.add(Mode.stringToMode(modebString));
+				initializeModesBodyMap(modebString, modesBMap);
+			}
+		}
+
+		// Read stored prodecure name
+		if (dataModelJson.get("spName") == null) {
+			spName = null;
+		} else {
+			spName = dataModelJson.get("spName").getAsString();
+		}
+
+		return new DataModel(null, modesB, modesBMap, spName);
+	}
+
+
 	//Add the attribute type information to jsonmodel, add #attribute directly. Remove +/- from string
 	public static void initializeModesBodyMap(String modebString, Map<String, List<List<String>>> modesBMap) {
 		String relationName = modebString.substring(0, modebString.indexOf(Constants.TransformDelimeter.OPEN_PARA.getValue()));
@@ -257,7 +291,7 @@ public class JsonSettingsReader {
 		if (schemaJson.get("name") != null) {
 			name = schemaJson.get("name").getAsString().toUpperCase();
 		}
-		
+
 		// Read relations
 		if (schemaJson.get("relations") == null) {
 			throw new IllegalArgumentException("Schema not set in schema json.");
@@ -284,7 +318,62 @@ public class JsonSettingsReader {
 		
 		return new Schema(name, relations, inds);
 	}
-	
+
+	/*
+ 	* Read JSON object for schema with new attribute target and convert to object
+ 	*/
+	public static Schema readSchemaV1(JsonObject schemaJson) {
+		String name = "";
+		Map<String, Relation> relations;
+		Relation target = null;
+		Map<String, List<InclusionDependency>> inds;
+
+		// Read schema name
+		if (schemaJson.get("name") != null) {
+			name = schemaJson.get("name").getAsString().toUpperCase();
+		}
+
+		if(schemaJson.get("target") != null){
+			JsonObject relationObject = schemaJson.get("target").getAsJsonObject();
+			// Get relation name
+			String relationName = relationObject.get("name").getAsString().toUpperCase();
+			// Get relation attributes
+			List<String> attributeNames = new LinkedList<String>();
+			JsonArray attributesArray = relationObject.get("attributes").getAsJsonArray();
+			for (int j = 0; j < attributesArray.size(); j++) {
+				String attribute = attributesArray.get(j).getAsString().toUpperCase();
+				attributeNames.add(attribute);
+			}
+			target = new Relation(relationName, attributeNames);
+		}
+
+		// Read relations
+		if (schemaJson.get("relations") == null) {
+			throw new IllegalArgumentException("Schema not set in schema json.");
+		} else {
+			relations = new HashMap<String, Relation>();
+			JsonArray relationsArray = schemaJson.get("relations").getAsJsonArray();
+			for (int i = 0; i < relationsArray.size(); i++) {
+				JsonObject relationObject = relationsArray.get(i).getAsJsonObject();
+				// Get relation name
+				String relationName = relationObject.get("name").getAsString().toUpperCase();
+				// Get relation attributes
+				List<String> attributeNames = new LinkedList<String>();
+				JsonArray attributesArray = relationObject.get("attributes").getAsJsonArray();
+				for (int j = 0; j < attributesArray.size(); j++) {
+					String attribute = attributesArray.get(j).getAsString().toUpperCase();
+					attributeNames.add(attribute);
+				}
+				relations.put(relationName, new Relation(relationName, attributeNames));
+			}
+		}
+
+		// Read inclusion dependencies
+		inds = JsonSettingsReader.readINDs(schemaJson);
+
+		return new Schema(name, relations, target, inds);
+	}
+
 	/*
 	 * Read JSON object for INDs and convert to object
 	 */

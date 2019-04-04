@@ -9,6 +9,7 @@ public class Schema {
 
 	private String name;
 	private Map<String, Relation> relations;
+	private Relation target;
 	private Map<String, List<InclusionDependency>> inclusionDependencies;
 	private Map<Pair<String,Integer>, List<MatchingDependency>> matchingDependencies;
 	
@@ -23,7 +24,15 @@ public class Schema {
 		this.relations = relations;
 		this.inclusionDependencies = inclusionDependencies;
 	}
-	
+
+	public Schema(String name, Map<String, Relation> relations, Relation target, Map<String, List<InclusionDependency>> inclusionDependencies) {
+		super();
+		this.name = name;
+		this.relations = relations;
+		this.target = target;
+		this.inclusionDependencies = inclusionDependencies;
+	}
+
 	public String getName() {
 		return name;
 	}
@@ -50,5 +59,13 @@ public class Schema {
 
 	public void setMatchingDependencies(Map<Pair<String, Integer>, List<MatchingDependency>> matchingDependencies) {
 		this.matchingDependencies = matchingDependencies;
+	}
+
+	public Relation getTarget() {
+		return target;
+	}
+
+	public void setTarget(Relation target) {
+		this.target = target;
 	}
 }

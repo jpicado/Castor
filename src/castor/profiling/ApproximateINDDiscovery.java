@@ -30,7 +30,10 @@ public class ApproximateINDDiscovery {
 	
 	@Option(name="-maxerror",usage="Maximum error",required=true)
     private double maxError;
-	
+
+	@Option(name="-outfile",usage="Output file",required=true)
+	private String outfile;
+
 	@Argument
     private List<String> arguments = new ArrayList<String>();
 	
@@ -152,7 +155,10 @@ public class ApproximateINDDiscovery {
 		
 		DAOFactory daoFactory = DAOFactory.getDAOFactory(DAOFactory.VOLTDB);
         try {
-        	// Create data access objects and set URL of data
+			//Create list to store all the inds
+			List<String> inds = new ArrayList<>();
+
+			// Create data access objects and set URL of data
         	String dbUrl = "localhost";
         	try {
         		daoFactory.initConnection(dbUrl);
@@ -200,11 +206,13 @@ public class ApproximateINDDiscovery {
     		        		double error = 1.0 - ((double)intersectionCount/(double)leftAttributeCount);
     		        		
     		        		if (error <= maxError)
-    		        			System.out.println(relation1.getName()+"["+attribute1+"] < "+ relation2.getName()+"["+attribute2+"] - error: "+error);
+    		        			//System.out.println(relation1.getName()+"["+attribute1+"] < "+ relation2.getName()+"["+attribute2+"] - error: "+error);
+								inds.add(("("+relation1.getName()+"."+attribute1+") < ("+ relation2.getName()+"."+attribute2+") < "+error).toLowerCase());
     		    		}
     		    	}
     		    }
     		}
+			FileUtils.writeToFile(outfile, inds);
         }
         catch (Exception e) {
             e.printStackTrace();
