@@ -133,16 +133,16 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 			List<String> values = new ArrayList<String>();
 			values.add(exampleTuple.getValues().get(i).toString());
 
-			// For each relation that have attributes with same type, call
-			// stratifiedSamplingRecursive
-			for (Pair<String, Integer> relationInputAttributePair : groupedRelationsByAttributeType
-					.get(attributeType)) {
-				String relationName = relationInputAttributePair.getFirst();
-				int inputAttributePosition = relationInputAttributePair.getSecond();
-
-				stratifiedSamplingRecursive(genericDAO, schema, groupedModes, groupedRelationsByAttributeType,
-						hashConstantToVariable, relationName, inputAttributePosition, attributeType, values,
-						parameters.getIterations(), 1, sampleSize, ground, clause, randomGenerator);
+			// For each relation that have attributes with same type, call stratifiedSamplingRecursive
+			if (groupedRelationsByAttributeType.containsKey(attributeType)) {
+				for (Pair<String, Integer> relationInputAttributePair : groupedRelationsByAttributeType.get(attributeType)) {
+					String relationName = relationInputAttributePair.getFirst();
+					int inputAttributePosition = relationInputAttributePair.getSecond();
+	
+					stratifiedSamplingRecursive(genericDAO, schema, groupedModes, groupedRelationsByAttributeType,
+							hashConstantToVariable, relationName, inputAttributePosition, attributeType, values,
+							parameters.getIterations(), 1, sampleSize, ground, clause, randomGenerator);
+				}
 			}
 		}
 
