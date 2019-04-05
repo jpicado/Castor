@@ -569,6 +569,7 @@ public class QueryGenerator {
 							firstWhereCondition = false;
 						}
 						termName = termName.replace("\"", "'");
+						termName = Commons.unescapeMetaCharacters(termName);
 						querySelect.append(predicateAlias + "." + schema.getRelations().get(predicateName).getAttributeNames().get(i)
 								+ " = "
 								+ termName);
@@ -604,6 +605,7 @@ public class QueryGenerator {
 							firstWhereCondition = false;
 						}
 						termName = termName.replace("\"", "'");
+						termName = Commons.unescapeMetaCharacters(termName);
 						querySelect.append(predicateAlias + "." + schema.getRelations().get(predicateName).getAttributeNames().get(i)
 								+ " = "
 								+ termName);
