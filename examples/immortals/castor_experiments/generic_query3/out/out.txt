@@ -1,0 +1,417 @@
+[main] INFO  Reading parameters...
+[main] INFO  Parameters [createStoredProcedure=false, useStoredProcedure=false, estimationSample=1.0, minPrecision=1.0, minRecall=1.0, minPos=2, maxNoise=1.0, sample=20, beam=3, threads=1, minimizeBottomClause=false, reductionMethod=consistency, iterations=2, recall=10, groundRecall=10, maxterms=100, useInds=false, dbURL=localhost, port=10101, randomSeed=1, samplingMethod=naive, generalizationMethod=naive, sampleInTesting=false, sampleGroundBottomClauses=true, sampleInCoveringApproach=true, shuffleExamples=false, randomizeRecall=false, allowSimilarity=false, evalfn=COVERAGE, matchingLiteralPrefix=m_, allStableCoverageInTraining=false, allStableCoverageInTesting=false]
+[main] INFO  Running DDLIndExtraction 
+[main] INFO  Reading inclusion dependencies...
+[main] INFO  Reading matching dependencies...
+[main] INFO  Reading data model...
+[main] INFO  Preprocessing...
+[main] INFO  Creating coverage engine...
+[main] INFO  Creating coverage engine for covering approach...
+[main] INFO  Learning...
+[main] INFO  Training positive examples in table query3_all_pos: 1584
+[main] INFO  Training negative examples in table query3_all_neg: 10000
+[main] INFO  Remaining uncovered examples: 1584
+[main] INFO  Generating bottom clause for [39657933, 2199, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 24 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:14.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1583
+[main] INFO  Generating bottom clause for [39658143, 2199, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 11 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:22.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1582
+[main] INFO  Generating bottom clause for [39657660, 2199, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 12 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:23.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1581
+[main] INFO  Generating bottom clause for [39656941, 2199, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 12 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:15.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1580
+[main] INFO  Generating bottom clause for [39658490, 1830, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 10 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:11.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1579
+[main] INFO  Generating bottom clause for [39657966, 2199, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 11 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:12.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1578
+[main] INFO  Generating bottom clause for [39657012, 2199, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 12 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:22.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1577
+[main] INFO  Generating bottom clause for [39658094, 2199, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 13 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:5.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1576
+[main] INFO  Generating bottom clause for [39658405, 1830, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 11 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:11.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1575
+[main] INFO  Generating bottom clause for [39658473, 2199, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 18 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:5.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1574
+[main] INFO  Generating bottom clause for [39657062, 1830, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 10 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:11.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1573
+[main] INFO  Generating bottom clause for [39658354, 1935, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 8 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:13.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1572
+[main] INFO  Generating bottom clause for [39657271, 2212, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 5 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:13.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1571
+[main] INFO  Generating bottom clause for [39657701, 1935, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 8 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:19.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1570
+[main] INFO  Generating bottom clause for [39657238, 1935, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 8 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:23.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1569
+[main] INFO  Generating bottom clause for [39657001, 2199, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 12 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:22.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1568
+[main] INFO  Generating bottom clause for [39657113, 2199, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 11 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:8.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1567
+[main] INFO  Generating bottom clause for [39656918, 1830, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 85
+[main] INFO  Saturation time: 9 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:85, Score:8.0
+[main] INFO  Best armg at iter 1 - NumLits:52, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:52, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1566
+[main] INFO  Generating bottom clause for [39657865, 2199, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 11 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:5.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1565
+[main] INFO  Generating bottom clause for [39657202, 1935, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 8 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:12.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1564
+[main] INFO  Generating bottom clause for [39657178, 2199, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 11 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:21.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1563
+[main] INFO  Generating bottom clause for [39656993, 2199, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 12 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:22.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1562
+[main] INFO  Generating bottom clause for [39658269, 2199, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 11 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:30.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1561
+[main] INFO  Generating bottom clause for [39658424, 1935, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 8 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:18.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1560
+[main] INFO  Generating bottom clause for [39658130, 1935, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 8 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:37.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1559
+[main] INFO  Generating bottom clause for [39658451, 1830, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 11 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:3.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1558
+[main] INFO  Generating bottom clause for [39658039, 1830, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 10 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:13.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1557
+[main] INFO  Generating bottom clause for [39657326, 2199, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 11 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:16.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1556
+[main] INFO  Generating bottom clause for [39658435, 1935, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 8 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:4.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1555
+[main] INFO  Generating bottom clause for [39657986, 1830, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 10 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:10.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1554
+[main] INFO  Generating bottom clause for [39658028, 2199, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 11 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:18.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1553
+[main] INFO  Generating bottom clause for [39657256, 1935, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 9 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:23.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1552
+[main] INFO  Generating bottom clause for [39657050, 2212, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 5 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:10.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1551
+[main] INFO  Generating bottom clause for [39658165, 2199, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 12 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:22.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1550
+[main] INFO  Generating bottom clause for [39658058, 1935, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 8 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:6.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9744253803820008, Recall(all)=0.9501262626262627
+[main] INFO  Remaining uncovered examples: 1549
+[main] INFO  Generating bottom clause for [39657240, 1793, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 85
+[main] INFO  Saturation time: 5 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:85, Score:2.0
+[main] INFO  Best armg at iter 1 - NumLits:52, Score:1584.0
+[main] INFO  Best armg at iter 2 - NumLits:52, Score:1584.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=1.0, Recall(all)=1.0
+[main] INFO  Before reduction - NumLits:52, Score:1584.0
+[main] INFO  After reduction - NumLits:5, Score:1584.0
+[main] INFO  After minimization - NumLits:4
+[main] INFO  Stats: Score=1584.0, Precision(new)=1.0, F1(new)=1.0, Recall(all)=1.0
+[main] INFO  New clause added to theory:
+query3_all(V0,V1,V2,V3) :-
+	cot_event(V0,V1,"a\-n\-A\-C\-F\-m",V3,V6,"201705071635"), source(V1,V5,V4), cot_event_position(V0,V26,V27,V28,V32,V31,V29,V30), V2="a\-n\-A\-C\-F\-m".
+[main] INFO  New pos cover = 1584, Total pos cover = 1584, Total neg cover = 0
+[main] INFO  Definition learned:
+query3_all(V0,V1,V2,V3) :-
+	cot_event(V0,V1,"a\-n\-A\-C\-F\-m",V3,V6,"201705071635"), source(V1,V5,V4), cot_event_position(V0,V26,V27,V28,V32,V31,V29,V30), V2="a\-n\-A\-C\-F\-m".	(Pos cover=1584, Neg cover=0)
+
+[main] INFO  SQL format:
+SELECT T0.ID , T0.SOURCE_ID , '' , T0.HOW FROM COT_EVENT AS T0 JOIN SOURCE AS T1 ON T0.SOURCE_ID = T1.SOURCE_ID JOIN COT_EVENT_POSITION AS T2 ON T0.ID = T2.ID WHERE T0.COT_TYPE = 'a-n-A-C-F-m' AND T0.SERVERTIME = '201705071635';
+
+[main] INFO  Evaluating on training data...
+[main] INFO  Positive examples in table query3_all_pos: 1584
+[main] INFO  Negative examples in table query3_all_neg: 10000
+[main] INFO  Statistics:
+		|	    Actual		|
+Predicted	|    Positive	|    Negative	|    Total
+    Positive	|	1584	|	0	|	1584
+    Negative	|	0	|	10000	|	10000
+Total		|	1584	|	10000	|	11584
+
+Accuracy: 1.0
+Precision: 1.0
+Recall: 1.0
+F1: 1.0
+
+[main] INFO  Total time: 313894 Minutes : 5.231566666666667
+[main] INFO  Creating coverage engine time: 105796
+[main] INFO  Learning time: 208093
+[main] INFO  Bottom-clause construction time: 374
+[main] INFO  Coverage time: 98575
+[main] INFO  Coverage calls: 117819
+[main] INFO  Scoring time: 129037
+[main] INFO  Entailment time: 69084
+[main] INFO  Minimization time: 1
+[main] INFO  Reduction time: 547
+[main] INFO  LGG time: 0
+[main] INFO  LearnClause time: 205407
+[main] INFO  Preprocessing time (extracting statistics, creating indexes, etc) (not included in total time): 2
+[main] INFO  Computing join sizes time: 0
+[main] INFO  Similarity search time: 0

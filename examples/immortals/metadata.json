@@ -1,0 +1,79 @@
+{
+	"attributes": [
+		{
+			"name": "source_id",
+			"types": ["source"],
+			"access_modes": ["+", "-"]
+		},
+		{
+			"name": "name",
+			"types": ["name"],
+			"access_modes": ["+", "-", "#"]
+		},
+		{
+			"name": "channel",
+			"types": ["channel"],
+			"access_modes": ["-", "#"]
+		},
+		{
+			"name": "id",
+			"types": ["event"],
+			"access_modes": ["+", "-"]
+		},
+		{
+			"name": "cot_type",
+			"types": ["type"],
+			"access_modes": ["-", "#"]
+		},
+		{
+			"name": "how",
+			"types": ["how"],
+			"access_modes": ["-"]
+		},
+		{
+			"name": "detail",
+			"types": ["detail"],
+			"access_modes": ["-"]
+		},
+		{
+			"name": "servertime",
+			"types": ["time"],
+			"access_modes": ["-", "#"]
+		},
+		{
+			"name": "point_hae",
+			"types": ["point"],
+			"access_modes": ["-"]
+		},
+		{
+			"name": "point_ce",
+			"types": ["point"],
+			"access_modes": ["-"]
+		},
+		{
+			"name": "point_le",
+			"types": ["point"],
+			"access_modes": ["-"]
+		},
+		{
+			"name": "tileX",
+			"types": ["tile"],
+			"access_modes": ["-", "#"]
+		},
+		{
+			"name": "tileY",
+			"types": ["tile"],
+			"access_modes": ["-", "#"]
+		},
+		{
+			"name": "longitude",
+			"types": ["coordinate"],
+			"access_modes": ["-"]
+		},
+		{
+			"name": "latitude",
+			"types": ["coordinate"],
+			"access_modes": ["-"]
+		}
+	]
+}

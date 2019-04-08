@@ -1,0 +1,9 @@
+DATALOG FORMAT:
+
+query1_all(V0,V1,V2) :-
+	source(V1,V4,V3), cot_event(V0,V1,"a\-n\-A\-C\-F\-s",V5,V6,V7), cot_event_position(V0,V26,V27,V28,V32,V31,V29,V30), V2="a\-n\-A\-C\-F\-s".
+
+
+SQL FORMAT:
+
+SELECT T1.ID , T0.SOURCE_ID , '' FROM SOURCE AS T0 JOIN COT_EVENT AS T1 ON T0.SOURCE_ID = T1.SOURCE_ID JOIN COT_EVENT_POSITION AS T2 ON T1.ID = T2.ID WHERE T1.COT_TYPE = 'a-n-A-C-F-s';

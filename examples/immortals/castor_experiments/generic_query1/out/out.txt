@@ -1,0 +1,67 @@
+[main] INFO  Reading parameters...
+[main] INFO  Parameters [createStoredProcedure=false, useStoredProcedure=false, estimationSample=1.0, minPrecision=1.0, minRecall=1.0, minPos=2, maxNoise=1.0, sample=20, beam=3, threads=1, minimizeBottomClause=false, reductionMethod=consistency, iterations=2, recall=10, groundRecall=10, maxterms=100, useInds=false, dbURL=localhost, port=10101, randomSeed=1, samplingMethod=naive, generalizationMethod=naive, sampleInTesting=false, sampleGroundBottomClauses=true, sampleInCoveringApproach=true, shuffleExamples=false, randomizeRecall=false, allowSimilarity=false, evalfn=COVERAGE, matchingLiteralPrefix=m_, allStableCoverageInTraining=false, allStableCoverageInTesting=false]
+[main] INFO  Running DDLIndExtraction 
+[main] INFO  Reading inclusion dependencies...
+[main] INFO  Reading matching dependencies...
+[main] INFO  Reading data model...
+[main] INFO  Preprocessing...
+[main] INFO  Creating coverage engine...
+[main] INFO  Creating coverage engine for covering approach...
+[main] INFO  Learning...
+[main] INFO  Training positive examples in table query1_all_pos: 866
+[main] INFO  Training negative examples in table query1_all_neg: 10000
+[main] INFO  Remaining uncovered examples: 866
+[main] INFO  Generating bottom clause for [39791749, 1810, a-n-A-C-F-s]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 26 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:6.0
+[main] INFO  Best armg at iter 1 - NumLits:35, Score:866.0
+[main] INFO  Best armg at iter 2 - NumLits:35, Score:866.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=1.0, Recall(all)=1.0
+[main] INFO  Before reduction - NumLits:35, Score:866.0
+[main] INFO  After reduction - NumLits:5, Score:866.0
+[main] INFO  After minimization - NumLits:4
+[main] INFO  Stats: Score=866.0, Precision(new)=1.0, F1(new)=1.0, Recall(all)=1.0
+[main] INFO  New clause added to theory:
+query1_all(V0,V1,V2) :-
+	source(V1,V4,V3), cot_event(V0,V1,"a\-n\-A\-C\-F\-s",V5,V6,V7), cot_event_position(V0,V26,V27,V28,V32,V31,V29,V30), V2="a\-n\-A\-C\-F\-s".
+[main] INFO  New pos cover = 866, Total pos cover = 866, Total neg cover = 0
+[main] INFO  Definition learned:
+query1_all(V0,V1,V2) :-
+	source(V1,V4,V3), cot_event(V0,V1,"a\-n\-A\-C\-F\-s",V5,V6,V7), cot_event_position(V0,V26,V27,V28,V32,V31,V29,V30), V2="a\-n\-A\-C\-F\-s".	(Pos cover=866, Neg cover=0)
+
+[main] INFO  SQL format:
+SELECT T1.ID , T0.SOURCE_ID , '' FROM SOURCE AS T0 JOIN COT_EVENT AS T1 ON T0.SOURCE_ID = T1.SOURCE_ID JOIN COT_EVENT_POSITION AS T2 ON T1.ID = T2.ID WHERE T1.COT_TYPE = 'a-n-A-C-F-s';
+
+[main] INFO  Evaluating on training data...
+[main] INFO  Positive examples in table query1_all_pos: 866
+[main] INFO  Negative examples in table query1_all_neg: 10000
+[main] INFO  Statistics:
+		|	    Actual		|
+Predicted	|    Positive	|    Negative	|    Total
+    Positive	|	866	|	0	|	866
+    Negative	|	0	|	10000	|	10000
+Total		|	866	|	10000	|	10866
+
+Accuracy: 1.0
+Precision: 1.0
+Recall: 1.0
+F1: 1.0
+
+[main] INFO  Total time: 111819 Minutes : 1.86365
+[main] INFO  Creating coverage engine time: 104307
+[main] INFO  Learning time: 7506
+[main] INFO  Bottom-clause construction time: 26
+[main] INFO  Coverage time: 4513
+[main] INFO  Coverage calls: 2913
+[main] INFO  Scoring time: 5033
+[main] INFO  Entailment time: 1626
+[main] INFO  Minimization time: 1
+[main] INFO  Reduction time: 443
+[main] INFO  LGG time: 0
+[main] INFO  LearnClause time: 6697
+[main] INFO  Preprocessing time (extracting statistics, creating indexes, etc) (not included in total time): 2
+[main] INFO  Computing join sizes time: 0
+[main] INFO  Similarity search time: 0

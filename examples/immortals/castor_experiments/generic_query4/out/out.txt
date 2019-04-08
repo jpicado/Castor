@@ -1,0 +1,147 @@
+[main] INFO  Reading parameters...
+[main] INFO  Parameters [createStoredProcedure=false, useStoredProcedure=false, estimationSample=1.0, minPrecision=1.0, minRecall=1.0, minPos=2, maxNoise=1.0, sample=20, beam=3, threads=1, minimizeBottomClause=false, reductionMethod=consistency, iterations=2, recall=10, groundRecall=10, maxterms=100, useInds=false, dbURL=localhost, port=10101, randomSeed=1, samplingMethod=naive, generalizationMethod=naive, sampleInTesting=false, sampleGroundBottomClauses=true, sampleInCoveringApproach=true, shuffleExamples=false, randomizeRecall=false, allowSimilarity=false, evalfn=COVERAGE, matchingLiteralPrefix=m_, allStableCoverageInTraining=false, allStableCoverageInTesting=false]
+[main] INFO  Running DDLIndExtraction 
+[main] INFO  Reading inclusion dependencies...
+[main] INFO  Reading matching dependencies...
+[main] INFO  Reading data model...
+[main] INFO  Preprocessing...
+[main] INFO  Creating coverage engine...
+[main] INFO  Creating coverage engine for covering approach...
+[main] INFO  Learning...
+[main] INFO  Training positive examples in table query4_all_pos: 5000
+[main] INFO  Training negative examples in table query4_all_neg: 10000
+[main] INFO  Remaining uncovered examples: 5000
+[main] INFO  Generating bottom clause for [A98ED9, 39714799, a-n-A-C-F-m, 201705071725]...
+[main] INFO  Literals: 53
+[main] INFO  Saturation time: 12 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:53, Score:3.0
+[main] INFO  Best armg at iter 1 - NumLits:6, Score:4199.0
+[main] INFO  Best armg at iter 2 - NumLits:6, Score:4199.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9129253179693445, Recall(all)=0.8398
+[main] INFO  Remaining uncovered examples: 4999
+[main] INFO  Generating bottom clause for [A7FED0, 39698663, a-n-A-C-F-m, 201705071715]...
+[main] INFO  Literals: 53
+[main] INFO  Saturation time: 8 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:53, Score:9.0
+[main] INFO  Best armg at iter 1 - NumLits:6, Score:4199.0
+[main] INFO  Best armg at iter 2 - NumLits:6, Score:4199.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9129253179693445, Recall(all)=0.8398
+[main] INFO  Remaining uncovered examples: 4998
+[main] INFO  Generating bottom clause for [A98ED9, 39718915, a-n-A-C-F-m, 201705071730]...
+[main] INFO  Literals: 53
+[main] INFO  Saturation time: 6 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:53, Score:16.0
+[main] INFO  Best armg at iter 1 - NumLits:6, Score:4199.0
+[main] INFO  Best armg at iter 2 - NumLits:6, Score:4199.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9129253179693445, Recall(all)=0.8398
+[main] INFO  Remaining uncovered examples: 4997
+[main] INFO  Generating bottom clause for [A9B85B, 39725373, a-n-A-C-F-m, 201705071745]...
+[main] INFO  Literals: 53
+[main] INFO  Saturation time: 7 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:53, Score:10.0
+[main] INFO  Best armg at iter 1 - NumLits:6, Score:4199.0
+[main] INFO  Best armg at iter 2 - NumLits:6, Score:4199.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9129253179693445, Recall(all)=0.8398
+[main] INFO  Remaining uncovered examples: 4996
+[main] INFO  Generating bottom clause for [AACF19, 39759989, a-n-A-C-F-m, 201705071805]...
+[main] INFO  Literals: 53
+[main] INFO  Saturation time: 6 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:53, Score:2.0
+[main] INFO  Best armg at iter 1 - NumLits:6, Score:4199.0
+[main] INFO  Best armg at iter 2 - NumLits:6, Score:4199.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9129253179693445, Recall(all)=0.8398
+[main] INFO  Remaining uncovered examples: 4995
+[main] INFO  Generating bottom clause for [AACF19, 39756643, a-n-A-C-F-m, 201705071805]...
+[main] INFO  Literals: 53
+[main] INFO  Saturation time: 13 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:53, Score:6.0
+[main] INFO  Best armg at iter 1 - NumLits:6, Score:4199.0
+[main] INFO  Best armg at iter 2 - NumLits:6, Score:4199.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9129253179693445, Recall(all)=0.8398
+[main] INFO  Remaining uncovered examples: 4994
+[main] INFO  Generating bottom clause for [A9B85B, 39725000, a-n-A-C-F-m, 201705071740]...
+[main] INFO  Literals: 53
+[main] INFO  Saturation time: 6 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:53, Score:8.0
+[main] INFO  Best armg at iter 1 - NumLits:6, Score:4199.0
+[main] INFO  Best armg at iter 2 - NumLits:6, Score:4199.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9129253179693445, Recall(all)=0.8398
+[main] INFO  Remaining uncovered examples: 4993
+[main] INFO  Generating bottom clause for [A836FB, 39672296, a-n-A-C-F-m, 201705071655]...
+[main] INFO  Literals: 53
+[main] INFO  Saturation time: 6 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:53, Score:3.0
+[main] INFO  Best armg at iter 1 - NumLits:6, Score:4199.0
+[main] INFO  Best armg at iter 2 - NumLits:6, Score:4199.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9129253179693445, Recall(all)=0.8398
+[main] INFO  Remaining uncovered examples: 4992
+[main] INFO  Generating bottom clause for [ICAO-4006AE, 39777440, a-n-A-C-F, 201705072150]...
+[main] INFO  Literals: 53
+[main] INFO  Saturation time: 3 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:53, Score:1.0
+[main] INFO  Best armg at iter 1 - NumLits:5, Score:5000.0
+[main] INFO  Best armg at iter 2 - NumLits:5, Score:5000.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=1.0, Recall(all)=1.0
+[main] INFO  Before reduction - NumLits:5, Score:5000.0
+[main] INFO  After reduction - NumLits:4, Score:5000.0
+[main] INFO  After minimization - NumLits:4
+[main] INFO  Stats: Score=5000.0, Precision(new)=1.0, F1(new)=1.0, Recall(all)=1.0
+[main] INFO  New clause added to theory:
+query4_all(V0,V1,V2,V3) :-
+	cot_event_position(V1,V8,V9,V10,V14,V13,V11,V12), cot_event(V1,V4,V2,V6,V7,V3), source(V4,V0,"7").
+[main] INFO  New pos cover = 5000, Total pos cover = 5000, Total neg cover = 0
+[main] INFO  Definition learned:
+query4_all(V0,V1,V2,V3) :-
+	cot_event_position(V1,V8,V9,V10,V14,V13,V11,V12), cot_event(V1,V4,V2,V6,V7,V3), source(V4,V0,"7").	(Pos cover=5000, Neg cover=0)
+
+[main] INFO  SQL format:
+SELECT T2.NAME , T0.ID , T1.COT_TYPE , T1.SERVERTIME FROM COT_EVENT_POSITION AS T0 JOIN COT_EVENT AS T1 ON T0.ID = T1.ID JOIN SOURCE AS T2 ON T1.SOURCE_ID = T2.SOURCE_ID WHERE T2.CHANNEL = '7';
+
+[main] INFO  Evaluating on training data...
+[main] INFO  Positive examples in table query4_all_pos: 5000
+[main] INFO  Negative examples in table query4_all_neg: 10000
+[main] INFO  Statistics:
+		|	    Actual		|
+Predicted	|    Positive	|    Negative	|    Total
+    Positive	|	5000	|	0	|	5000
+    Negative	|	0	|	10000	|	10000
+Total		|	5000	|	10000	|	15000
+
+Accuracy: 1.0
+Precision: 1.0
+Recall: 1.0
+F1: 1.0
+
+[main] INFO  Total time: 191550 Minutes : 3.1925
+[main] INFO  Creating coverage engine time: 87848
+[main] INFO  Learning time: 103697
+[main] INFO  Bottom-clause construction time: 67
+[main] INFO  Coverage time: 4747
+[main] INFO  Coverage calls: 4510
+[main] INFO  Scoring time: 96247
+[main] INFO  Entailment time: 1441
+[main] INFO  Minimization time: 0
+[main] INFO  Reduction time: 47
+[main] INFO  LGG time: 0
+[main] INFO  LearnClause time: 97310
+[main] INFO  Preprocessing time (extracting statistics, creating indexes, etc) (not included in total time): 3
+[main] INFO  Computing join sizes time: 0
+[main] INFO  Similarity search time: 0

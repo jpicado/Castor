@@ -1,0 +1,127 @@
+[main] INFO  Reading parameters...
+[main] INFO  Parameters [createStoredProcedure=false, useStoredProcedure=false, estimationSample=1.0, minPrecision=1.0, minRecall=1.0, minPos=2, maxNoise=1.0, sample=20, beam=3, threads=1, minimizeBottomClause=false, reductionMethod=consistency, iterations=2, recall=10, groundRecall=10, maxterms=100, useInds=false, dbURL=localhost, port=10101, randomSeed=1, samplingMethod=naive, generalizationMethod=naive, sampleInTesting=false, sampleGroundBottomClauses=true, sampleInCoveringApproach=true, shuffleExamples=false, randomizeRecall=false, allowSimilarity=false, evalfn=COVERAGE, matchingLiteralPrefix=m_, allStableCoverageInTraining=false, allStableCoverageInTesting=false]
+[main] INFO  Running DDLIndExtraction 
+[main] INFO  Reading inclusion dependencies...
+[main] INFO  Reading matching dependencies...
+[main] INFO  Reading data model...
+[main] INFO  Preprocessing...
+[main] INFO  Creating coverage engine...
+[main] INFO  Creating coverage engine for covering approach...
+[main] INFO  Learning...
+[main] INFO  Training positive examples in table query2_all_pos: 1635
+[main] INFO  Training negative examples in table query2_all_neg: 10000
+[main] INFO  Remaining uncovered examples: 1635
+[main] INFO  Generating bottom clause for [39657433, 1935, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 671 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:10.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9585987261146497, Recall(all)=0.9204892966360856
+[main] INFO  Remaining uncovered examples: 1634
+[main] INFO  Generating bottom clause for [39657331, 1830, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 9 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:8.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9585987261146497, Recall(all)=0.9204892966360856
+[main] INFO  Remaining uncovered examples: 1633
+[main] INFO  Generating bottom clause for [39657655, 2212, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 6 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:18.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9585987261146497, Recall(all)=0.9204892966360856
+[main] INFO  Remaining uncovered examples: 1632
+[main] INFO  Generating bottom clause for [39658113, 2199, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 12 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:5.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9585987261146497, Recall(all)=0.9204892966360856
+[main] INFO  Remaining uncovered examples: 1631
+[main] INFO  Generating bottom clause for [39658463, 2135, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 8 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:5.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9585987261146497, Recall(all)=0.9204892966360856
+[main] INFO  Remaining uncovered examples: 1630
+[main] INFO  Generating bottom clause for [39657487, 2199, a-n-A-C-F-m, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 11 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:14.0
+[main] INFO  Best armg at iter 1 - NumLits:57, Score:1505.0
+[main] INFO  Best armg at iter 2 - NumLits:57, Score:1505.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.9585987261146497, Recall(all)=0.9204892966360856
+[main] INFO  Remaining uncovered examples: 1629
+[main] INFO  Generating bottom clause for [39657361, 2170, a-n-A-C-F, m-g]...
+[main] INFO  Literals: 93
+[main] INFO  Saturation time: 4 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:93, Score:1.0
+[main] INFO  Best armg at iter 1 - NumLits:35, Score:1635.0
+[main] INFO  Best armg at iter 2 - NumLits:35, Score:1635.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=1.0, Recall(all)=1.0
+[main] INFO  Before reduction - NumLits:35, Score:1635.0
+[main] INFO  After reduction - NumLits:4, Score:1635.0
+[main] INFO  After minimization - NumLits:4
+[main] INFO  Stats: Score=1635.0, Precision(new)=1.0, F1(new)=1.0, Recall(all)=1.0
+[main] INFO  New clause added to theory:
+query2_all(V0,V1,V2,V3) :-
+	cot_event_position(V0,V27,V28,V29,V33,V32,V30,V31), cot_event(V0,V1,V2,V3,V6,"201705071635"), source(V1,V5,V4).
+[main] INFO  New pos cover = 1635, Total pos cover = 1635, Total neg cover = 0
+[main] INFO  Definition learned:
+query2_all(V0,V1,V2,V3) :-
+	cot_event_position(V0,V27,V28,V29,V33,V32,V30,V31), cot_event(V0,V1,V2,V3,V6,"201705071635"), source(V1,V5,V4).	(Pos cover=1635, Neg cover=0)
+
+[main] INFO  SQL format:
+SELECT T0.ID , T1.SOURCE_ID , T1.COT_TYPE , T1.HOW FROM COT_EVENT_POSITION AS T0 JOIN COT_EVENT AS T1 ON T0.ID = T1.ID JOIN SOURCE AS T2 ON T1.SOURCE_ID = T2.SOURCE_ID WHERE T1.SERVERTIME = '201705071635';
+
+[main] INFO  Evaluating on training data...
+[main] INFO  Positive examples in table query2_all_pos: 1635
+[main] INFO  Negative examples in table query2_all_neg: 10000
+[main] INFO  Statistics:
+		|	    Actual		|
+Predicted	|    Positive	|    Negative	|    Total
+    Positive	|	1635	|	0	|	1635
+    Negative	|	0	|	10000	|	10000
+Total		|	1635	|	10000	|	11635
+
+Accuracy: 1.0
+Precision: 1.0
+Recall: 1.0
+F1: 1.0
+
+[main] INFO  Total time: 165445 Minutes : 2.757416666666667
+[main] INFO  Creating coverage engine time: 113117
+[main] INFO  Learning time: 52322
+[main] INFO  Bottom-clause construction time: 721
+[main] INFO  Coverage time: 30230
+[main] INFO  Coverage calls: 32213
+[main] INFO  Scoring time: 32236
+[main] INFO  Entailment time: 16658
+[main] INFO  Minimization time: 0
+[main] INFO  Reduction time: 352
+[main] INFO  LGG time: 0
+[main] INFO  LearnClause time: 51281
+[main] INFO  Preprocessing time (extracting statistics, creating indexes, etc) (not included in total time): 2
+[main] INFO  Computing join sizes time: 0
+[main] INFO  Similarity search time: 0

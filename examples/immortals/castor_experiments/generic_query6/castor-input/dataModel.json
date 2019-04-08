@@ -1,0 +1,24 @@
+{
+  "headMode": "query6_all(+name,+event,+type,+time)",
+  "bodyModes": [
+    "source(+source,#name,#channel)",
+    "source(+source,#name,-channel)",
+    "source(+source,-name,#channel)",
+    "source(+source,-name,-channel)",
+    "source(-source,+name,#channel)",
+    "source(-source,+name,-channel)",
+    "cot_event(+event,-source,#type,-how,-detail,#time)",
+    "cot_event(+event,-source,#type,-how,-detail,-time)",
+    "cot_event(+event,-source,-type,-how,-detail,#time)",
+    "cot_event(+event,-source,-type,-how,-detail,-time)",
+    "cot_event(-event,+source,#type,-how,-detail,#time)",
+    "cot_event(-event,+source,#type,-how,-detail,-time)",
+    "cot_event(-event,+source,-type,-how,-detail,#time)",
+    "cot_event(-event,+source,-type,-how,-detail,-time)",
+    "cot_event_position(+event,-point,-point,-point,#tile,#tile,-coordinate,-coordinate)",
+    "cot_event_position(+event,-point,-point,-point,#tile,-tile,-coordinate,-coordinate)",
+    "cot_event_position(+event,-point,-point,-point,-tile,#tile,-coordinate,-coordinate)",
+    "cot_event_position(+event,-point,-point,-point,-tile,-tile,-coordinate,-coordinate)"
+  ],
+  "spName": "CastorProcedure_query6_all"
+}

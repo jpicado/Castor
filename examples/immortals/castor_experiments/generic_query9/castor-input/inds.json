@@ -1,0 +1,28 @@
+{
+  "inds": [
+    {
+      "leftRelation": "cot_event",
+      "leftAttributeNumber": 1,
+      "rightRelation": "source",
+      "rightAttributeNumber": 0
+    },
+    {
+      "leftRelation": "source",
+      "leftAttributeNumber": 0,
+      "rightRelation": "cot_event",
+      "rightAttributeNumber": 1
+    },
+    {
+      "leftRelation": "cot_event_position",
+      "leftAttributeNumber": 0,
+      "rightRelation": "cot_event",
+      "rightAttributeNumber": 0
+    },
+    {
+      "leftRelation": "cot_event",
+      "leftAttributeNumber": 0,
+      "rightRelation": "cot_event_position",
+      "rightAttributeNumber": 0
+    }
+  ]
+}

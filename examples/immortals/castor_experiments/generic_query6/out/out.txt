@@ -1,0 +1,111 @@
+[main] INFO  Reading parameters...
+[main] INFO  Parameters [createStoredProcedure=false, useStoredProcedure=false, estimationSample=1.0, minPrecision=1.0, minRecall=0.0, minPos=2, maxNoise=1.0, sample=20, beam=3, threads=1, minimizeBottomClause=false, reductionMethod=consistency, iterations=2, recall=10, groundRecall=10, maxterms=100, useInds=false, dbURL=localhost, port=10101, randomSeed=1, samplingMethod=naive, generalizationMethod=naive, sampleInTesting=false, sampleGroundBottomClauses=true, sampleInCoveringApproach=true, shuffleExamples=false, randomizeRecall=false, allowSimilarity=false, evalfn=COVERAGE, matchingLiteralPrefix=m_, allStableCoverageInTraining=false, allStableCoverageInTesting=false]
+[main] INFO  Running DDLIndExtraction 
+[main] INFO  Reading inclusion dependencies...
+[main] INFO  Reading matching dependencies...
+[main] INFO  Reading data model...
+[main] INFO  Preprocessing...
+[main] INFO  Creating coverage engine...
+[main] INFO  Creating coverage engine for covering approach...
+[main] INFO  Learning...
+[main] INFO  Training positive examples in table query6_all_pos: 5000
+[main] INFO  Training negative examples in table query6_all_neg: 10000
+[main] INFO  Remaining uncovered examples: 5000
+[main] INFO  Generating bottom clause for [A3FF61, 39732783, a-n-A-C-F-m, 201705071750]...
+[main] INFO  Literals: 53
+[main] INFO  Saturation time: 18 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:53, Score:5.0
+[main] INFO  Best armg at iter 1 - NumLits:6, Score:2786.0
+[main] INFO  Best armg at iter 2 - NumLits:6, Score:2786.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.7156434626252248, Recall(all)=0.5572
+[main] INFO  Before reduction - NumLits:6, Score:2786.0
+[main] INFO  After reduction - NumLits:4, Score:2786.0
+[main] INFO  After minimization - NumLits:4
+[main] INFO  Stats: Score=2786.0, Precision(new)=1.0, F1(new)=0.7156434626252248, Recall(all)=0.5572
+[main] INFO  New clause added to theory:
+query6_all(V0,V1,V2,V3) :-
+	source(V4,V0,"5"), cot_event(V1,V4,V2,V6,V7,V3), cot_event_position(V1,V8,V9,V9,V13,V12,V10,V11).
+[main] INFO  New pos cover = 2786, Total pos cover = 2786, Total neg cover = 0
+[main] INFO  Remaining uncovered examples: 2214
+[main] INFO  Generating bottom clause for [ICAO-AB9278, 39781053, a-n-A-C-F-m, 201705072340]...
+[main] INFO  Literals: 53
+[main] INFO  Saturation time: 5 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:53, Score:3.0
+[main] INFO  Best armg at iter 1 - NumLits:5, Score:1684.0
+[main] INFO  Best armg at iter 2 - NumLits:5, Score:1684.0
+[main] INFO  Best armg at iter 3 - NumLits:5, Score:1684.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=0.8640328373524885, Recall(all)=0.894
+[main] INFO  Before reduction - NumLits:5, Score:1684.0
+[main] INFO  After reduction - NumLits:4, Score:1684.0
+[main] INFO  After minimization - NumLits:4
+[main] INFO  Stats: Score=1684.0, Precision(new)=1.0, F1(new)=0.8640328373524885, Recall(all)=0.894
+[main] INFO  New clause added to theory:
+query6_all(V0,V1,V2,V3) :-
+	cot_event_position(V1,V8,V9,V10,V14,V13,V11,V12), source(V4,V0,"5"), cot_event(V1,V4,V2,V6,V7,V3).
+[main] INFO  New pos cover = 1684, Total pos cover = 4470, Total neg cover = 0
+[main] INFO  Remaining uncovered examples: 530
+[main] INFO  Generating bottom clause for [ICAO-A6FF58, 39791059, a-n-A-C-F-s, 201705080835]...
+[main] INFO  Literals: 53
+[main] INFO  Saturation time: 5 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:53, Score:6.0
+[main] INFO  Best armg at iter 1 - NumLits:8, Score:277.0
+[main] INFO  Best armg at iter 2 - NumLits:5, Score:530.0
+[main] INFO  Best armg at iter 3 - NumLits:5, Score:530.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=1.0, Recall(all)=0.106
+[main] INFO  Before reduction - NumLits:5, Score:530.0
+[main] INFO  After reduction - NumLits:5, Score:530.0
+[main] INFO  After minimization - NumLits:4
+[main] INFO  Stats: Score=530.0, Precision(new)=1.0, F1(new)=1.0, Recall(all)=0.106
+[main] INFO  New clause added to theory:
+query6_all(V0,V1,V2,V3) :-
+	cot_event_position(V1,V8,V9,V10,V14,V13,V11,V12), cot_event(V1,V4,"a\-n\-A\-C\-F\-s",V6,V7,V3), source(V4,V0,V5), V2="a\-n\-A\-C\-F\-s".
+[main] INFO  New pos cover = 530, Total pos cover = 530, Total neg cover = 0
+[main] INFO  Definition learned:
+query6_all(V0,V1,V2,V3) :-
+	source(V4,V0,"5"), cot_event(V1,V4,V2,V6,V7,V3), cot_event_position(V1,V8,V9,V9,V13,V12,V10,V11).	(Pos cover=2786, Neg cover=0)
+query6_all(V0,V1,V2,V3) :-
+	cot_event_position(V1,V8,V9,V10,V14,V13,V11,V12), source(V4,V0,"5"), cot_event(V1,V4,V2,V6,V7,V3).	(Pos cover=4470, Neg cover=0)
+query6_all(V0,V1,V2,V3) :-
+	cot_event_position(V1,V8,V9,V10,V14,V13,V11,V12), cot_event(V1,V4,"a\-n\-A\-C\-F\-s",V6,V7,V3), source(V4,V0,V5), V2="a\-n\-A\-C\-F\-s".	(Pos cover=530, Neg cover=0)
+
+[main] INFO  SQL format:
+SELECT T0.NAME , T1.ID , T1.COT_TYPE , T1.SERVERTIME FROM SOURCE AS T0 JOIN COT_EVENT AS T1 ON T0.SOURCE_ID = T1.SOURCE_ID JOIN COT_EVENT_POSITION AS T2 ON T1.ID = T2.ID AND T2.POINT_CE = T2.POINT_LE WHERE T0.CHANNEL = '5';
+SELECT T1.NAME , T0.ID , T2.COT_TYPE , T2.SERVERTIME FROM COT_EVENT_POSITION AS T0 JOIN COT_EVENT AS T2 ON T0.ID = T2.ID JOIN SOURCE AS T1 ON T1.SOURCE_ID = T2.SOURCE_ID WHERE T1.CHANNEL = '5';
+SELECT T2.NAME , T0.ID , '' , T1.SERVERTIME FROM COT_EVENT_POSITION AS T0 JOIN COT_EVENT AS T1 ON T0.ID = T1.ID JOIN SOURCE AS T2 ON T1.SOURCE_ID = T2.SOURCE_ID WHERE T1.COT_TYPE = 'a-n-A-C-F-s';
+
+[main] INFO  Evaluating on training data...
+[main] INFO  Positive examples in table query6_all_pos: 5000
+[main] INFO  Negative examples in table query6_all_neg: 10000
+[main] INFO  Statistics:
+		|	    Actual		|
+Predicted	|    Positive	|    Negative	|    Total
+    Positive	|	5000	|	0	|	5000
+    Negative	|	0	|	10000	|	10000
+Total		|	5000	|	10000	|	15000
+
+Accuracy: 1.0
+Precision: 1.0
+Recall: 1.0
+F1: 1.0
+
+[main] INFO  Total time: 136324 Minutes : 2.2720666666666665
+[main] INFO  Creating coverage engine time: 84531
+[main] INFO  Learning time: 51787
+[main] INFO  Bottom-clause construction time: 28
+[main] INFO  Coverage time: 3362
+[main] INFO  Coverage calls: 2345
+[main] INFO  Scoring time: 46474
+[main] INFO  Entailment time: 1058
+[main] INFO  Minimization time: 1
+[main] INFO  Reduction time: 230
+[main] INFO  LGG time: 0
+[main] INFO  LearnClause time: 46102
+[main] INFO  Preprocessing time (extracting statistics, creating indexes, etc) (not included in total time): 2
+[main] INFO  Computing join sizes time: 0
+[main] INFO  Similarity search time: 0

@@ -1,0 +1,67 @@
+[main] INFO  Reading parameters...
+[main] INFO  Parameters [createStoredProcedure=false, useStoredProcedure=false, estimationSample=1.0, minPrecision=1.0, minRecall=1.0, minPos=2, maxNoise=1.0, sample=20, beam=3, threads=1, minimizeBottomClause=false, reductionMethod=consistency, iterations=2, recall=10, groundRecall=10, maxterms=100, useInds=false, dbURL=localhost, port=10101, randomSeed=1, samplingMethod=naive, generalizationMethod=naive, sampleInTesting=false, sampleGroundBottomClauses=true, sampleInCoveringApproach=true, shuffleExamples=false, randomizeRecall=false, allowSimilarity=false, evalfn=COVERAGE, matchingLiteralPrefix=m_, allStableCoverageInTraining=false, allStableCoverageInTesting=false]
+[main] INFO  Running DDLIndExtraction 
+[main] INFO  Reading inclusion dependencies...
+[main] INFO  Reading matching dependencies...
+[main] INFO  Reading data model...
+[main] INFO  Preprocessing...
+[main] INFO  Creating coverage engine...
+[main] INFO  Creating coverage engine for covering approach...
+[main] INFO  Learning...
+[main] INFO  Training positive examples in table query7_all_pos: 670
+[main] INFO  Training negative examples in table query7_all_neg: 10000
+[main] INFO  Remaining uncovered examples: 670
+[main] INFO  Generating bottom clause for [A38E11, 39687181, a-n-A-C-F-m, 201705071705]...
+[main] INFO  Literals: 53
+[main] INFO  Saturation time: 12 milliseconds.
+[main] INFO  Reordering bottom clause...
+[main] INFO  Generalizing clause...
+[main] INFO  Best armg at iter 0 - NumLits:53, Score:430.0
+[main] INFO  Best armg at iter 1 - NumLits:11, Score:670.0
+[main] INFO  Best armg at iter 2 - NumLits:11, Score:670.0
+[main] INFO  Stats before reduction: Precision(new)=1.0, F1(new)=1.0, Recall(all)=1.0
+[main] INFO  Before reduction - NumLits:11, Score:670.0
+[main] INFO  After reduction - NumLits:4, Score:670.0
+[main] INFO  After minimization - NumLits:4
+[main] INFO  Stats: Score=670.0, Precision(new)=1.0, F1(new)=1.0, Recall(all)=1.0
+[main] INFO  New clause added to theory:
+query7_all(V0,V1,V2,V3) :-
+	cot_event(V1,V4,V2,V6,V7,V3), cot_event_position(V1,V8,V9,V9,"18830","25704",V10,V11), source(V4,V0,"6").
+[main] INFO  New pos cover = 670, Total pos cover = 670, Total neg cover = 0
+[main] INFO  Definition learned:
+query7_all(V0,V1,V2,V3) :-
+	cot_event(V1,V4,V2,V6,V7,V3), cot_event_position(V1,V8,V9,V9,"18830","25704",V10,V11), source(V4,V0,"6").	(Pos cover=670, Neg cover=0)
+
+[main] INFO  SQL format:
+SELECT T2.NAME , T0.ID , T0.COT_TYPE , T0.SERVERTIME FROM COT_EVENT AS T0 JOIN COT_EVENT_POSITION AS T1 ON T0.ID = T1.ID AND T1.POINT_CE = T1.POINT_LE JOIN SOURCE AS T2 ON T0.SOURCE_ID = T2.SOURCE_ID WHERE T1.TILEX = '18830' AND T1.TILEY = '25704' AND T2.CHANNEL = '6';
+
+[main] INFO  Evaluating on training data...
+[main] INFO  Positive examples in table query7_all_pos: 670
+[main] INFO  Negative examples in table query7_all_neg: 10000
+[main] INFO  Statistics:
+		|	    Actual		|
+Predicted	|    Positive	|    Negative	|    Total
+    Positive	|	670	|	0	|	670
+    Negative	|	0	|	10000	|	10000
+Total		|	670	|	10000	|	10670
+
+Accuracy: 1.0
+Precision: 1.0
+Recall: 1.0
+F1: 1.0
+
+[main] INFO  Total time: 63462 Minutes : 1.0577
+[main] INFO  Creating coverage engine time: 61191
+[main] INFO  Learning time: 2265
+[main] INFO  Bottom-clause construction time: 12
+[main] INFO  Coverage time: 1278
+[main] INFO  Coverage calls: 85
+[main] INFO  Scoring time: 1705
+[main] INFO  Entailment time: 279
+[main] INFO  Minimization time: 0
+[main] INFO  Reduction time: 176
+[main] INFO  LGG time: 0
+[main] INFO  LearnClause time: 1874
+[main] INFO  Preprocessing time (extracting statistics, creating indexes, etc) (not included in total time): 2
+[main] INFO  Computing join sizes time: 0
+[main] INFO  Similarity search time: 0
