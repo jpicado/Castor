@@ -13,7 +13,7 @@
 [main] INFO  Remaining uncovered examples: 866
 [main] INFO  Generating bottom clause for [39791749, 1810, a-n-A-C-F-s]...
 [main] INFO  Literals: 93
-[main] INFO  Saturation time: 26 milliseconds.
+[main] INFO  Saturation time: 23 milliseconds.
 [main] INFO  Reordering bottom clause...
 [main] INFO  Generalizing clause...
 [main] INFO  Best armg at iter 0 - NumLits:93, Score:6.0
@@ -50,18 +50,18 @@ Precision: 1.0
 Recall: 1.0
 F1: 1.0
 
-[main] INFO  Total time: 111819 Minutes : 1.86365
-[main] INFO  Creating coverage engine time: 104307
-[main] INFO  Learning time: 7506
-[main] INFO  Bottom-clause construction time: 26
-[main] INFO  Coverage time: 4513
+[main] INFO  Total time: 125224 Minutes : 2.087066666666667
+[main] INFO  Creating coverage engine time: 116515
+[main] INFO  Learning time: 8699
+[main] INFO  Bottom-clause construction time: 23
+[main] INFO  Coverage time: 5384
 [main] INFO  Coverage calls: 2913
-[main] INFO  Scoring time: 5033
-[main] INFO  Entailment time: 1626
+[main] INFO  Scoring time: 5812
+[main] INFO  Entailment time: 2026
 [main] INFO  Minimization time: 1
-[main] INFO  Reduction time: 443
+[main] INFO  Reduction time: 437
 [main] INFO  LGG time: 0
-[main] INFO  LearnClause time: 6697
-[main] INFO  Preprocessing time (extracting statistics, creating indexes, etc) (not included in total time): 2
+[main] INFO  LearnClause time: 7902
+[main] INFO  Preprocessing time (extracting statistics, creating indexes, etc) (not included in total time): 4
 [main] INFO  Computing join sizes time: 0
 [main] INFO  Similarity search time: 0
