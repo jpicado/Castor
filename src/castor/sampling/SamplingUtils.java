@@ -402,7 +402,7 @@ public class SamplingUtils {
 	/*
 	 * Count number of join paths starting from tuple using memorization
 	 */
-	public static long computeJoinPathSizeFromTuple(GenericDAO genericDAO, Schema schema, Tuple tuple, JoinNode node, int depth, Map<Triple<String,Integer,Tuple>,Long> joinPathSizes) {
+	public static long computeJoinPathSizeFromTuple(GenericDAO genericDAO, Schema schema, Tuple tuple, JoinNode node, int depth, Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int queryLimit) {
 		long size = 1;
 		
 		Triple<String,Integer,Tuple> key = new Triple<String,Integer,Tuple>(node.getNodeRelation().getRelation(),depth,tuple);
@@ -411,6 +411,10 @@ public class SamplingUtils {
 		} else {
 			if (node.getEdges().size() > 0) {
 				for (JoinEdge joinEdge : node.getEdges()) {
+					if (tuple.getValues().get(joinEdge.getLeftJoinAttribute()) == null) {
+						continue;
+					}
+
 					// tuple semijoin child
 					String leftAttributeValue = tuple.getValues().get(joinEdge.getLeftJoinAttribute()).toString();
 					String rightAttributeName = schema.getRelations().get(joinEdge.getJoinNode().getNodeRelation().getRelation().toUpperCase()).getAttributeNames().get(joinEdge.getRightJoinAttribute());
@@ -422,12 +426,13 @@ public class SamplingUtils {
 						String selectAttributeValue = joinEdge.getJoinNode().getNodeRelation().getConstantAttributeValues().get(attrPos);
 						query += selectAttributeName + " = '" + selectAttributeValue + "'";
 					}
+					query += " LIMIT " + queryLimit;
 					GenericTableObject result = genericDAO.executeQuery(query);
 					
 					long sum = 0;
 					if (result != null) {
 						for (Tuple tupleChild : result.getTable()) {
-							sum += computeJoinPathSizeFromTuple(genericDAO, schema, tupleChild, joinEdge.getJoinNode(), depth+1, joinPathSizes);
+							sum += computeJoinPathSizeFromTuple(genericDAO, schema, tupleChild, joinEdge.getJoinNode(), depth+1, joinPathSizes, queryLimit);
 						}
 					}
 					if (sum > 0) {
@@ -444,7 +449,7 @@ public class SamplingUtils {
 	/*
 	 * Count number of join paths starting from tuple joining with relation
 	 */
-	public static long computeJoinPathSizeFromTupleAndRelation(GenericDAO genericDAO, Schema schema, Tuple tuple, JoinNode node, JoinEdge joinEdge, int depth, Map<Triple<String,Integer,Tuple>,Long> joinPathSizes) {
+	public static long computeJoinPathSizeFromTupleAndRelation(GenericDAO genericDAO, Schema schema, Tuple tuple, JoinNode node, JoinEdge joinEdge, int depth, Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int queryLimit) {
 		// tuple semijoin child
 		String leftAttributeValue = tuple.getValues().get(joinEdge.getLeftJoinAttribute()).toString();
 		String rightAttributeName = schema.getRelations().get(joinEdge.getJoinNode().getNodeRelation().getRelation().toUpperCase()).getAttributeNames().get(joinEdge.getRightJoinAttribute());
@@ -461,7 +466,7 @@ public class SamplingUtils {
 		long sum = 0;
 		if (result != null) {
 			for (Tuple tupleChild : result.getTable()) {
-				sum += computeJoinPathSizeFromTuple(genericDAO, schema, tupleChild, joinEdge.getJoinNode(), depth+1, joinPathSizes);
+				sum += computeJoinPathSizeFromTuple(genericDAO, schema, tupleChild, joinEdge.getJoinNode(), depth+1, joinPathSizes, queryLimit);
 			}
 		}
 		
@@ -506,12 +511,18 @@ public class SamplingUtils {
 			
 			if (i == 0) {
 				sb.append("SELECT * FROM " + joinPathNode.getLeftJoinRelation().getRelation() + " WHERE ");
+				boolean first = true;
 				for (int j=0; j<tuple.getValues().size(); j++) {
-					if (j != 0) {
+					if (tuple.getValues().get(j) == null) {
+						continue;
+					}
+					
+					if (!first) {
 						sb.append(" AND ");
 					}
 					String attributeName = schema.getRelations().get(joinPathNode.getLeftJoinRelation().getRelation().toUpperCase()).getAttributeNames().get(j);
 					sb.append(attributeName + " = '" + tuple.getValues().get(j).toString() + "'" );
+					first = false;
 				}
 				
 			}

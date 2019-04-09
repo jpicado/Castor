@@ -59,6 +59,7 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 	private static final String RELATION_ARG_NAME = "relation";
 	private static final String ATTRIBUTE_ARG_NAME = "attribute";
 	private static final String ATTRIBUTENUMBER_ARG_NAME = "attributeNumber";
+	private static final String QUERY_LIMIT = "queryLimit";
 	private static final String MODEBSTRING_ARG_NAME = "modeBString";
 	private static final String PACKAGE_ARG_NAME = "package";
 	private static final String NAME_ARG_NAME = "name";
@@ -75,13 +76,13 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 	private List<String> procedures = new ArrayList<String>();
 
 	public boolean generateAndCompileStoredProcedures(String dbURL, String port, String dataset, String spName,
-			int iterations, Schema schema, Mode modeH, List<Mode> modesB, boolean applyInds) throws Exception {
+			int iterations, Schema schema, Mode modeH, List<Mode> modesB, boolean applyInds, int queryLimit) throws Exception {
 
 		// Generate stored procedures
 		// Bottom clause
-		generateStoredProcedure(dataset, spName, iterations, schema, modeH, modesB, applyInds, false);
+		generateStoredProcedure(dataset, spName, iterations, schema, modeH, modesB, applyInds, false, queryLimit);
 		// Ground bottom clause
-		generateStoredProcedure(dataset, spName, iterations, schema, modeH, modesB, applyInds, true);
+		generateStoredProcedure(dataset, spName, iterations, schema, modeH, modesB, applyInds, true, queryLimit);
 
 		// Compile stored procedures and generate catalog
 		boolean success = compileStoredProcedures(dataset);
@@ -98,7 +99,7 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 	}
 
 	private void generateStoredProcedure(String dataset, String spNameTemplate, int iterations, Schema schema,
-			Mode modeH, List<Mode> modesB, boolean applyInds, boolean ground) throws Exception {
+			Mode modeH, List<Mode> modesB, boolean applyInds, boolean ground, int queryLimit) throws Exception {
 
 		// Create folder where stored procedures will be written
 		new File(SP_GENERATION_LOCATION + File.separator + dataset).mkdirs();
@@ -179,6 +180,7 @@ public class StoredProcedureGeneratorSaturationInsideSP {
 					sqlStatementTemplate.add(RELATION_ARG_NAME, mode.getPredicateName());
 					sqlStatementTemplate.add(ATTRIBUTE_ARG_NAME, attribute);
 					sqlStatementTemplate.add(ATTRIBUTENUMBER_ARG_NAME, attributeNumber);
+					sqlStatementTemplate.add(QUERY_LIMIT, queryLimit);
 
 					sqlStatementsBuilder.append(sqlStatementTemplate.render() + "\n");
 				}

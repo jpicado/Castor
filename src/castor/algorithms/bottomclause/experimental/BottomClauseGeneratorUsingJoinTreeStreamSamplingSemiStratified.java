@@ -107,7 +107,7 @@ public class BottomClauseGeneratorUsingJoinTreeStreamSamplingSemiStratified exte
 					for (JoinEdge childJoinEdge : joinEdge.getJoinNode().getEdges()) {
 						// compute w(t,R)
 						TimeWatch tw = TimeWatch.start();
-						long size = SamplingUtils.computeJoinPathSizeFromTupleAndRelation(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode(), childJoinEdge, depth, joinPathSizes);
+						long size = SamplingUtils.computeJoinPathSizeFromTupleAndRelation(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode(), childJoinEdge, depth, joinPathSizes, queryLimit);
 						NumbersKeeper.computeJoinSizesTime += tw.time();
 						joinPathSizesFromTupleAndEdge.put(new Pair<Tuple,JoinEdge>(tupleInJoin,childJoinEdge), size);
 						

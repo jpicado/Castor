@@ -738,7 +738,7 @@ public class CastorCmd {
 		StoredProcedureGeneratorSaturationInsideSP spGenerator = new StoredProcedureGeneratorSaturationInsideSP();
 		boolean success = spGenerator.generateAndCompileStoredProcedures(this.parameters.getDbURL(),
 				this.parameters.getPort(), "sp", this.dataModel.getSpName(), this.parameters.getIterations(),
-				this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), this.parameters.isUseInds());
+				this.schema, this.dataModel.getModeH(), this.dataModel.getModesB(), this.parameters.isUseInds(), this.parameters.getQueryLimit());
 		return success;
 	}
 }

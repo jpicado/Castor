@@ -66,9 +66,7 @@ public abstract class BottomClauseGeneratorUsingJoinTreeStreamSampling extends B
 							TimeWatch tw = TimeWatch.start();
 							
 //							size = SamplingUtils.computeJoinPathSizeFromTupleWithQueries(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode());
-//							System.out.println("a:"+size);
-							size = SamplingUtils.computeJoinPathSizeFromTuple(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode(), depth, joinPathSizes);
-//							System.out.println("b:"+size);
+							size = SamplingUtils.computeJoinPathSizeFromTuple(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode(), depth, joinPathSizes, queryLimit);
 							joinPathSizes.put(key, size);
 							
 							NumbersKeeper.computeJoinSizesTime += tw.time();
@@ -149,7 +147,7 @@ public abstract class BottomClauseGeneratorUsingJoinTreeStreamSampling extends B
 				for (Tuple tupleInJoin : result.getTable()) {
 					TimeWatch tw = TimeWatch.start();
 //					long weight = SamplingUtils.computeJoinPathSizeFromTupleWithQueries(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode());
-					long weight = SamplingUtils.computeJoinPathSizeFromTuple(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode(), depth, joinPathSizes);
+					long weight = SamplingUtils.computeJoinPathSizeFromTuple(genericDAO, schema, tupleInJoin, joinEdge.getJoinNode(), depth, joinPathSizes, queryLimit);
 					NumbersKeeper.computeJoinSizesTime += tw.time();
 					
 					weightSummed += weight;

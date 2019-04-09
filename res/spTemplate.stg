@@ -1,6 +1,6 @@
 
-spBottomClauseSqlStatementTemplate(relation,attribute,attributeNumber) ::= <<
-public final SQLStmt SQL_$relation$_$attributeNumber$ = new SQLStmt("SELECT * FROM $relation$ WHERE $attribute$ IN ?;");
+spBottomClauseSqlStatementTemplate(relation,attribute,attributeNumber,queryLimit) ::= <<
+public final SQLStmt SQL_$relation$_$attributeNumber$ = new SQLStmt("SELECT * FROM $relation$ WHERE $attribute$ IN ? LIMIT $queryLimit$;");
 >>
 
 spNewListeralsForGroupedModesClear() ::= <<
