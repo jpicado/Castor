@@ -34,7 +34,7 @@ public class BottomClauseGeneratorWithGroupedModesNaiveSampling extends BottomCl
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> inTerms, Map<String, Set<String>> newInTerms, Map<String, Set<String>> previousIterationsInTerms,
 			Set<String> distinctTerms,
-			String relationName, List<Mode> relationModes, int recall, boolean ground, boolean randomizeRecall, Random randomGenerator) {
+			String relationName, List<Mode> relationModes, int recall, boolean ground, boolean randomizeRecall, int queryLimit, Random randomGenerator) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 		
 		// If sampling is turned off, set recall to max value
@@ -91,8 +91,8 @@ public class BottomClauseGeneratorWithGroupedModesNaiveSampling extends BottomCl
 					queryBuilder.append(" UNION ");
 				}
 			}
-			queryBuilder.append(";");
 			String query = queryBuilder.toString();
+			query += " LIMIT " + queryLimit;
 			
 			// Run query
 			GenericTableObject result = genericDAO.executeQuery(query);

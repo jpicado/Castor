@@ -110,7 +110,7 @@ public abstract class BottomClauseGeneratorUsingJoinTree implements BottomClause
 			groupedModes.get(mode.getPredicateName()).add(mode);
 		}
 		
-		createBodyLiterals(genericDAO, schema, joinTree, exampleTuple, groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, sampleSize);
+		createBodyLiterals(genericDAO, schema, joinTree, exampleTuple, groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, sampleSize, parameters.getQueryLimit());
 		
 		return clause;
 	}
@@ -119,7 +119,7 @@ public abstract class BottomClauseGeneratorUsingJoinTree implements BottomClause
 			JoinNode joinTree, Tuple tuple, 
 			Map<String, List<Mode>> groupedModes, Map<String, String> hashConstantToVariable, 
 			Random randomGenerator, MyClause clause, boolean ground,
-			Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int sampleSize);
+			Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int sampleSize, int queryLimit);
 	
 	protected void modeOperationsForTuple(Tuple tuple, MyClause clause, 
 			Map<String, String> hashConstantToVariable, 

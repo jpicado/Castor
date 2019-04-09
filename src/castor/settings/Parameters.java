@@ -38,6 +38,7 @@ public class Parameters {
 	private String matchingLiteralPrefix = "m_";
 	private boolean allStableCoverageInTraining = false;
 	private boolean allStableCoverageInTesting = false;
+	private int queryLimit = Integer.MAX_VALUE;
 	
 	public boolean isCreateStoredProcedure() {
 		return createStoredProcedure;
@@ -261,6 +262,12 @@ public class Parameters {
 	public void setAllStableCoverageInTesting(boolean allStableCoverageInTesting) {
 		this.allStableCoverageInTesting = allStableCoverageInTesting;
 	}
+	public int getQueryLimit() {
+		return queryLimit;
+	}
+	public void setQueryLimit(int queryLimit) {
+		this.queryLimit = queryLimit;
+	}
 	@Override
 	public String toString() {
 		return "Parameters [createStoredProcedure=" + createStoredProcedure + ", useStoredProcedure="
@@ -275,6 +282,7 @@ public class Parameters {
 				+ sampleInCoveringApproach + ", shuffleExamples=" + shuffleExamples + ", randomizeRecall="
 				+ randomizeRecall + ", allowSimilarity=" + allowSimilarity + ", evalfn=" + evalfn
 				+ ", matchingLiteralPrefix=" + matchingLiteralPrefix + ", allStableCoverageInTraining="
-				+ allStableCoverageInTraining + ", allStableCoverageInTesting=" + allStableCoverageInTesting + "]";
+				+ allStableCoverageInTraining + ", allStableCoverageInTesting=" + allStableCoverageInTesting
+				+ ", queryLimit=" + queryLimit + "]";
 	}
 }

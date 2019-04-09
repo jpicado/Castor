@@ -61,7 +61,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 		Map<String, String> hashConstantToVariable = new HashMap<String, String>();
 		Map<String, String> hashVariableToConstant = new HashMap<String, String>();
 		return this.generateBottomClauseOneQueryPerRelationAttribute(genericDAO, hashConstantToVariable,
-				hashVariableToConstant, exampleTuple, schema, dataModel.getModeH(), dataModel.getModesB(), parameters.getIterations(), parameters.getRecall(), parameters.isUseInds(), parameters.getMaxterms(), false, parameters.isRandomizeRecall());
+				hashVariableToConstant, exampleTuple, schema, dataModel.getModeH(), dataModel.getModesB(), parameters.getIterations(), parameters.getRecall(), parameters.isUseInds(), parameters.getMaxterms(), false, parameters.isRandomizeRecall(), parameters.getQueryLimit());
 	}
 	
 	/*
@@ -74,7 +74,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 		Map<String, String> hashVariableToConstant = new HashMap<String, String>();
 		for (Tuple example : examples) {
 			bottomClauses.add(this.generateBottomClauseOneQueryPerRelationAttribute(genericDAO, hashConstantToVariable,
-					hashVariableToConstant, example, schema, dataModel.getModeH(), dataModel.getModesB(), parameters.getIterations(), parameters.getRecall(), parameters.isUseInds(), parameters.getMaxterms(), false, parameters.isRandomizeRecall()));
+					hashVariableToConstant, example, schema, dataModel.getModeH(), dataModel.getModesB(), parameters.getIterations(), parameters.getRecall(), parameters.isUseInds(), parameters.getMaxterms(), false, parameters.isRandomizeRecall(), parameters.getQueryLimit()));
 		}
 		return bottomClauses;
 	}
@@ -88,7 +88,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 		Map<String, String> hashConstantToVariable = new HashMap<String, String>();
 		Map<String, String> hashVariableToConstant = new HashMap<String, String>();
 		return this.generateBottomClauseOneQueryPerRelationAttribute(genericDAO, hashConstantToVariable,
-				hashVariableToConstant, exampleTuple, schema, dataModel.getModeH(), dataModel.getModesB(), parameters.getIterations(), parameters.getGroundRecall(), parameters.isUseInds(), parameters.getMaxterms(), true, parameters.isRandomizeRecall());
+				hashVariableToConstant, exampleTuple, schema, dataModel.getModeH(), dataModel.getModesB(), parameters.getIterations(), parameters.getGroundRecall(), parameters.isUseInds(), parameters.getMaxterms(), true, parameters.isRandomizeRecall(), parameters.getQueryLimit());
 	}
 	
 	/*
@@ -107,7 +107,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 	 */
 	private MyClause generateBottomClauseOneQueryPerRelationAttribute(GenericDAO genericDAO,
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant, Tuple exampleTuple,
-			Schema schema, Mode modeH, List<Mode> modesB, int iterations, int recall, boolean applyInds, int maxTerms, boolean ground, boolean shuffleTuples) {
+			Schema schema, Mode modeH, List<Mode> modesB, int iterations, int recall, boolean applyInds, int maxTerms, boolean ground, boolean shuffleTuples, int queryLimit) {
 
 		// Check that arities of example and modeH match
 		if (modeH.getArguments().size() != exampleTuple.getValues().size()) {
@@ -191,13 +191,13 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 				// Generate new literals for grouped modes
 				List<Predicate> newLiterals = operationForGroupedModes(genericDAO, schema, clause,
 						hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, relationName, attributeName,
-						relationAttributeModes, groupedModes, knownTermsSet, recall, ground, shuffleTuples, randomGenerator);
+						relationAttributeModes, groupedModes, knownTermsSet, recall, ground, shuffleTuples, queryLimit, randomGenerator);
 
 				// Apply INDs
 				if (applyInds) {
 					followIndChain(genericDAO, schema, clause, newLiterals, hashConstantToVariable,
 							hashVariableToConstant, newInTerms, distinctTerms, groupedModes, recall, relationName,
-							new HashSet<String>(), ground, shuffleTuples, randomGenerator);
+							new HashSet<String>(), ground, shuffleTuples, queryLimit, randomGenerator);
 				}
 				for (Predicate literal : newLiterals) {
 					clause.addNegativeLiteral(literal);
@@ -224,7 +224,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> newInTerms, Set<String> distinctTerms, String relationName, String attributeName,
 			List<Mode> relationAttributeModes, Map<Pair<String, Integer>, List<Mode>> groupedModes, RandomSet<String> knownTermsSet,
-			int recall, boolean ground, boolean shuffleTuples, Random randomGenerator);
+			int recall, boolean ground, boolean shuffleTuples, int queryLimit, Random randomGenerator);
 
 	/*
 	 * Creates a literal from a tuple and a mode.
@@ -283,7 +283,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 			List<Predicate> newLiteralsForGroupedModes, Map<String, String> hashConstantToVariable,
 			Map<String, String> hashVariableToConstant, Map<String, Set<String>> newInTerms, Set<String> distinctTerms,
 			Map<Pair<String, Integer>, List<Mode>> groupedModes, int recall, String currentPredicate,
-			Set<String> seenPredicates, boolean ground, boolean shuffleTuples, Random randomGenerator) {
+			Set<String> seenPredicates, boolean ground, boolean shuffleTuples, int queryLimit, Random randomGenerator) {
 
 		if (!seenPredicates.contains(currentPredicate)
 				&& schema.getInclusionDependencies().containsKey(currentPredicate)) {
@@ -293,7 +293,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 					// Apply IND
 					List<Predicate> literalsFromInd = applyInclusionDependency(genericDAO, schema, clause,
 							newLiteralsForGroupedModes, hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, ind,
-							groupedModes, recall, ground, shuffleTuples, randomGenerator);
+							groupedModes, recall, ground, shuffleTuples, queryLimit, randomGenerator);
 					addNotRepeated(newLiteralsForGroupedModes, literalsFromInd);
 
 					// Add current predicate to seen list
@@ -302,7 +302,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 					// Follow chain
 					followIndChain(genericDAO, schema, clause, newLiteralsForGroupedModes, hashConstantToVariable,
 							hashVariableToConstant, newInTerms, distinctTerms, groupedModes, recall, ind.getRightPredicateName(),
-							seenPredicates, ground, shuffleTuples, randomGenerator);
+							seenPredicates, ground, shuffleTuples, queryLimit, randomGenerator);
 				}
 			}
 		}
@@ -314,7 +314,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 	private List<Predicate> applyInclusionDependency(GenericDAO genericDAO, Schema schema, MyClause clause,
 			List<Predicate> newLiteralsForGroupedModes, Map<String, String> hashConstantToVariable,
 			Map<String, String> hashVariableToConstant, Map<String, Set<String>> newInTerms, Set<String> distinctTerms, InclusionDependency ind,
-			Map<Pair<String, Integer>, List<Mode>> groupedModes, int recall, boolean ground, boolean shuffleTuples, Random randomGenerator) {
+			Map<Pair<String, Integer>, List<Mode>> groupedModes, int recall, boolean ground, boolean shuffleTuples, int queryLimit, Random randomGenerator) {
 
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 
@@ -367,7 +367,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 					// Generate new literals
 					List<Predicate> modeBLiterals = operationForGroupedModes(genericDAO, schema, clause,
 							hashConstantToVariable, hashVariableToConstant, newInTerms, distinctTerms, relationName, attributeName,
-							relationAttributeModes, groupedModes, termsSet, recall, ground, shuffleTuples, randomGenerator);
+							relationAttributeModes, groupedModes, termsSet, recall, ground, shuffleTuples, queryLimit, randomGenerator);
 					addNotRepeated(newLiterals, modeBLiterals);
 				}
 			}
@@ -422,7 +422,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 	 */
 	private MyClause generateBottomClause(GenericDAO genericDAO, Map<String, String> hashConstantToVariable,
 			Map<String, String> hashVariableToConstant, Tuple exampleTuple, Schema schema, Mode modeH,
-			List<Mode> modesB, int iterations, int recall) {
+			List<Mode> modesB, int iterations, int recall, int queryLimit) {
 
 		// Check that arities of example and modeH match
 		if (modeH.getArguments().size() != exampleTuple.getValues().size()) {
@@ -472,6 +472,7 @@ public abstract class BottomClauseGeneratorOriginalAlgorithm implements BottomCl
 				// Create query and run
 				String query = String.format(SELECTIN_SQL_STATEMENT, mode.getPredicateName(), attributeName,
 						knownTerms);
+				query += " LIMIT " + queryLimit;
 				GenericTableObject result = genericDAO.executeQuery(query);
 
 				if (result != null) {

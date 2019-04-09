@@ -44,7 +44,7 @@ public class BottomClauseGeneratorOlkenSampling extends BottomClauseGeneratorOri
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> newInTerms, Set<String> distinctTerms, String relationName, String attributeName,
 			List<Mode> relationAttributeModes, Map<Pair<String, Integer>, List<Mode>> groupedModes, RandomSet<String> knownTermsSet,
-			int recall, boolean ground, boolean shuffleTuples, Random randomGenerator) {
+			int recall, boolean ground, boolean shuffleTuples, int queryLimit, Random randomGenerator) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 		
 		// RAJOIN algorithm (from Olken's thesis)
@@ -102,6 +102,7 @@ public class BottomClauseGeneratorOlkenSampling extends BottomClauseGeneratorOri
 				if (randomGenerator.nextDouble() < p) {
 					// Create query and run
 					String query = String.format(SELECT_SQL_STATEMENT, relationName, attributeName, "'"+randomValue+"'");
+					query += " LIMIT " + queryLimit;
 					GenericTableObject result = genericDAO.executeQuery(query);
 					
 					if (result != null) {

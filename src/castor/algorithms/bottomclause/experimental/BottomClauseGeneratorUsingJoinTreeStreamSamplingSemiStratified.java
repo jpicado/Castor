@@ -35,12 +35,12 @@ public class BottomClauseGeneratorUsingJoinTreeStreamSamplingSemiStratified exte
 			JoinNode joinTree, Tuple exampleTuple, 
 			Map<String, List<Mode>> groupedModes, Map<String, String> hashConstantToVariable, 
 			Random randomGenerator, MyClause clause, boolean ground,
-			Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int sampleSize) {
+			Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int sampleSize, int queryLimit) {
 		
 		List<Tuple> exampleTupleList = new ArrayList<Tuple>();
 		exampleTupleList.add(exampleTuple);
 		for (JoinEdge joinEdge : joinTree.getEdges()) {
-			generateBottomClauseAux(genericDAO, schema, exampleTupleList, joinEdge, groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, 1, sampleSize);
+			generateBottomClauseAux(genericDAO, schema, exampleTupleList, joinEdge, groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, 1, sampleSize, queryLimit);
 		}
 	}
 	
@@ -54,7 +54,7 @@ public class BottomClauseGeneratorUsingJoinTreeStreamSamplingSemiStratified exte
 			List<Tuple> tuples, JoinEdge joinEdge, 
 			Map<String, List<Mode>> groupedModes, Map<String, String> hashConstantToVariable, 
 			Random randomGenerator, MyClause clause, boolean ground,
-			Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int depth, int sampleSize) {
+			Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int depth, int sampleSize, int queryLimit) {
 		
 		String relation = joinEdge.getJoinNode().getNodeRelation().getRelation();
 		String attributeName = schema.getRelations().get(relation.toUpperCase()).getAttributeNames().get(joinEdge.getRightJoinAttribute());
@@ -75,6 +75,7 @@ public class BottomClauseGeneratorUsingJoinTreeStreamSamplingSemiStratified exte
 		}
 		
 		String query = String.join(" UNION ", selectQueries);
+		query += " LIMIT " + queryLimit;
 		
 		// Run query to get all tuples in join
 		GenericTableObject result = genericDAO.executeQuery(query);
@@ -173,7 +174,7 @@ public class BottomClauseGeneratorUsingJoinTreeStreamSamplingSemiStratified exte
 		// Recursive call on node's children
 		for (JoinEdge childJoinEdge : joinEdge.getJoinNode().getEdges()) {
 			generateBottomClauseAux(genericDAO, schema, joinTuples, childJoinEdge, 
-					groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, depth+1, sampleSize);
+					groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, depth+1, sampleSize, queryLimit);
 		}
 	}
 }

@@ -141,7 +141,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 	
 					stratifiedSamplingRecursive(genericDAO, schema, groupedModes, groupedRelationsByAttributeType,
 							hashConstantToVariable, relationName, inputAttributePosition, attributeType, values,
-							parameters.getIterations(), 1, sampleSize, ground, clause, randomGenerator);
+							parameters.getIterations(), 1, sampleSize, ground, parameters.getQueryLimit(), clause, randomGenerator);
 				}
 			}
 		}
@@ -157,7 +157,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 			Map<String, List<Pair<String, Integer>>> groupedRelationsByAttributeType,
 			Map<String, String> hashConstantToVariable, String relationName, int inputAttributePosition,
 			String inputAttributeType, List<String> inputAttributeValues, int iterations, int currentIteration,
-			int sampleSize, boolean ground, MyClause clause, Random randomGenerator) {
+			int sampleSize, boolean ground, int queryLimit, MyClause clause, Random randomGenerator) {
 		List<Tuple> sample = new LinkedList<Tuple>();
 
 		// If do not have known values for input attribute, return empty set of tuples
@@ -172,7 +172,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 		String inputAttributeKnownTerms = collectionToString(inputAttributeValues);
 
 		List<List<Tuple>> strata = computeStrata(genericDAO, schema, relationName, inputAttributeName,
-				inputAttributeKnownTerms, relationAttributeModes, Integer.MAX_VALUE);
+				inputAttributeKnownTerms, relationAttributeModes, Integer.MAX_VALUE, queryLimit);
 		
 		// Check whether last iteration
 		if (iterations == currentIteration) {
@@ -186,7 +186,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 			// Sample by order
 			// sample.addAll(sampleFromStrata(genericDAO, schema, relationName,
 			// inputAttributeName, inputAttributeKnownTerms, relationAttributeModes,
-			// sampleSize));
+			// sampleSize, queryLimit));
 		} else {
 			// Recursive call
 			int relationArity = relationAttributeModes.get(0).getArguments().size();
@@ -194,8 +194,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 				// Get values for attribute in position i of relation
 				String joinAttributeName = schema.getRelations().get(relationName.toUpperCase()).getAttributeNames()
 						.get(i);
-				List<String> values = projectSelectIn(genericDAO, relationName, joinAttributeName, inputAttributeName,
-						inputAttributeKnownTerms);
+				List<String> values = projectSelectIn(genericDAO, relationName, joinAttributeName, inputAttributeName, inputAttributeKnownTerms, queryLimit);
 
 				// Get all types in modes for this attribute
 				Set<String> attributeTypes = new HashSet<String>();
@@ -235,7 +234,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 							List<Tuple> returnedTuples = stratifiedSamplingRecursive(genericDAO, schema, groupedModes,
 									groupedRelationsByAttributeType, hashConstantToVariable, joinRelationName,
 									joinAttributePosition, joinAttributeType, localValues, iterations,
-									currentIteration + 1, sampleSize, ground, clause, randomGenerator);
+									currentIteration + 1, sampleSize, ground, queryLimit, clause, randomGenerator);
 
 							// Get tuples in relation that join with returnTuples
 							Set<String> joinAttributeValues = projectFromTuples(returnedTuples, joinAttributePosition);
@@ -244,6 +243,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 								String joinQuery = String.format(SELECTIN_TWOATTRIBUTES_SQL_STATEMENT, relationName,
 										inputAttributeName, inputAttributeKnownTerms, joinAttributeName,
 										joinAttributeKnownTerms);
+								joinQuery += " LIMIT " + queryLimit;
 								GenericTableObject result = genericDAO.executeQuery(joinQuery);
 								if (result != null) {
 									sample.addAll(result.getTable());
@@ -327,10 +327,10 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 	 * column).
 	 */
 	private List<String> projectSelectIn(GenericDAO genericDAO, String relationName, String projectAttributeName,
-			String inputAttributeName, String inputAttributeKnownTerms) {
+			String inputAttributeName, String inputAttributeKnownTerms, int queryLimit) {
 		List<String> values = new ArrayList<String>();
-		String query = String.format(PROJET_SELECTIN_SQL_STATEMENT, projectAttributeName, relationName,
-				inputAttributeName, inputAttributeKnownTerms);
+		String query = String.format(PROJET_SELECTIN_SQL_STATEMENT, projectAttributeName, relationName, inputAttributeName, inputAttributeKnownTerms, queryLimit);
+		query += " LIMIT " + queryLimit;
 		GenericTableObject result = genericDAO.executeQuery(query);
 		if (result != null) {
 			for (Tuple tuple : result.getTable()) {
@@ -391,7 +391,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 	 * Compute strata, and for each strata, sample the first sampleSize values.
 	 */
 	private List<Tuple> sampleFromStrata(GenericDAO genericDAO, Schema schema, String relationName,
-			String inputAttributeName, String inputAttributeKnownTerms, List<Mode> relationModes, int sampleSize) {
+			String inputAttributeName, String inputAttributeKnownTerms, List<Mode> relationModes, int sampleSize, int queryLimit) {
 		List<Tuple> sample = new ArrayList<Tuple>();
 
 		// Get attributes that can be constant
@@ -421,9 +421,11 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 			String constantAttributesString = String.join(",", constantAttributesNames);
 			String getRegionsQuery = String.format(SELECT_GROUPBY_SQL_STATEMENT, constantAttributesString,
 					relationName, inputAttributeName, inputAttributeKnownTerms, constantAttributesString);
+			getRegionsQuery += " LIMIT " + queryLimit;
 			GenericTableObject getRegionsResult = genericDAO.executeQuery(getRegionsQuery);
 			if (getRegionsResult != null) {
 				String query = String.format(SELECTIN_SQL_STATEMENT, relationName, inputAttributeName, inputAttributeKnownTerms);
+				query += " LIMIT " + queryLimit;
 				GenericTableObject allTuplesResult = genericDAO.executeQuery(query);
 				
 				// Each tuple represents a region
@@ -454,7 +456,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 	 * Computes strata defined by regions (distinct values in inputAttributeName).
 	 */
 	private List<List<Tuple>> computeStrata(GenericDAO genericDAO, Schema schema, String relationName,
-			String inputAttributeName, String inputAttributeKnownTerms, List<Mode> relationModes, int sampleSize) {
+			String inputAttributeName, String inputAttributeKnownTerms, List<Mode> relationModes, int sampleSize, int queryLimit) {
 		List<List<Tuple>> strata = new ArrayList<List<Tuple>>();
 
 		// Get attributes that can be constant
@@ -472,6 +474,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 		}
 		
 		String query = String.format(SELECTIN_SQL_STATEMENT, relationName, inputAttributeName, inputAttributeKnownTerms);
+		query += " LIMIT " + queryLimit;
 		GenericTableObject allTuplesResult = genericDAO.executeQuery(query);
 
 		if (constantAttributes.isEmpty()) {
@@ -485,7 +488,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 			String constantAttributesString = String.join(",", constantAttributes);
 			String getRegionsQuery = String.format(SELECT_GROUPBY_SQL_STATEMENT, constantAttributesString,
 					relationName, inputAttributeName, inputAttributeKnownTerms, constantAttributesString);
-
+			getRegionsQuery += " LIMIT " + queryLimit;
 			GenericTableObject getRegionsResult = genericDAO.executeQuery(getRegionsQuery);
 			if (getRegionsResult != null) {
 				// Each tuple represents a region

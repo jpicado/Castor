@@ -567,7 +567,7 @@ public class CastorCmd {
 		} else {
 			if (parameters.getSamplingMethod().equals(SamplingMethods.NAIVE)) {
 				saturator = new BottomClauseGeneratorNaiveSampling(true, parameters.getRandomSeed());
-//				saturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(true);
+//				saturator = new BottomClauseGeneratorWithGroupedModesNaiveSampling(true, parameters.getRandomSeed());
 //				saturator = new BottomClauseGeneratorNaiveSamplingTupleByTuple(true, parameters.getRandomSeed());
 			} else if (parameters.getSamplingMethod().equals(SamplingMethods.OLKEN))  {
 				// Using grouped modes

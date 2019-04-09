@@ -25,7 +25,7 @@ public class BottomClauseGeneratorUsingJoinTreeOlkenSamplingRandom extends Botto
 			JoinNode joinTree, Tuple exampleTuple, 
 			Map<String, List<Mode>> groupedModes, Map<String, String> hashConstantToVariable, 
 			Random randomGenerator, MyClause clause, boolean ground,
-			Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int sampleSize) {
+			Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int sampleSize, int queryLimit) {
 		
 		// Approach 1: Get one sample from all relations, multiple times
 		//TODO: implement
@@ -34,7 +34,7 @@ public class BottomClauseGeneratorUsingJoinTreeOlkenSamplingRandom extends Botto
 		List<Tuple> exampleTupleList = new ArrayList<Tuple>();
 		exampleTupleList.add(exampleTuple);
 		for (JoinEdge joinEdge : joinTree.getEdges()) {
-			generateBottomClauseAux(genericDAO, schema, exampleTupleList, joinEdge, groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, 1, sampleSize);
+			generateBottomClauseAux(genericDAO, schema, exampleTupleList, joinEdge, groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, 1, sampleSize, queryLimit);
 		}
 	}
 }

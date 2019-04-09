@@ -32,7 +32,7 @@ public class BottomClauseGeneratorNaiveSampling extends BottomClauseGeneratorOri
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> newInTerms, Set<String> distinctTerms, String relationName, String attributeName,
 			List<Mode> relationAttributeModes, Map<Pair<String, Integer>, List<Mode>> groupedModes, RandomSet<String> knownTermsSet,
-			int recall, boolean ground, boolean randomizeRecall, Random randomGenerator) {
+			int recall, boolean ground, boolean randomizeRecall, int queryLimit, Random randomGenerator) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 		
 		// If sampling is turned off, set recall to max value
@@ -44,6 +44,7 @@ public class BottomClauseGeneratorNaiveSampling extends BottomClauseGeneratorOri
 
 		// Create query and run
 		String query = String.format(SELECTIN_SQL_STATEMENT, relationName, attributeName, knownTerms);
+		query += " LIMIT " + queryLimit;
 		GenericTableObject result = genericDAO.executeQuery(query);
 		
 		// Create reservoir

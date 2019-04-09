@@ -32,7 +32,7 @@ public abstract class BottomClauseGeneratorUsingJoinTreeOlkenSampling extends Bo
 			List<Tuple> tuples, JoinEdge joinEdge, 
 			Map<String, List<Mode>> groupedModes, Map<String, String> hashConstantToVariable, 
 			Random randomGenerator, MyClause clause, boolean ground,
-			Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int depth, int sampleSize) {
+			Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int depth, int sampleSize, int queryLimit) {
 		// Get tuples in relation in joinEdge that join with given tuples
 		String relation = joinEdge.getJoinNode().getNodeRelation().getRelation();
 		String attributeName = schema.getRelations().get(relation.toUpperCase()).getAttributeNames().get(joinEdge.getRightJoinAttribute());
@@ -53,6 +53,7 @@ public abstract class BottomClauseGeneratorUsingJoinTreeOlkenSampling extends Bo
 		}
 		
 		String query = String.join(" UNION ", selectQueries);
+		query += " LIMIT " + queryLimit;
 		
 		// Run query to get all tuples in join
 		GenericTableObject result = genericDAO.executeQuery(query);
@@ -133,7 +134,7 @@ public abstract class BottomClauseGeneratorUsingJoinTreeOlkenSampling extends Bo
 		// Recursive call on node's children
 		for (JoinEdge childJoinEdge : joinEdge.getJoinNode().getEdges()) {
 			generateBottomClauseAux(genericDAO, schema, joinTuples, childJoinEdge, 
-					groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, depth+1, sampleSize);
+					groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, depth+1, sampleSize, queryLimit);
 		}
 	}
 	

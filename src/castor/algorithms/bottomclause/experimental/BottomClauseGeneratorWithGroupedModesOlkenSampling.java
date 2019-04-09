@@ -44,7 +44,7 @@ public class BottomClauseGeneratorWithGroupedModesOlkenSampling extends BottomCl
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant,
 			Map<String, Set<String>> inTerms, Map<String, Set<String>> newInTerms, Map<String, Set<String>> previousIterationsInTerms,
 			Set<String> distinctTerms,
-			String relationName, List<Mode> relationModes, int recall, boolean ground, boolean shuffleTuples, Random randomGenerator) {
+			String relationName, List<Mode> relationModes, int recall, boolean ground, boolean shuffleTuples, int queryLimit, Random randomGenerator) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 		
 		// COUNT query: Count the number of potential tuples

@@ -34,11 +34,12 @@ public abstract class BottomClauseGeneratorUsingJoinTreeStreamSampling extends B
 			Tuple tuple, JoinEdge joinEdge, 
 			Map<String, List<Mode>> groupedModes, Map<String, String> hashConstantToVariable, 
 			Random randomGenerator, MyClause clause, boolean ground,
-			Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int depth) {
+			Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int depth, int queryLimit) {
 		
 		String relation = joinEdge.getJoinNode().getNodeRelation().getRelation();
 		String attributeName = schema.getRelations().get(relation.toUpperCase()).getAttributeNames().get(joinEdge.getRightJoinAttribute());
 		String query = String.format(SELECT_WHERE_SQL_STATEMENT, relation, attributeName, "'"+tuple.getValues().get(joinEdge.getLeftJoinAttribute()).toString()+"'");
+		query += " LIMIT " + queryLimit;
 		
 		// Run query to get all tuples in join
 		GenericTableObject result = genericDAO.executeQuery(query);
@@ -89,7 +90,7 @@ public abstract class BottomClauseGeneratorUsingJoinTreeStreamSampling extends B
 		// Recursive call on node's children
 		for (JoinEdge childJoinEdge : joinEdge.getJoinNode().getEdges()) {
 			generateBottomClauseAux(genericDAO, schema, joinTuple, childJoinEdge, 
-					groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, depth+1);
+					groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, depth+1, queryLimit);
 		}
 	}
 	
@@ -101,7 +102,7 @@ public abstract class BottomClauseGeneratorUsingJoinTreeStreamSampling extends B
 			List<Tuple> tuples, JoinEdge joinEdge, 
 			Map<String, List<Mode>> groupedModes, Map<String, String> hashConstantToVariable, 
 			Random randomGenerator, MyClause clause, boolean ground,
-			Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int depth, int sampleSize) {
+			Map<Triple<String,Integer,Tuple>,Long> joinPathSizes, int depth, int sampleSize, int queryLimit) {
 		// Get tuples in relation in joinEdge that join with given tuples
 		String relation = joinEdge.getJoinNode().getNodeRelation().getRelation();
 		String attributeName = schema.getRelations().get(relation.toUpperCase()).getAttributeNames().get(joinEdge.getRightJoinAttribute());
@@ -122,6 +123,7 @@ public abstract class BottomClauseGeneratorUsingJoinTreeStreamSampling extends B
 		}
 		
 		String query = String.join(" UNION ", selectQueries);
+		query += " LIMIT " + queryLimit;
 		
 		// Run query to get all tuples in join
 		GenericTableObject result = genericDAO.executeQuery(query);
@@ -171,7 +173,7 @@ public abstract class BottomClauseGeneratorUsingJoinTreeStreamSampling extends B
 		// Recursive call on node's children
 		for (JoinEdge childJoinEdge : joinEdge.getJoinNode().getEdges()) {
 			generateBottomClauseAux(genericDAO, schema, joinTuples, childJoinEdge, 
-					groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, depth+1, sampleSize);
+					groupedModes, hashConstantToVariable, randomGenerator, clause, ground, joinPathSizes, depth+1, sampleSize, queryLimit);
 		}
 	}
 }

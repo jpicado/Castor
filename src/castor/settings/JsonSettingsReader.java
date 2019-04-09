@@ -122,6 +122,9 @@ public class JsonSettingsReader {
 		if (parametersJson.get("matchingLiteralPrefix") != null) {
 			parameters.setMatchingLiteralPrefix(parametersJson.get("matchingLiteralPrefix").getAsString());
 		}
+		if (parametersJson.get("queryLimit") != null) {
+			parameters.setQueryLimit(parametersJson.get("queryLimit").getAsInt());
+		}
 		
 		return parameters;
 	}

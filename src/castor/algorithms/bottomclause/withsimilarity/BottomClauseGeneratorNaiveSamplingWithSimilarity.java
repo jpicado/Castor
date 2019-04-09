@@ -101,7 +101,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 		return this.generateBottomClauseOneQueryPerRelationAttribute(genericDAO, hashConstantToVariable,
 				hashVariableToConstant, exampleTuple, schema, dataModel.getModeH(), dataModel.getModesB(),
 				parameters.getIterations(), parameters.getRecall(), parameters.isUseInds(), parameters.getMaxterms(),
-				false, parameters.isRandomizeRecall());
+				false, parameters.isRandomizeRecall(), parameters.getQueryLimit());
 	}
 
 	/*
@@ -117,7 +117,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 			bottomClauses.add(this.generateBottomClauseOneQueryPerRelationAttribute(genericDAO, hashConstantToVariable,
 					hashVariableToConstant, example, schema, dataModel.getModeH(), dataModel.getModesB(),
 					parameters.getIterations(), parameters.getRecall(), parameters.isUseInds(),
-					parameters.getMaxterms(), false, parameters.isRandomizeRecall()));
+					parameters.getMaxterms(), false, parameters.isRandomizeRecall(), parameters.getQueryLimit()));
 		}
 		return bottomClauses;
 	}
@@ -134,7 +134,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 		return this.generateBottomClauseOneQueryPerRelationAttribute(genericDAO, hashConstantToVariable,
 				hashVariableToConstant, exampleTuple, schema, dataModel.getModeH(), dataModel.getModesB(),
 				parameters.getIterations(), parameters.getGroundRecall(), parameters.isUseInds(),
-				parameters.getMaxterms(), true, parameters.isRandomizeRecall());
+				parameters.getMaxterms(), true, parameters.isRandomizeRecall(), parameters.getQueryLimit());
 	}
 
 	/*
@@ -156,7 +156,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 	private MyClause generateBottomClauseOneQueryPerRelationAttribute(GenericDAO genericDAO,
 			Map<String, String> hashConstantToVariable, Map<String, String> hashVariableToConstant, Tuple exampleTuple,
 			Schema schema, Mode modeH, List<Mode> modesB, int iterations, int recall, boolean applyInds, int maxTerms,
-			boolean ground, boolean shuffleTuples) {
+			boolean ground, boolean shuffleTuples, int queryLimit) {
 
 		// Check that arities of example and modeH match
 		if (modeH.getArguments().size() != exampleTuple.getValues().size()) {
@@ -232,7 +232,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 				List<Predicate> newLiterals = operationForGroupedModes(genericDAO, schema, clause,
 						hashConstantToVariable, hashVariableToConstant, inTerms, newInTerms, inTermsForMDs,
 						newInTermsForMDs, maxDistanceForMDs, relationName, attributeName, inputVarPosition,
-						relationAttributeModes, groupedModesByRelationAttribute, recall, ground, shuffleTuples, randomGenerator);
+						relationAttributeModes, groupedModesByRelationAttribute, recall, ground, shuffleTuples, queryLimit, randomGenerator);
 
 				for (Predicate literal : newLiterals) {
 					clause.addNegativeLiteral(literal);
@@ -255,7 +255,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 					List<Predicate> newLiterals = operationForGroupedModes(genericDAO, schema, clause,
 							hashConstantToVariable, hashVariableToConstant, inTerms, newInTerms, inTermsForMDs,
 							newInTermsForMDs, maxDistanceForMDs, relationName, attributeName, inputVarPosition,
-							groupedModesByRelation.get(relationName), groupedModesByRelationAttribute, recall, ground, shuffleTuples, randomGenerator);
+							groupedModesByRelation.get(relationName), groupedModesByRelationAttribute, recall, ground, shuffleTuples, queryLimit, randomGenerator);
 
 					for (Predicate literal : newLiterals) {
 						clause.addNegativeLiteral(literal);
@@ -298,7 +298,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 			Map<Pair<String, Integer>, Set<String>> newInTermsForMDs,
 			Map<Pair<String, Integer>, Double> maxDistanceForMDs, String relationName, String attributeName,
 			int inputAttributePosition, List<Mode> relationAttributeModes,
-			Map<Pair<String, Integer>, List<Mode>> groupedModes, int recall, boolean ground, boolean randomizeRecall, Random randomGenerator) {
+			Map<Pair<String, Integer>, List<Mode>> groupedModes, int recall, boolean ground, boolean randomizeRecall, int queryLimit, Random randomGenerator) {
 		List<Predicate> newLiterals = new LinkedList<Predicate>();
 
 		// If sampling is turned off, set recall to max value
@@ -329,6 +329,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 
 			// Create query and run
 			String query = String.format(SELECTIN_SQL_STATEMENT, relationName, attributeName, knownTerms);
+			query += " LIMIT " + queryLimit;
 			GenericTableObject result = genericDAO.executeQuery(query);
 
 //			List<Pair<Tuple, String>> tuplesWithSourceValue = new ArrayList<Pair<Tuple, String>>();
@@ -377,6 +378,7 @@ public class BottomClauseGeneratorNaiveSamplingWithSimilarity implements BottomC
 
 				// Create query and run
 				String query = String.format(SELECTIN_SQL_STATEMENT, relationName, attributeName, knownTerms);
+				query += " LIMIT " + queryLimit;
 				GenericTableObject result = genericDAO.executeQuery(query);
 				if (result != null) {
 					for (Tuple tuple : result.getTable()) {

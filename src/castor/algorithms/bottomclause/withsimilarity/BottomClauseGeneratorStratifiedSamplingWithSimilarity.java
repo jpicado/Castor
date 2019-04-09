@@ -163,7 +163,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 	
 					stratifiedSamplingRecursive(genericDAO, schema, groupedModesByRelation, groupedModesByRelationAttribute, groupedRelationsByAttributeType,
 							hashConstantToVariable, modeH.getPredicateName(), i, relationName, inputAttributePosition, values,
-							parameters.getIterations(), 1, sampleSize, ground, clause, randomGenerator,
+							parameters.getIterations(), 1, sampleSize, ground, parameters.getQueryLimit(), clause, randomGenerator,
 							maxDistanceForMDs);
 				}
 			}
@@ -177,7 +177,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 					
 					stratifiedSamplingRecursive(genericDAO, schema, groupedModesByRelation, groupedModesByRelationAttribute, groupedRelationsByAttributeType,
 							hashConstantToVariable, modeH.getPredicateName(), i, relationName, inputAttributePosition, values,
-							parameters.getIterations(), 1, sampleSize, ground, clause, randomGenerator,
+							parameters.getIterations(), 1, sampleSize, ground, parameters.getQueryLimit(), clause, randomGenerator,
 							maxDistanceForMDs);
 				}
 			}
@@ -196,7 +196,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 			Map<String, String> hashConstantToVariable, String sourceRelationName, int sourceInputAttributePosition, 
 			String relationName, int inputAttributePosition,  
 			List<String> inputAttributeValues, int iterations, int currentIteration,
-			int sampleSize, boolean ground, MyClause clause, Random randomGenerator,
+			int sampleSize, boolean ground, int queryLimit, MyClause clause, Random randomGenerator,
 			Map<Pair<String, Integer>, Double> maxDistanceForMDs) {
 		List<Pair<Tuple, String>> sample = new ArrayList<Pair<Tuple, String>>();
 
@@ -297,7 +297,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 		
 		// Compute strata
 		List<List<Pair<Tuple, String>>> strata = computeStrata(genericDAO, schema, relationName, inputAttributeName,
-				inputAttributeValues, inputAttributeValuesFromSimilarity, inputAttributeKnownTermsAll, groupedModesByRelation.get(relationName), Integer.MAX_VALUE);
+				inputAttributeValues, inputAttributeValuesFromSimilarity, inputAttributeKnownTermsAll, groupedModesByRelation.get(relationName), Integer.MAX_VALUE, queryLimit);
 		
 		// Check whether last iteration
 		if (iterations == currentIteration) {
@@ -338,7 +338,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 							localValues.removeAll(inputAttributeValuesAll);
 						}
 						
-						List<Pair<Tuple,String>> sampleFromRecursiveCall = stratifiedSamplingRecursiveAux(genericDAO, schema, groupedModesByRelation, groupedModesByRelationAttribute, groupedRelationsByAttributeType, hashConstantToVariable, relationName, i, joinRelationName, joinAttributePosition, localValues, iterations, currentIteration, sampleSize, ground, clause, randomGenerator, maxDistanceForMDs, sourceForSimilarValue, inputAttributeName, joinAttributeName, inputAttributeKnownTermsAll);
+						List<Pair<Tuple,String>> sampleFromRecursiveCall = stratifiedSamplingRecursiveAux(genericDAO, schema, groupedModesByRelation, groupedModesByRelationAttribute, groupedRelationsByAttributeType, hashConstantToVariable, relationName, i, joinRelationName, joinAttributePosition, localValues, iterations, currentIteration, sampleSize, ground, queryLimit, clause, randomGenerator, maxDistanceForMDs, sourceForSimilarValue, inputAttributeName, joinAttributeName, inputAttributeKnownTermsAll);
 						sample.addAll(sampleFromRecursiveCall);
 						
 						relationAttributesUsed.add(new Pair<String,Integer>(joinAttributeName,joinAttributePosition));
@@ -360,7 +360,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 								localValues.removeAll(inputAttributeValuesAll);
 							}
 							
-							List<Pair<Tuple,String>> sampleFromRecursiveCall = stratifiedSamplingRecursiveAux(genericDAO, schema, groupedModesByRelation, groupedModesByRelationAttribute, groupedRelationsByAttributeType, hashConstantToVariable, relationName, i, joinRelationName, joinAttributePosition, localValues, iterations, currentIteration, sampleSize, ground, clause, randomGenerator, maxDistanceForMDs, sourceForSimilarValue, inputAttributeName, joinAttributeName, inputAttributeKnownTermsAll);
+							List<Pair<Tuple,String>> sampleFromRecursiveCall = stratifiedSamplingRecursiveAux(genericDAO, schema, groupedModesByRelation, groupedModesByRelationAttribute, groupedRelationsByAttributeType, hashConstantToVariable, relationName, i, joinRelationName, joinAttributePosition, localValues, iterations, currentIteration, sampleSize, ground, queryLimit, clause, randomGenerator, maxDistanceForMDs, sourceForSimilarValue, inputAttributeName, joinAttributeName, inputAttributeKnownTermsAll);
 							sample.addAll(sampleFromRecursiveCall);
 							
 							relationAttributesUsed.add(keyUsedRelationAttributes);
@@ -413,7 +413,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 			Map<String, String> hashConstantToVariable, String relationName, int inputAttributePosition, 
 			String joinRelationName, int joinAttributePosition,
 			List<String> localValues, int iterations, int currentIteration,
-			int sampleSize, boolean ground, MyClause clause, Random randomGenerator,
+			int sampleSize, boolean ground, int queryLimit, MyClause clause, Random randomGenerator,
 			Map<Pair<String, Integer>, Double> maxDistanceForMDs,
 			Map<String,String> sourceForSimilarValue, String inputAttributeName, String joinAttributeName,
 			String inputAttributeKnownTermsAll) {
@@ -423,7 +423,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 				groupedRelationsByAttributeType, hashConstantToVariable,
 				relationName, inputAttributePosition, joinRelationName, joinAttributePosition, 
 				localValues, iterations,
-				currentIteration + 1, sampleSize, ground, clause, randomGenerator,
+				currentIteration + 1, sampleSize, ground, queryLimit, clause, randomGenerator,
 				maxDistanceForMDs);
 
 		// Get tuples in relation that join with returnTuples
@@ -625,7 +625,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 
 	private List<List<Pair<Tuple,String>>> computeStrata(GenericDAO genericDAO, Schema schema, String relationName,
 			String inputAttributeName, List<String> exactInputValues, List<Pair<String,String>> similarInputValues, 
-			String inputAttributeKnownTermsAll, List<Mode> relationModes, int sampleSize) {
+			String inputAttributeKnownTermsAll, List<Mode> relationModes, int sampleSize, int queryLimit) {
 		List<List<Pair<Tuple,String>>> strata = new ArrayList<List<Pair<Tuple,String>>>();
 
 		if (relationModes == null) {
@@ -649,6 +649,7 @@ public class BottomClauseGeneratorStratifiedSamplingWithSimilarity implements Bo
 		
 		String inputAttributeKnownTerms = collectionToString(exactInputValues);
 		String query = String.format(SELECTIN_SQL_STATEMENT, relationName, inputAttributeName, inputAttributeKnownTerms);
+		query += " LIMIT " + queryLimit;
 		GenericTableObject allTuplesResult = genericDAO.executeQuery(query);
 		if (allTuplesResult != null) {
 			for (Tuple tuple : allTuplesResult.getTable()) {
