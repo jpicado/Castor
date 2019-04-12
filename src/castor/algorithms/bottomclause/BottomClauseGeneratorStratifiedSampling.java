@@ -40,6 +40,8 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 	private static final String SELECTIN_TWOATTRIBUTES_SQL_STATEMENT = "SELECT * FROM %s WHERE %s IN %s AND %s IN %s";
 	private static final String PROJET_SELECTIN_SQL_STATEMENT = "SELECT DISTINCT(%s) FROM %s WHERE %s IN %s";
 	private static final String SELECT_GROUPBY_SQL_STATEMENT = "SELECT %s FROM %s WHERE %s IN %s GROUP BY %s";
+	
+	private static boolean SAMPLE_WITH_REPLACEMENT = false;
 
 	private int varCounter;
 	private int nullCounter;
@@ -171,16 +173,23 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 				.get(inputAttributePosition);
 		String inputAttributeKnownTerms = collectionToString(inputAttributeValues);
 
-		List<List<Tuple>> strata = computeStrata(genericDAO, schema, relationName, inputAttributeName,
-				inputAttributeKnownTerms, relationAttributeModes, Integer.MAX_VALUE, queryLimit);
+		//TODO: USE OPTION1
+//		List<List<Tuple>> strata = computeStrata(genericDAO, schema, relationName, inputAttributeName, inputAttributeKnownTerms, relationAttributeModes, Integer.MAX_VALUE, queryLimit);
+		//TODO: USE OPTION2 
+		List<List<Tuple>> strata = computeSampledStrata(genericDAO, schema, relationName, inputAttributeName, inputAttributeKnownTerms, relationAttributeModes, sampleSize, queryLimit, randomGenerator);
 		
 		// Check whether last iteration
 		if (iterations == currentIteration) {
 			// Base case: last iteration
 
 			// Random sample
+			//TODO: OPTION1
+//			for (List<Tuple> stratum : strata) {
+//				sample.addAll(randomSampleFromList(stratum, sampleSize, SAMPLE_WITH_REPLACEMENT, randomGenerator));
+//			}
+			//TODO: OPTION2
 			for (List<Tuple> stratum : strata) {
-				sample.addAll(randomSampleFromList(stratum, sampleSize, false, randomGenerator));
+				sample.addAll(stratum);
 			}
 
 			// Sample by order
@@ -258,7 +267,10 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 			// stratum to sample.
 			for (List<Tuple> stratum : strata) {
 				if (!isIntersect(sample, stratum)) {
-					sample.addAll(randomSampleFromList(stratum, sampleSize, false, randomGenerator));
+					//TODO: OPTION1
+//					sample.addAll(randomSampleFromList(stratum, sampleSize, SAMPLE_WITH_REPLACEMENT, randomGenerator));
+					//TODO: OPTION2
+					sample.addAll(stratum);
 				}
 			}
 		}
@@ -298,7 +310,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 	}
 
 	/*
-	 * Get a random sample from list, without replacement.
+	 * Get a random sample from list.
 	 */
 	private List<Tuple> randomSampleFromList(List<Tuple> list, int sampleSize, boolean withReplacement,
 			Random randomGenerator) {
@@ -309,7 +321,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 		} else {
 			Set<Integer> usedIndexes = new HashSet<Integer>();
 			int resultsCounter = 0;
-			while (resultsCounter < sampleSize) {
+			while (resultsCounter < sampleSize && usedIndexes.size() < list.size()) {
 				int randomIndex = randomGenerator.nextInt(list.size());
 				if (withReplacement || !usedIndexes.contains(randomIndex)) {
 					sample.add(list.get(randomIndex));
@@ -358,7 +370,6 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 			boolean headMode) {
 		List<Term> terms = new ArrayList<Term>();
 		for (int i = 0; i < mode.getArguments().size(); i++) {
-			//TODO default value for nulls? distinct value?
 			String value;
 			if (tuple.getValues().get(i) != null) {
 				value = tuple.getValues().get(i).toString();
@@ -390,7 +401,7 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 	/*
 	 * Compute strata, and for each strata, sample the first sampleSize values.
 	 */
-	private List<Tuple> sampleFromStrata(GenericDAO genericDAO, Schema schema, String relationName,
+	private List<Tuple> computeSampledStrataWithLimit(GenericDAO genericDAO, Schema schema, String relationName,
 			String inputAttributeName, String inputAttributeKnownTerms, List<Mode> relationModes, int sampleSize, int queryLimit) {
 		List<Tuple> sample = new ArrayList<Tuple>();
 
@@ -435,13 +446,6 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 						selectConditions.add(new Pair<Integer, Object>(constantAttributesPositions.get(i),
 								tuple.getValues().get(i)));
 					}
-//					String stratumQuery = String.format(SELECTIN_SQL_STATEMENT, relationName, inputAttributeName,
-//							inputAttributeKnownTerms);
-//					GenericTableObject stratumResult = genericDAO.executeQueryWithSelectLimit(stratumQuery,
-//							selectConditions, sampleSize);
-//					if (stratumResult != null) {
-//						sample.addAll(stratumResult.getTable());
-//					}
 					
 					List<Tuple> stratum = selectLimit(allTuplesResult.getTable(), selectConditions, sampleSize);
 					sample.addAll(stratum);
@@ -495,20 +499,84 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 				for (Tuple tuple : getRegionsResult.getTable()) {
 					List<Pair<Integer, Object>> selectConditions = new LinkedList<Pair<Integer, Object>>();
 					for (int i = 0; i < constantAttributes.size(); i++) {
-						selectConditions.add(new Pair<Integer, Object>(constantAttributesPositions.get(i),
-								tuple.getValues().get(i)));
+						if (tuple.getValues().get(i) != null) {
+							selectConditions.add(new Pair<Integer, Object>(constantAttributesPositions.get(i),
+									tuple.getValues().get(i)));
+						}
 					}
-
-//					String stratumQuery = String.format(SELECTIN_SQL_STATEMENT, relationName, inputAttributeName,
-//							inputAttributeKnownTerms);
-//					GenericTableObject stratumResult = genericDAO.executeQueryWithSelectLimit(stratumQuery,
-//							selectConditions, sampleSize);
-//					if (stratumResult != null) {
-//						strata.add(stratumResult.getTable());
-//					}
-//					
+					
 					List<Tuple> stratum = selectLimit(allTuplesResult.getTable(), selectConditions, sampleSize);
 					strata.add(stratum);
+				}
+			}
+		}
+
+		return strata;
+	}
+	
+	/*
+	 * Computes strata defined by regions (distinct values in inputAttributeName).
+	 * Number of samples in strata depends on number of regions and sample size.
+	 */
+	private List<List<Tuple>> computeSampledStrata(GenericDAO genericDAO, Schema schema, String relationName,
+			String inputAttributeName, String inputAttributeKnownTerms, List<Mode> relationModes, int sampleSize, int queryLimit, Random randomGenerator) {
+		List<List<Tuple>> strata = new ArrayList<List<Tuple>>();
+
+		// Get attributes that can be constant
+		RandomSet<String> constantAttributes = new RandomSet<String>();
+		RandomSet<Integer> constantAttributesPositions = new RandomSet<Integer>();
+		for (Mode mode : relationModes) {
+			for (int i = 0; i < mode.getArguments().size(); i++) {
+				if (mode.getArguments().get(i).getIdentifierType() == IdentifierType.CONSTANT) {
+					String attributeName = schema.getRelations().get(relationName.toUpperCase()).getAttributeNames()
+							.get(i);
+					constantAttributes.add(attributeName);
+					constantAttributesPositions.add(i);
+				}
+			}
+		}
+		
+		String query = String.format(SELECTIN_SQL_STATEMENT, relationName, inputAttributeName, inputAttributeKnownTerms);
+		query += " LIMIT " + queryLimit;
+		GenericTableObject allTuplesResult = genericDAO.executeQuery(query);
+
+		if (constantAttributes.isEmpty()) {
+			// Add sampled table as stratum
+			if (allTuplesResult != null) {
+				strata.add(randomSampleFromList(allTuplesResult.getTable(), sampleSize, SAMPLE_WITH_REPLACEMENT, randomGenerator));
+			}
+		} else {
+			// Get regions
+			String constantAttributesString = String.join(",", constantAttributes);
+			String getRegionsQuery = String.format(SELECT_GROUPBY_SQL_STATEMENT, constantAttributesString,
+					relationName, inputAttributeName, inputAttributeKnownTerms, constantAttributesString);
+			getRegionsQuery += " LIMIT " + queryLimit;
+			GenericTableObject getRegionsResult = genericDAO.executeQuery(getRegionsQuery);
+			if (getRegionsResult != null) {
+				int nRegions = getRegionsResult.getTable().size();
+				if (nRegions > 0) {
+					// if #regions > sampleSize, want 1 per region
+					// else, want ceiling(sampleSize / #regions) per region
+					int samplePerRegion;
+					if (getRegionsResult.getTable().size() > sampleSize) {
+						samplePerRegion = 1;
+					} else {
+						samplePerRegion = (int)Math.ceil(sampleSize / getRegionsResult.getTable().size());
+					}
+					
+					// Each tuple represents a region
+					for (Tuple tuple : getRegionsResult.getTable()) {
+						List<Pair<Integer, Object>> selectConditions = new LinkedList<Pair<Integer, Object>>();
+						for (int i = 0; i < constantAttributes.size(); i++) {
+							selectConditions.add(new Pair<Integer, Object>(constantAttributesPositions.get(i),
+									tuple.getValues().get(i)));
+						}
+
+						// Get all tuples that satisfy region
+						List<Tuple> stratum = selectLimit(allTuplesResult.getTable(), selectConditions, Integer.MAX_VALUE);
+						// Sample from these tuples
+						strata.add(randomSampleFromList(stratum, samplePerRegion, SAMPLE_WITH_REPLACEMENT, randomGenerator));
+					}
 				}
 			}
 		}
@@ -529,16 +597,12 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 				Object value;
 				if (tuple.getValues().get(attributePosition) != null) {
 					value = tuple.getValues().get(attributePosition);
-				}
-				else {
-					value = NULL_PREFIX+nullCounter;
-					nullCounter++;
-				}
-				
-				Object desiredValue = selectCondition.getSecond();
-				if (!value.equals(desiredValue)) {
-					keep = false;
-					break;
+
+					Object desiredValue = selectCondition.getSecond();
+					if (!value.equals(desiredValue)) {
+						keep = false;
+						break;
+					}
 				}
 			}
 			
