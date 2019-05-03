@@ -19,6 +19,7 @@ public class ClauseTransformations {
     
     /*
 	 * Reorder clause so that all literals are head-connected from left to right
+	 * Removes non-head-connected literals
 	 */
 	public static MyClause reorderClauseForHeadConnected(MyClause clause) {
 		MyClause newClause = new MyClause();
@@ -37,6 +38,7 @@ public class ClauseTransformations {
 			remainingLiterals.addAll(notHeadConnectedLiterals);
 			notHeadConnectedLiterals.clear();
 			
+			boolean foundOne = false;
 			for (Literal literal : remainingLiterals) {
 				boolean connected = false;
 				for (Term term : literal.getAtomicSentence().getArgs()) {
@@ -47,12 +49,15 @@ public class ClauseTransformations {
 				}
 				
 				if (connected) {
+					foundOne = true;
 					newClause.addLiteral(literal);
 					seenTerms.addAll(literal.getAtomicSentence().getArgs());
 				} else {
 					notHeadConnectedLiterals.add(literal);
 				}
 			}
+			if (!foundOne)
+				break;
 		}
 		
 		return newClause;
