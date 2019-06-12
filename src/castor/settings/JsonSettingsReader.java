@@ -228,6 +228,40 @@ public class JsonSettingsReader {
 		return new DataModel(modeH, modesB, modesBMap, spName);
 	}
 
+
+	/*
+* Read Relaxed JSON object for data model and convert to object - HeadMode can be null
+*/
+	public static DataModel readRelaxedDataModel(JsonObject dataModelJson) {
+		List<Mode> modesB;
+		Map<String, List<List<String>>> modesBMap;
+		String spName;
+
+		// Read body modes
+		if (dataModelJson.get("bodyModes") == null) {
+			throw new IllegalArgumentException("Body modes not set in data model json.");
+		} else {
+			modesB = new LinkedList<Mode>();
+			modesBMap = new HashMap<String, List<List<String>>>();
+			JsonArray modesBArray = dataModelJson.get("bodyModes").getAsJsonArray();
+			for (int i = 0; i < modesBArray.size(); i++) {
+				String modebString = modesBArray.get(i).getAsString();
+				modesB.add(Mode.stringToMode(modebString));
+				initializeModesBodyMap(modebString, modesBMap);
+			}
+		}
+
+		// Read stored prodecure name
+		if (dataModelJson.get("spName") == null) {
+			spName = null;
+		} else {
+			spName = dataModelJson.get("spName").getAsString();
+		}
+
+		return new DataModel(null, modesB, modesBMap, spName);
+	}
+
+
 	//Add the attribute type information to jsonmodel, add #attribute directly. Remove +/- from string
 	public static void initializeModesBodyMap(String modebString, Map<String, List<List<String>>> modesBMap) {
 		String relationName = modebString.substring(0, modebString.indexOf(Constants.TransformDelimeter.OPEN_PARA.getValue()));
@@ -260,7 +294,7 @@ public class JsonSettingsReader {
 		if (schemaJson.get("name") != null) {
 			name = schemaJson.get("name").getAsString().toUpperCase();
 		}
-		
+
 		// Read relations
 		if (schemaJson.get("relations") == null) {
 			throw new IllegalArgumentException("Schema not set in schema json.");
@@ -287,7 +321,7 @@ public class JsonSettingsReader {
 		
 		return new Schema(name, relations, inds);
 	}
-	
+
 	/*
 	 * Read JSON object for INDs and convert to object
 	 */

@@ -23,7 +23,7 @@ public class Schema {
 		this.relations = relations;
 		this.inclusionDependencies = inclusionDependencies;
 	}
-	
+
 	public String getName() {
 		return name;
 	}
@@ -51,4 +51,5 @@ public class Schema {
 	public void setMatchingDependencies(Map<Pair<String, Integer>, List<MatchingDependency>> matchingDependencies) {
 		this.matchingDependencies = matchingDependencies;
 	}
+
 }

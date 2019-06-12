@@ -2,6 +2,7 @@ package castor.settings;
 
 import castor.language.Mode;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -52,5 +53,13 @@ public class DataModel {
 
 	public void setModesBMap(Map<String, List<List<String>>> modesBMap) {
 		this.modesBMap = modesBMap;
+	}
+
+	public List<String> getModesBString(){
+		List<String> modesList = new ArrayList<>();
+		for(Mode mode:  this.modesB){
+			modesList.add(mode.toString());
+		}
+		return modesList;
 	}
 }
