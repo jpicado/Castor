@@ -14,6 +14,7 @@ public class LearningResult {
 	private double f1;
 	private long time;
 	private List<ClauseAsString> definition;
+	private String outputSQL;
 	
 	public LearningResult() {
 		super();
@@ -92,5 +93,11 @@ public class LearningResult {
 	}
 	public void setDefinition(List<ClauseAsString> definition) {
 		this.definition = definition;
+	}
+	public String getOutputSQL() {
+		return outputSQL;
+	}
+	public void setOutputSQL(String outputSQL) {
+		this.outputSQL = outputSQL;
 	}
 }
