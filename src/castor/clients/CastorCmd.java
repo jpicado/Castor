@@ -421,6 +421,7 @@ public class CastorCmd {
 						sb.append(clause+"\n");
 						sqlLines.add(clause);
 					}
+					learningResult.setOutputSQL(sb.toString());
 					logger.info(sb.toString());
 				}
 				
@@ -451,32 +452,32 @@ public class CastorCmd {
 					Relation posTest;
 					Relation negTest;
 					CoverageBySubsumptionParallel.EXAMPLES_SOURCE examplesSourceTest;
-					
+
 					// If file names for examples are given, assume examples are in files
 					String posTestExamplesFile = null;
 					String negTestExamplesFile = null;
 					if (posTestExamplesFilePath != null && negTestExamplesFilePath != null) {
 						// Get examples from file
 						examplesSourceTest = CoverageBySubsumptionParallel.EXAMPLES_SOURCE.FILE;
-						
+
 						posTestExamplesFile = getOption(posTestExamplesFilePath);
 						negTestExamplesFile = getOption(negTestExamplesFilePath);
-						
+
 						String posTestFileName = FilenameUtils.getBaseName(posTestExamplesFile);
 						String negTestFileName = FilenameUtils.getBaseName(negTestExamplesFile);
 
 						List<String> posTestExamplesFileHeader = CSVFileReader.readCSVHeader(posTestExamplesFile);
 						List<String> negTestExamplesFileHeader = CSVFileReader.readCSVHeader(negTestExamplesFile);
-						
+
 						posTest = new Relation(posTestFileName, posTestExamplesFileHeader);
 						negTest = new Relation(negTestFileName, negTestExamplesFileHeader);
 					} else {
 						// Get examples from DB
 						examplesSourceTest = CoverageBySubsumptionParallel.EXAMPLES_SOURCE.DB;
-						
+
 						String posTestTableName = (this.dataModel.getModeH().getPredicateName() + testPosSuffix).toUpperCase();
 						String negTestTableName = (this.dataModel.getModeH().getPredicateName() + testNegSuffix).toUpperCase();
-						
+
 						posTest = this.schema.getRelations().get(posTestTableName);
 						negTest = this.schema.getRelations().get(negTestTableName);
 
@@ -504,22 +505,22 @@ public class CastorCmd {
 							testSaturator = new BottomClauseGeneratorNaiveSampling(this.parameters.isSampleInTesting(), parameters.getRandomSeed());
 						}
 					}
-					
+
 					logger.info("Evaluating on testing data...");
-					
+
 					CoverageEngine testCoverageEngine;
 					if (parameters.isAllStableCoverageInTesting()) {
-						testCoverageEngine = new CoverageBySubsumptionParallelAlternativeCoverage(genericDAO, bottomClauseConstructionDAO, testSaturator, 
+						testCoverageEngine = new CoverageBySubsumptionParallelAlternativeCoverage(genericDAO, bottomClauseConstructionDAO, testSaturator,
 								posTest, negTest, this.schema, this.dataModel, this.parameters, true,
 								examplesSourceTest, posTestExamplesFile, negTestExamplesFile);
 					} else {
-						testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, testSaturator, 
+						testCoverageEngine = new CoverageBySubsumptionParallel(genericDAO, bottomClauseConstructionDAO, testSaturator,
 								posTest, negTest, this.schema, this.dataModel, this.parameters, true,
 								examplesSourceTest, posTestExamplesFile, negTestExamplesFile);
-					}					
+					}
 					testEvaluationResult = learner.evaluate(testCoverageEngine, this.schema, definition, posTest, negTest);
 				}
-				
+
 				logger.info("Total time: " + NumbersKeeper.totalTime + " Minutes : "+(NumbersKeeper.totalTime*1.0)/(60000*1.0));
 				logger.info("Creating coverage engine time: " + NumbersKeeper.creatingCoverageTime);
 				logger.info("Learning time: " + NumbersKeeper.learningTime);
