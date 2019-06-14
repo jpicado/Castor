@@ -45,6 +45,8 @@ public abstract class BottomClauseGeneratorUsingJoinTreeOlkenSampling extends Bo
 					selectQuery += " AND ";
 					String selectAttributeName = joinEdge.getJoinNode().getNodeRelation().getConstantAttributeNames().get(attrPos);
 					String selectAttributeValue = joinEdge.getJoinNode().getNodeRelation().getConstantAttributeValues().get(attrPos);
+					// Escape single quotes
+					selectAttributeValue = selectAttributeValue.replace("'", "''");
 					selectQuery += selectAttributeName + " = '" + selectAttributeValue + "'";
 				}
 				

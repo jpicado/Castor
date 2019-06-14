@@ -174,9 +174,9 @@ public class BottomClauseGeneratorStratifiedSampling implements BottomClauseGene
 		String inputAttributeKnownTerms = collectionToString(inputAttributeValues);
 
 		//TODO: USE OPTION1
-//		List<List<Tuple>> strata = computeStrata(genericDAO, schema, relationName, inputAttributeName, inputAttributeKnownTerms, relationAttributeModes, Integer.MAX_VALUE, queryLimit);
+		List<List<Tuple>> strata = computeStrata(genericDAO, schema, relationName, inputAttributeName, inputAttributeKnownTerms, relationAttributeModes, Integer.MAX_VALUE, queryLimit);
 		//TODO: USE OPTION2 
-		List<List<Tuple>> strata = computeSampledStrata(genericDAO, schema, relationName, inputAttributeName, inputAttributeKnownTerms, relationAttributeModes, sampleSize, queryLimit, randomGenerator);
+//		List<List<Tuple>> strata = computeSampledStrata(genericDAO, schema, relationName, inputAttributeName, inputAttributeKnownTerms, relationAttributeModes, sampleSize, queryLimit, randomGenerator);
 		
 		// Check whether last iteration
 		if (iterations == currentIteration) {
