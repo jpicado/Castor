@@ -6,8 +6,8 @@ import castor.algorithms.transformations.ReductionMethods;
 public class Parameters {
 
 	// Default values for parameters
-	private boolean createStoredProcedure = true;
-	private boolean useStoredProcedure = true;
+	private boolean createStoredProcedure = false;
+	private boolean useStoredProcedure = false;
 	private double estimationSample = 1.0;
 	private double minPrecision = 0.5;
 	private double minRecall = 0;
