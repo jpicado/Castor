@@ -39,7 +39,10 @@ public abstract class BottomClauseGeneratorUsingJoinTreeOlkenSampling extends Bo
 		Set<String> selectQueries = new HashSet<String>();
 		for (int i = 0; i < tuples.size(); i++) {
 			if (tuples.get(i) != null && tuples.get(i).getValues().get(joinEdge.getLeftJoinAttribute()) != null) {
-				String selectQuery = String.format(SELECT_WHERE_SQL_STATEMENT, relation, attributeName, "'"+tuples.get(i).getValues().get(joinEdge.getLeftJoinAttribute()).toString()+"'");
+				String value = tuples.get(i).getValues().get(joinEdge.getLeftJoinAttribute()).toString();
+				// Escape single quotes
+				value = value.replace("'", "''");
+				String selectQuery = String.format(SELECT_WHERE_SQL_STATEMENT, relation, attributeName, "'"+value+"'");
 				
 				for (int attrPos = 0; attrPos < joinEdge.getJoinNode().getNodeRelation().getConstantAttributeNames().size(); attrPos++) {
 					selectQuery += " AND ";
